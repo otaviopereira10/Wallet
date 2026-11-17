@@ -6,12 +6,13 @@
  *   DATABASE_URL="postgresql://..." npm run db:migrate
  */
 import postgres from "postgres";
+import { databaseUrl } from "../src/lib/supabase-env";
 import { applyMigrations, readMigrationFiles } from "../src/server/db/migrations";
 
 async function main() {
-  const url = process.env.DATABASE_URL;
+  const url = databaseUrl();
   if (!url) {
-    console.error("DATABASE_URL não definida. Copie .env.example para .env.local e preencha, ou exporte a variável.");
+    console.error("DATABASE_URL (ou POSTGRES_URL) não definida. Copie .env.example para .env.local e preencha, ou exporte a variável.");
     process.exit(1);
   }
   const sql = postgres(url, { prepare: false, max: 1, onnotice: () => {} });

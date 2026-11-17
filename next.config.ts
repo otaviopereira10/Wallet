@@ -4,7 +4,8 @@ const isDev = process.env.NODE_ENV !== "production";
 
 const supabaseOrigin = (() => {
   try {
-    return process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : "";
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    return url ? new URL(url).origin : "";
   } catch {
     return "";
   }

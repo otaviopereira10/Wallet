@@ -3,6 +3,7 @@ import { jwtVerify } from "jose";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveBackend, supabaseKey, supabaseUrl } from "@/lib/supabase-env";
 
 /**
  * Route protection (optimistic check before rendering) + Supabase session
@@ -12,13 +13,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
 
 function backend(): "supabase" | "local" {
-  const explicit = process.env.DATA_BACKEND;
-  if (explicit === "local" || explicit === "supabase") return explicit;
-  const hasSupabase =
-    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    !!(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) &&
-    !!process.env.DATABASE_URL;
-  return hasSupabase ? "supabase" : "local";
+  return resolveBackend();
 }
 
 function localSecret(): Uint8Array | null {
@@ -51,8 +46,8 @@ export async function proxy(request: NextRequest) {
 
   if (backend() === "supabase") {
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,
+      supabaseUrl()!,
+      supabaseKey()!,
       {
         cookies: {
           getAll() {

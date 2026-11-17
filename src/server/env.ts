@@ -1,4 +1,5 @@
 import "server-only";
+import { databaseUrl, resolveBackend, supabaseKey, supabaseUrl } from "@/lib/supabase-env";
 
 /**
  * Server-side configuration. Secrets live only in environment variables and
@@ -21,18 +22,16 @@ function pick(...names: string[]): string | undefined {
 
 export const env = {
   get backend(): Backend {
-    const explicit = pick("DATA_BACKEND");
-    if (explicit === "local" || explicit === "supabase") return explicit;
-    return this.supabaseUrl && this.supabaseKey && this.databaseUrl ? "supabase" : "local";
+    return resolveBackend();
   },
   get supabaseUrl() {
-    return pick("NEXT_PUBLIC_SUPABASE_URL");
+    return supabaseUrl();
   },
   get supabaseKey() {
-    return pick("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    return supabaseKey();
   },
   get databaseUrl() {
-    return pick("DATABASE_URL");
+    return databaseUrl();
   },
   get localDataDir() {
     return pick("LOCAL_DATA_DIR") ?? ".data/pglite";
