@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Isabelle Wallet palette — pink identity, kept calm and premium. */
+:root {
+  --c-bg: #fff9fc;
+  --c-surface: #ffffff;
+  --c-surface-2: #fceef4;
+  --c-surface-3: #f8dce8;
+  --c-border: #f2dfe8;
+  --c-border-strong: #e9c7d7;
+  --c-text: #302630;
+  --c-muted: #88818a;
+  --c-pink-50: #fceef4;
+  --c-pink-100: #f8dce8;
+  --c-pink-300: #e8a3c1;
+  --c-pink-500: #c96b98;
+  --c-pink-600: #b4588a;
+  --c-on-primary: #ffffff;
+  --c-success: #3f9c78;
+  --c-success-bg: #e9f6f0;
+  --c-warning: #c98a2c;
+  --c-warning-bg: #fdf3e2;
+  --c-danger: #d0566b;
+  --c-danger-bg: #fdecef;
+  --c-info: #6f7fc4;
+  --c-info-bg: #eef0fb;
+  --c-plum: #8b5e9b;
+  --c-sage: #5fae8f;
+  --c-gold: #d9a85b;
+  --shadow-soft: 0 1px 2px rgb(48 38 48 / 0.04), 0 8px 24px -12px rgb(201 107 152 / 0.18);
+  --shadow-pop: 0 18px 50px -20px rgb(48 38 48 / 0.35);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --c-bg: #151017;
+  --c-surface: #1e1721;
+  --c-surface-2: #271e2b;
+  --c-surface-3: #33263a;
+  --c-border: #33283a;
+  --c-border-strong: #463650;
+  --c-text: #f6edf2;
+  --c-muted: #a99fab;
+  --c-pink-50: #2c1f2a;
+  --c-pink-100: #3c2635;
+  --c-pink-300: #e8a3c1;
+  --c-pink-500: #e08db4;
+  --c-pink-600: #eaa2c4;
+  --c-on-primary: #241a24;
+  --c-success: #6cc7a3;
+  --c-success-bg: #1d2e28;
+  --c-warning: #e7b766;
+  --c-warning-bg: #33291a;
+  --c-danger: #ef8396;
+  --c-danger-bg: #3a1f26;
+  --c-info: #9fadeb;
+  --c-info-bg: #222640;
+  --c-plum: #b993c8;
+  --c-sage: #7fcbad;
+  --c-gold: #e5bf7f;
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px -14px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 20px 60px -20px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-border: var(--c-border);
+  --color-border-strong: var(--c-border-strong);
+  --color-ink: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-pink-50: var(--c-pink-50);
+  --color-pink-100: var(--c-pink-100);
+  --color-pink-300: var(--c-pink-300);
+  --color-pink-500: var(--c-pink-500);
+  --color-pink-600: var(--c-pink-600);
+  --color-on-primary: var(--c-on-primary);
+  --color-success: var(--c-success);
+  --color-success-bg: var(--c-success-bg);
+  --color-warning: var(--c-warning);
+  --color-warning-bg: var(--c-warning-bg);
+  --color-danger: var(--c-danger);
+  --color-danger-bg: var(--c-danger-bg);
+  --color-info: var(--c-info);
+  --color-info-bg: var(--c-info-bg);
+  --color-plum: var(--c-plum);
+  --color-sage: var(--c-sage);
+  --color-gold: var(--c-gold);
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --shadow-soft: var(--shadow-soft);
+  --shadow-pop: var(--shadow-pop);
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  table :is(td, th) {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+  table :is(td, th):first-child {
+    padding-left: 0;
+  }
+  table :is(td, th):last-child {
+    padding-right: 0;
+  }
+  ::selection {
+    background: var(--c-pink-100);
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-pink-500);
+    outline-offset: 2px;
+  }
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.55;
+    cursor: pointer;
+  }
+  [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}
+
+@layer utilities {
+  .select-chevron {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2388818a' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 14px;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-border-strong) transparent;
+  }
+  .fade-in {
+    animation: fade-in 0.35s ease both;
+  }
+  .rise-in {
+    animation: rise-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.dialog-overlay[data-state="open"] {
+  animation: overlay-in 0.18s ease both;
+}
+.dialog-content[data-state="open"] {
+  animation: sheet-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  aside,
+  nav,
+  header,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
