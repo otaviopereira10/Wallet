@@ -86,9 +86,9 @@ export function IncomeExpenseChart({
         <YAxis {...axis} width={56} tickFormatter={m.tick} />
         <Tooltip cursor={{ fill: "var(--c-surface-2)" }} content={<TooltipBox fmt={m.full} />} />
         <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-        {!hideIncome && <Bar dataKey="income" name="Receitas" fill={SERIES.income} radius={[6, 6, 0, 0]} maxBarSize={28} />}
-        <Bar dataKey="expenses" name="Despesas" fill={SERIES.expense} radius={[6, 6, 0, 0]} maxBarSize={28} />
-        {hasDebt && <Bar dataKey="debt" name="Pag. dívida" fill={SERIES.debt} radius={[6, 6, 0, 0]} maxBarSize={28} />}
+        {!hideIncome && <Bar dataKey="income" name="Income" fill={SERIES.income} radius={[6, 6, 0, 0]} maxBarSize={28} />}
+        <Bar dataKey="expenses" name="Expenses" fill={SERIES.expense} radius={[6, 6, 0, 0]} maxBarSize={28} />
+        {hasDebt && <Bar dataKey="debt" name="Debt payments" fill={SERIES.debt} radius={[6, 6, 0, 0]} maxBarSize={28} />}
       </BarChart>
     </ResponsiveContainer>
   );
@@ -111,9 +111,9 @@ export function NetWorthChart({ data, height = 260 }: { data: Array<{ label: str
         <Tooltip content={<TooltipBox fmt={m.full} />} />
         <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
         <ReferenceLine y={0} stroke="var(--c-border-strong)" />
-        <Area type="monotone" dataKey="netWorth" name="Patrimônio líquido" stroke={SERIES.netWorth} strokeWidth={2.5} fill="url(#nw)" />
-        <Line type="monotone" dataKey="assets" name="Saldo em contas" stroke={SERIES.income} strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="debts" name="Dívidas" stroke={SERIES.debt} strokeWidth={2} dot={false} strokeDasharray="5 4" />
+        <Area type="monotone" dataKey="netWorth" name="Net worth" stroke={SERIES.netWorth} strokeWidth={2.5} fill="url(#nw)" />
+        <Line type="monotone" dataKey="assets" name="Money in accounts" stroke={SERIES.income} strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="debts" name="Debts" stroke={SERIES.debt} strokeWidth={2} dot={false} strokeDasharray="5 4" />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -216,9 +216,9 @@ export function BalanceAreaChart({
         <Tooltip content={<TooltipBox fmt={m.full} />} />
         <ReferenceLine y={0} stroke="var(--c-danger)" strokeOpacity={0.5} />
         {buffer !== undefined && buffer > 0 && (
-          <ReferenceLine y={buffer} stroke={SERIES.gold} strokeDasharray="4 4" label={{ value: "reserva mínima", fontSize: 10, fill: "var(--c-muted)", position: "insideTopLeft" }} />
+          <ReferenceLine y={buffer} stroke={SERIES.gold} strokeDasharray="4 4" label={{ value: "safety cushion", fontSize: 10, fill: "var(--c-muted)", position: "insideTopLeft" }} />
         )}
-        <Area type="stepAfter" dataKey="balance" name="Saldo projetado" stroke={SERIES.netWorth} strokeWidth={2.25} fill="url(#bal)" />
+        <Area type="stepAfter" dataKey="balance" name="Expected balance" stroke={SERIES.netWorth} strokeWidth={2.25} fill="url(#bal)" />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -240,8 +240,8 @@ export function HorizontalBars({
         <YAxis type="category" dataKey="label" {...axis} width={110} />
         <Tooltip cursor={{ fill: "var(--c-surface-2)" }} content={<TooltipBox fmt={m.full} />} />
         <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-        <Bar dataKey="planned" name="Planejado" fill={SERIES.assets} radius={[0, 6, 6, 0]} maxBarSize={14} />
-        <Bar dataKey="actual" name="Realizado" fill={SERIES.expense} radius={[0, 6, 6, 0]} maxBarSize={14} />
+        <Bar dataKey="planned" name="Planned" fill={SERIES.assets} radius={[0, 6, 6, 0]} maxBarSize={14} />
+        <Bar dataKey="actual" name="Actual" fill={SERIES.expense} radius={[0, 6, 6, 0]} maxBarSize={14} />
       </BarChart>
     </ResponsiveContainer>
   );

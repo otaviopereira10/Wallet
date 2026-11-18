@@ -2,10 +2,11 @@
   "name": "isabelle-wallet",
   "version": "1.0.0",
   "private": true,
-  "description": "Isabelle Wallet — plataforma pessoal inteligente de controle financeiro",
+  "description": "Isabelle Wallet — a private, personal money manager",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "vercel-build": "tsx scripts/migrate.ts --if-configured && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

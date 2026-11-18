@@ -24,7 +24,7 @@ interface ReportView {
   goals: Array<{ name: string; target: number; saved: number; savedInPeriod: number }>;
 }
 
-const PERIOD_LABEL: Record<ReportPeriod, string> = { month: "Mensal", quarter: "Trimestral", semester: "Semestral", year: "Anual", custom: "Personalizado" };
+const PERIOD_LABEL: Record<ReportPeriod, string> = { month: "Monthly", quarter: "Quarterly", semester: "Semester (6 months)", year: "Yearly", custom: "Custom dates" };
 
 export function ReportsClient({
   period,
@@ -74,43 +74,43 @@ export function ReportsClient({
       doc.text("Isabelle Wallet", 40, 45);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      doc.text(`Relatório ${PERIOD_LABEL[period].toLowerCase()} · ${f.date(from)} a ${f.date(to)}${displayName ? ` · ${displayName}` : ""}`, 40, 66);
+      doc.text(`${PERIOD_LABEL[period]} report · ${f.date(from)} to ${f.date(to)}${displayName ? ` · ${displayName}` : ""}`, 40, 66);
       doc.setFontSize(8);
       doc.setTextColor(136, 129, 138);
-      doc.text(`Gerado em ${new Date().toLocaleString(f.locale)} · valores em ${f.base}`, 40, 80);
+      doc.text(`Created ${new Date().toLocaleString(f.locale)} · amounts in ${f.base}`, 40, 80);
       const opts = { headStyles: { fillColor: pink }, styles: { fontSize: 9 }, margin: { left: 40, right: 40 } };
       autoTable(doc, {
         ...opts,
         startY: 110,
-        head: [["Resumo", "Valor"]],
+        head: [["Summary", "Amount"]],
         body: [
-          ["Receitas", m(r.flows.income)],
-          ["Despesas (líquidas de reembolsos)", m(r.flows.netExpenses)],
-          ["Pagamentos de dívida", m(r.flows.debtPayments)],
-          ["Total de saídas", m(r.flows.outflows)],
-          ["Resultado do período", m(r.flows.net)],
-          ["Taxa de poupança", r.savingsRate === null ? "—" : `${r.savingsRate}%`],
-          ["Despesas pendentes no período", m(r.flows.expensesPending)],
+          ["Income", m(r.flows.income)],
+          ["Expenses (after refunds)", m(r.flows.netExpenses)],
+          ["Debt payments", m(r.flows.debtPayments)],
+          ["Total money out", m(r.flows.outflows)],
+          ["Net (in − out)", m(r.flows.net)],
+          ["Savings rate", r.savingsRate === null ? "—" : `${r.savingsRate}%`],
+          ["Unpaid expenses in the period", m(r.flows.expensesPending)],
         ],
       });
       const next = () => (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 20;
       if (r.monthly.length)
-        autoTable(doc, { ...opts, startY: next(), head: [["Mês", "Receitas", "Despesas", "Dívida", "Resultado"]], body: r.monthly.map((x) => [x.label, m(x.income), m(x.expenses), m(x.debtPayments), m(x.net)]) });
+        autoTable(doc, { ...opts, startY: next(), head: [["Month", "Income", "Expenses", "Debt", "Net"]], body: r.monthly.map((x) => [x.label, m(x.income), m(x.expenses), m(x.debtPayments), m(x.net)]) });
       if (r.byCategory.length)
-        autoTable(doc, { ...opts, startY: next(), head: [["Gastos por categoria", "Valor", "%"]], body: r.byCategory.map((c) => [c.label, m(c.amount), `${c.share}%`]) });
-      if (r.incomeByCategory.length) autoTable(doc, { ...opts, startY: next(), head: [["Receitas por categoria", "Valor"]], body: r.incomeByCategory.map((c) => [c.label, m(c.amount)]) });
+        autoTable(doc, { ...opts, startY: next(), head: [["Spending by category", "Amount", "%"]], body: r.byCategory.map((c) => [c.label, m(c.amount), `${c.share}%`]) });
+      if (r.incomeByCategory.length) autoTable(doc, { ...opts, startY: next(), head: [["Income by category", "Amount"]], body: r.incomeByCategory.map((c) => [c.label, m(c.amount)]) });
       if (r.budgetVsActual.length)
-        autoTable(doc, { ...opts, startY: next(), head: [["Orçamento", "Planejado", "Realizado"]], body: r.budgetVsActual.map((b) => [b.label, m(b.planned), m(b.actual)]) });
-      if (r.debt.length) autoTable(doc, { ...opts, startY: next(), head: [["Evolução da dívida", "Saldo no fim do mês"]], body: r.debt.map((d) => [d.label, m(d.balance)]) });
+        autoTable(doc, { ...opts, startY: next(), head: [["Budget", "Planned", "Actual"]], body: r.budgetVsActual.map((b) => [b.label, m(b.planned), m(b.actual)]) });
+      if (r.debt.length) autoTable(doc, { ...opts, startY: next(), head: [["Debt over time", "Balance at month end"]], body: r.debt.map((d) => [d.label, m(d.balance)]) });
       if (r.goals.length)
-        autoTable(doc, { ...opts, startY: next(), head: [["Meta", "Alvo", "Acumulado", "No período"]], body: r.goals.map((g) => [g.name, m(g.target), m(g.saved), m(g.savedInPeriod)]) });
+        autoTable(doc, { ...opts, startY: next(), head: [["Goal", "Target", "Saved", "In this period"]], body: r.goals.map((g) => [g.name, m(g.target), m(g.saved), m(g.savedInPeriod)]) });
       doc.setFontSize(8);
       doc.setTextColor(136, 129, 138);
-      doc.text("Transferências entre contas não entram como receita nem despesa. Valores convertidos pela cotação registrada no app.", 40, 820);
-      doc.save(`isabelle-wallet-relatorio-${from}-a-${to}.pdf`);
-      toast.success("PDF gerado");
+      doc.text("Transfers between your own accounts are not counted as income or expenses. Amounts converted with the exchange rate saved in the app.", 40, 820);
+      doc.save(`isabelle-wallet-report-${from}-to-${to}.pdf`);
+      toast.success("PDF created");
     } catch {
-      toast.error("Não foi possível gerar o PDF.");
+      toast.error("Could not create the PDF.");
     } finally {
       setExporting(false);
     }
@@ -122,7 +122,7 @@ export function ReportsClient({
     <>
       <Card className="mb-6">
         <CardContent className="grid items-end gap-3 pt-5 sm:grid-cols-2 lg:grid-cols-[180px_1fr_1fr_auto_auto]">
-          <Field label="Tipo de relatório" htmlFor="rp-kind">
+          <Field label="Report type" htmlFor="rp-kind">
             <Select id="rp-kind" value={kind} onChange={(e) => setKind(e.target.value as ReportPeriod)}>
               {(Object.keys(PERIOD_LABEL) as ReportPeriod[]).map((k) => (
                 <option key={k} value={k}>
@@ -133,19 +133,19 @@ export function ReportsClient({
           </Field>
           {kind === "custom" ? (
             <>
-              <Field label="De" htmlFor="rp-from">
+              <Field label="From" htmlFor="rp-from">
                 <Input id="rp-from" type="date" value={cFrom} onChange={(e) => setCFrom(e.target.value)} />
               </Field>
-              <Field label="Até" htmlFor="rp-to">
+              <Field label="To" htmlFor="rp-to">
                 <Input id="rp-to" type="date" value={cTo} onChange={(e) => setCTo(e.target.value)} />
               </Field>
             </>
           ) : (
-            <Field label="Período de referência (qualquer dia dele)" htmlFor="rp-ref" className="lg:col-span-2">
+            <Field label="Pick any day inside the period" htmlFor="rp-ref" className="lg:col-span-2">
               <Input id="rp-ref" type="date" value={ref} onChange={(e) => setRef(e.target.value)} />
             </Field>
           )}
-          <Button onClick={apply}>Gerar</Button>
+          <Button onClick={apply}>Show report</Button>
           <Button variant="outline" onClick={exportPdf} loading={exporting}>
             <FileDown /> PDF
           </Button>
@@ -153,18 +153,18 @@ export function ReportsClient({
       </Card>
 
       <p className="mb-4 text-sm text-muted">
-        {PERIOD_LABEL[period]} · <strong className="text-ink">{f.date(from)}</strong> a <strong className="text-ink">{f.date(to)}</strong> · {r.transactionCount} movimentação(ões)
+        {PERIOD_LABEL[period]} · <strong className="text-ink">{f.date(from)}</strong> to <strong className="text-ink">{f.date(to)}</strong> · {r.transactionCount} transaction(s)
       </p>
 
       <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Receitas" value={f.money(r.flows.income)} tone="success" />
-        <StatCard label="Despesas" value={f.money(r.flows.netExpenses)} sub={r.flows.refunds ? `Reembolsos: ${f.money(r.flows.refunds)}` : undefined} tone="warning" />
-        <StatCard label="Pagamentos da dívida" value={f.money(r.flows.debtPayments)} tone="plum" />
+        <StatCard label="Income" value={f.money(r.flows.income)} tone="success" />
+        <StatCard label="Expenses" value={f.money(r.flows.netExpenses)} sub={r.flows.refunds ? `Refunds: ${f.money(r.flows.refunds)}` : undefined} tone="warning" />
+        <StatCard label="Debt payments" value={f.money(r.flows.debtPayments)} tone="plum" />
         <StatCard
-          label="Resultado"
+          label="Net (in − out)"
           value={f.money(r.flows.net, undefined, { signed: true })}
           tone={r.flows.net >= 0 ? "success" : "danger"}
-          sub={r.savingsRate !== null ? `Taxa de poupança: ${r.savingsRate}%` : "Sem receitas no período"}
+          sub={r.savingsRate !== null ? `Savings rate: ${r.savingsRate}%` : "No income in this period"}
         />
       </div>
 
@@ -172,8 +172,8 @@ export function ReportsClient({
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Receitas × despesas por mês</CardTitle>
-              <CardDescription>Transferências entre contas não entram.</CardDescription>
+              <CardTitle>Income vs. expenses by month</CardTitle>
+              <CardDescription>Transfers between your own accounts are left out.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -182,7 +182,7 @@ export function ReportsClient({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Gastos por categoria</CardTitle>
+            <CardTitle>Spending by category</CardTitle>
           </CardHeader>
           <CardContent>
             {r.byCategory.length ? (
@@ -203,55 +203,55 @@ export function ReportsClient({
                 </ul>
               </div>
             ) : (
-              <p className="py-8 text-center text-sm text-muted">Sem despesas no período.</p>
+              <p className="py-8 text-center text-sm text-muted">No expenses in this period.</p>
             )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Evolução do saldo</CardTitle>
-              <CardDescription>Saldo das contas, dívidas e patrimônio líquido no fim de cada mês.</CardDescription>
+              <CardTitle>Net worth over time</CardTitle>
+              <CardDescription>What you have, what you owe, and the difference (net worth) at the end of each month.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             {r.netWorth.length ? (
               <NetWorthChart data={r.netWorth.map((x) => ({ label: x.label, assets: x.assets / 100, debts: x.debts / 100, netWorth: x.netWorth / 100 }))} />
             ) : (
-              <p className="py-8 text-center text-sm text-muted">Período no futuro — sem histórico.</p>
+              <p className="py-8 text-center text-sm text-muted">This period is in the future — no history yet.</p>
             )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Evolução da dívida universitária</CardTitle>
+            <CardTitle>University debt over time</CardTitle>
           </CardHeader>
           <CardContent>
             {r.debt.some((d) => d.balance) ? (
-              <MultiLineChart data={r.debt.map((d) => ({ label: d.label, balance: d.balance / 100 }))} series={[{ key: "balance", name: "Saldo da dívida", color: SERIES.debt }]} height={260} />
+              <MultiLineChart data={r.debt.map((d) => ({ label: d.label, balance: d.balance / 100 }))} series={[{ key: "balance", name: "Debt balance", color: SERIES.debt }]} height={260} />
             ) : (
-              <p className="py-8 text-center text-sm text-muted">Nenhuma dívida no período.</p>
+              <p className="py-8 text-center text-sm text-muted">No debt in this period.</p>
             )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Orçamento planejado × realizado</CardTitle>
-              <CardDescription>Limite mensal × número de meses do período.</CardDescription>
+              <CardTitle>Budget: planned vs. actual</CardTitle>
+              <CardDescription>Planned = monthly limit × number of months in the period.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             {r.budgetVsActual.length ? (
               <HorizontalBars data={r.budgetVsActual.map((b) => ({ label: b.label, planned: b.planned / 100, actual: b.actual / 100 }))} />
             ) : (
-              <p className="py-8 text-center text-sm text-muted">Nenhum orçamento definido.</p>
+              <p className="py-8 text-center text-sm text-muted">No budget set.</p>
             )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Progresso das metas</CardTitle>
+            <CardTitle>Goal progress</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {r.goals.length ? (
@@ -262,7 +262,7 @@ export function ReportsClient({
                     <div className="mb-1 flex justify-between text-sm">
                       <span className="font-medium">{g.name}</span>
                       <span className="tabular text-muted">
-                        {f.money(g.saved)} / {f.money(g.target)} · +{f.money(g.savedInPeriod)} no período
+                        {f.money(g.saved)} / {f.money(g.target)} · +{f.money(g.savedInPeriod)} in this period
                       </span>
                     </div>
                     <ProgressBar value={pct} label={`${g.name} ${pct}%`} />
@@ -270,7 +270,7 @@ export function ReportsClient({
                 );
               })
             ) : (
-              <p className="py-8 text-center text-sm text-muted">Nenhuma meta.</p>
+              <p className="py-8 text-center text-sm text-muted">No goals.</p>
             )}
           </CardContent>
         </Card>
@@ -279,18 +279,18 @@ export function ReportsClient({
       <Card className="mt-4">
         <CardHeader>
           <div>
-            <CardTitle>Exportar dados</CardTitle>
-            <CardDescription>Arquivos CSV (abrem no Excel, Numbers e Google Sheets).</CardDescription>
+            <CardTitle>Download your data</CardTitle>
+            <CardDescription>CSV files (open in Excel, Numbers and Google Sheets).</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           {[
-            ["transactions", "Movimentações do período", true],
-            ["bills", "Vencimentos do período", true],
-            ["debt", "Histórico da dívida", true],
-            ["goals", "Contribuições para metas", true],
-            ["incomes", "Fontes de renda", false],
-            ["subscriptions", "Assinaturas", false],
+            ["transactions", "Transactions in this period", true],
+            ["bills", "Bills due in this period", true],
+            ["debt", "Debt history", true],
+            ["goals", "Goal contributions", true],
+            ["incomes", "Income sources", false],
+            ["subscriptions", "Subscriptions", false],
           ].map(([type, label, period]) => (
             <Button key={String(type)} asChild variant="outline" size="sm">
               <a href={csv(String(type), Boolean(period))} download>
@@ -299,7 +299,7 @@ export function ReportsClient({
             </Button>
           ))}
           <Button variant="secondary" size="sm" onClick={exportPdf} loading={exporting}>
-            <Download /> Relatório em PDF
+            <Download /> PDF report
           </Button>
         </CardContent>
       </Card>

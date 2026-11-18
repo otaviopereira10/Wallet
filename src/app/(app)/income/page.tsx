@@ -9,7 +9,7 @@ import { getAppData } from "@/server/context";
 import { txRows } from "@/server/view";
 import { IncomeClient } from "./income-client";
 
-export const metadata: Metadata = { title: "Receitas" };
+export const metadata: Metadata = { title: "Income" };
 
 export default async function IncomePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
@@ -28,7 +28,7 @@ export default async function IncomePage({ searchParams }: { searchParams: Promi
     frequency: i.frequency,
     frequencyLabel:
       i.frequency === "custom"
-        ? `A cada ${i.customInterval} ${i.customUnit === "day" ? "dia(s)" : i.customUnit === "week" ? "semana(s)" : "mês(es)"}`
+        ? `Every ${i.customInterval} ${i.customUnit === "day" ? "day(s)" : i.customUnit === "week" ? "week(s)" : "month(s)"}`
         : FREQUENCY_LABELS[i.frequency],
     startDate: i.startDate,
     endDate: i.endDate,
@@ -77,9 +77,9 @@ export default async function IncomePage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader
-        eyebrow="Dinheiro"
-        title="Receitas"
-        description="Suas fontes de renda. Receitas futuras aparecem nas projeções, mas só viram saldo real quando você confirma o recebimento."
+        eyebrow="Your money"
+        title="Income"
+        description="Money coming in. Future payments appear in your forecasts, but only count in your balance once you confirm you received them."
       />
       <IncomeClient
         sources={sources}

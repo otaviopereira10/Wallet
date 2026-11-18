@@ -11,14 +11,14 @@ export function AuthForm({ mode, notice }: { mode: "login" | "signup"; notice?: 
   return (
     <form action={action} className="space-y-4">
       {notice && <p className="rounded-xl bg-warning-bg px-3 py-2 text-sm text-warning">{notice}</p>}
-      <Field label="E-mail" htmlFor="email">
-        <Input id="email" name="email" type="email" autoComplete="email" required placeholder="voce@email.com" />
+      <Field label="Email" htmlFor="email">
+        <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@email.com" />
       </Field>
-      <Field label="Senha" htmlFor="password" hint={mode === "signup" ? "Mínimo de 8 caracteres." : undefined}>
+      <Field label="Password" htmlFor="password" hint={mode === "signup" ? "At least 8 characters." : undefined}>
         <Input id="password" name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} required minLength={8} />
       </Field>
       {mode === "signup" && (
-        <Field label="Confirme a senha" htmlFor="confirm">
+        <Field label="Confirm password" htmlFor="confirm">
           <Input id="confirm" name="confirm" type="password" autoComplete="new-password" required minLength={8} />
         </Field>
       )}
@@ -29,16 +29,16 @@ export function AuthForm({ mode, notice }: { mode: "login" | "signup"; notice?: 
       )}
       {state.message && <p className="rounded-xl bg-success-bg px-3 py-2 text-sm text-success">{state.message}</p>}
       <Button type="submit" size="lg" className="w-full" loading={pending}>
-        {mode === "login" ? "Entrar" : "Criar minha conta"}
+        {mode === "login" ? "Sign in" : "Create my account"}
       </Button>
       <p className="text-center text-sm text-muted">
         {mode === "login" ? (
           <>
-            Primeiro acesso? <Link href="/signup" className="font-semibold text-pink-600 hover:underline">Criar conta</Link>
+            First time here? <Link href="/signup" className="font-semibold text-pink-600 hover:underline">Create an account</Link>
           </>
         ) : (
           <>
-            Já tem conta? <Link href="/login" className="font-semibold text-pink-600 hover:underline">Entrar</Link>
+            Already have an account? <Link href="/login" className="font-semibold text-pink-600 hover:underline">Sign in</Link>
           </>
         )}
       </p>

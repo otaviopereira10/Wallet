@@ -46,9 +46,9 @@ export function SettingsClient({
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
-                <UserRound className="size-4 text-pink-500" /> Perfil e preferências
+                <UserRound className="size-4 text-pink-500" /> Profile & preferences
               </CardTitle>
-              <CardDescription>Moeda principal, formato, fuso horário, reserva mínima, alertas e tema.</CardDescription>
+              <CardDescription>Main currency, number format, time zone, safety cushion, reminders and theme.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -56,45 +56,45 @@ export function SettingsClient({
           </CardContent>
         </Card>
 
-        <Card id="cambio">
+        <Card id="exchange">
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
-                <ArrowLeftRight className="size-4 text-pink-500" /> Câmbio USD ↔ BRL
+                <ArrowLeftRight className="size-4 text-pink-500" /> Exchange rate USD ↔ BRL
               </CardTitle>
               <CardDescription>
-                Fonte: {fx.provider === "frankfurter" ? "Frankfurter (taxas de referência do Banco Central Europeu)" : "AwesomeAPI"}. Valores em moedas diferentes nunca são
-                misturados sem conversão explícita.
+                Source: {fx.provider === "frankfurter" ? "Frankfurter (European Central Bank reference rates)" : "AwesomeAPI"}. Amounts in different currencies are never
+                added together without converting them first.
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" loading={pending} onClick={() => run(() => refreshFxNow())}>
-              <RefreshCw /> Atualizar
+              <RefreshCw /> Update
             </Button>
           </CardHeader>
           <CardContent className="space-y-5">
             {fx.latest ? (
               <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl bg-surface-2/60 p-4">
                 <div>
-                  <p className="text-xs text-muted">Taxa em uso</p>
+                  <p className="text-xs text-muted">Rate in use</p>
                   <p className="tabular font-display text-3xl">
                     1 USD = {Number(fx.latest.rate).toLocaleString(f.locale, { maximumFractionDigits: 4 })} BRL
                   </p>
                   <p className="mt-1 text-xs text-muted">
-                    Data da cotação {f.date(fx.latest.rateDate)} · atualizada em {formatDateTime(fx.latest.fetchedAt.replace(" ", "T"), f.locale)}
+                    Rate date {f.date(fx.latest.rateDate)} · updated {formatDateTime(fx.latest.fetchedAt.replace(" ", "T"), f.locale)}
                   </p>
                 </div>
-                <Badge tone={fx.latest.isManual ? "warning" : "success"}>{fx.latest.isManual ? "Taxa manual" : `Fonte: ${fx.latest.source}`}</Badge>
+                <Badge tone={fx.latest.isManual ? "warning" : "success"}>{fx.latest.isManual ? "Manual rate" : `Source: ${fx.latest.source}`}</Badge>
               </div>
             ) : (
               <p className="rounded-xl bg-warning-bg px-4 py-3 text-sm text-warning">
-                Nenhuma cotação salva ainda. Clique em “Atualizar” ou informe uma taxa manual abaixo. Valores em outra moeda não entram nos totais até haver uma cotação.
+                No exchange rate saved yet. Click “Update” or enter a manual rate below. Amounts in the other currency are left out of totals until there is a rate.
               </p>
             )}
             {fx.history.length > 1 && (
               <MultiLineChart
                 height={180}
                 data={[...fx.history].reverse().map((h) => ({ label: f.date(h.date, "short"), rate: Number(h.rate) }))}
-                series={[{ key: "rate", name: "BRL por 1 USD", color: SERIES.netWorth }]}
+                series={[{ key: "rate", name: "BRL per 1 USD", color: SERIES.netWorth }]}
                 currency="BRL"
               />
             )}
@@ -102,10 +102,10 @@ export function SettingsClient({
             {fx.manual.length > 0 && (
               <div className="flex items-center justify-between text-xs text-muted">
                 <span>
-                  {fx.manual.length} taxa(s) manual(is) registrada(s). A mais recente (manual ou automática) é a que vale.
+                  {fx.manual.length} manual rate(s) saved. The most recent rate (manual or automatic) is the one used.
                 </span>
                 <Button variant="danger-ghost" size="sm" onClick={() => run(() => deleteManualRates())}>
-                  Remover taxas manuais
+                  Remove manual rates
                 </Button>
               </div>
             )}
@@ -118,16 +118,16 @@ export function SettingsClient({
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
-                <KeyRound className="size-4 text-pink-500" /> Segurança
+                <KeyRound className="size-4 text-pink-500" /> Security
               </CardTitle>
-              <CardDescription>Conectada como {system.email}</CardDescription>
+              <CardDescription>Signed in as {system.email}</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <PasswordForm />
             <form action={signOutAction}>
               <Button type="submit" variant="outline" className="w-full">
-                <LogOut /> Sair da conta
+                <LogOut /> Sign out
               </Button>
             </form>
           </CardContent>
@@ -137,17 +137,17 @@ export function SettingsClient({
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="size-4 text-pink-500" /> Privacidade e sistema
+                <ShieldCheck className="size-4 text-pink-500" /> Privacy & system
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <Row label="Armazenamento" value={system.backend === "supabase" ? "Supabase (PostgreSQL com RLS)" : "Banco local embutido (PostgreSQL/PGlite com RLS)"} />
-            <Row label="Isolamento dos dados" value="Row Level Security: cada linha só é visível para a dona" />
-            <Row label="IA" value={system.aiConfigured ? `Configurada (${system.aiModel}) · ${app.aiEnabled ? "ativada por você" : "desativada"}` : "Não configurada — cálculos locais funcionam"} />
-            <Row label="Pagamentos reais" value="Nunca: o app apenas organiza, calcula e recomenda" />
+            <Row label="Storage" value={system.backend === "supabase" ? "Supabase (PostgreSQL with Row Level Security)" : "Built-in local database (PostgreSQL/PGlite with Row Level Security)"} />
+            <Row label="Who can see your data" value="Only you — every row is locked to your account (Row Level Security)" />
+            <Row label="AI" value={system.aiConfigured ? `Set up (${system.aiModel}) · ${app.aiEnabled ? "turned on by you" : "turned off"}` : "Not set up — all calculations still work"} />
+            <Row label="Real payments" value="Never: the app only organizes, calculates and recommends" />
             <Link href="/data" className="inline-flex items-center gap-2 text-sm font-semibold text-pink-600 hover:underline">
-              <Database className="size-4" /> Backup, importação e exportação
+              <Database className="size-4" /> Backup, import and export
             </Link>
           </CardContent>
         </Card>
@@ -155,13 +155,13 @@ export function SettingsClient({
         <Card className="border-danger/30">
           <CardHeader>
             <div>
-              <CardTitle className="text-danger">Zona de perigo</CardTitle>
-              <CardDescription>Apaga todas as contas, movimentações, dívidas, metas e configurações financeiras. Seu login é mantido.</CardDescription>
+              <CardTitle className="text-danger">Danger zone</CardTitle>
+              <CardDescription>Deletes all accounts, transactions, debts, goals and financial settings. Your login stays.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
             <Button variant="danger" onClick={() => setResetOpen(true)}>
-              <Trash2 /> Apagar todos os dados financeiros
+              <Trash2 /> Delete all financial data
             </Button>
           </CardContent>
         </Card>
@@ -173,20 +173,20 @@ export function SettingsClient({
           setResetOpen(o);
           if (!o) setConfirmText("");
         }}
-        title="Apagar todos os dados?"
+        title="Delete all data?"
         description={
           <span className="block space-y-3">
-            <span className="block">Esta ação não pode ser desfeita. Baixe um backup antes, se quiser guardar uma cópia.</span>
+            <span className="block">This cannot be undone. Download a backup first if you want to keep a copy.</span>
             <span className="block">
-              Digite <strong>APAGAR</strong> para confirmar:
-              <Input className="mt-2" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} aria-label="Confirmação" />
+              Type <strong>DELETE</strong> to confirm:
+              <Input className="mt-2" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} aria-label="Confirmation" />
             </span>
           </span>
         }
-        confirmLabel="Apagar tudo"
+        confirmLabel="Delete everything"
         onConfirm={async () => {
-          if (confirmText !== "APAGAR") {
-            toast.error("Digite APAGAR para confirmar.");
+          if (confirmText !== "DELETE") {
+            toast.error("Type DELETE to confirm.");
             return false;
           }
           const ok = await run(() => resetAllData({ confirm: confirmText }));
@@ -217,30 +217,30 @@ function ManualRateForm() {
   const e = formState.errors as Record<string, { message?: string }>;
   return (
     <form noValidate onSubmit={handleSubmit((v) => run(() => setManualRate(v), { onSuccess: () => reset({ base: "USD", quote: "BRL", rate: "", date: app.today }) }))} className="rounded-2xl border border-border p-4">
-      <p className="mb-3 text-sm font-medium">Informar taxa manual</p>
+      <p className="mb-3 text-sm font-medium">Enter a rate manually</p>
       <FormGrid className="sm:grid-cols-4">
-        <Field label="De" htmlFor="mr-base">
+        <Field label="From" htmlFor="mr-base">
           <Select id="mr-base" {...register("base")}>
             <option value="USD">USD</option>
             <option value="BRL">BRL</option>
           </Select>
         </Field>
-        <Field label="Para" htmlFor="mr-quote">
+        <Field label="To" htmlFor="mr-quote">
           <Select id="mr-quote" {...register("quote")}>
             <option value="BRL">BRL</option>
             <option value="USD">USD</option>
           </Select>
         </Field>
-        <Field label="Taxa" error={err(e, "rate")} htmlFor="mr-rate">
-          <Input id="mr-rate" inputMode="decimal" placeholder="5,4321" {...register("rate")} />
+        <Field label="Rate" error={err(e, "rate")} htmlFor="mr-rate">
+          <Input id="mr-rate" inputMode="decimal" placeholder="5.4321" {...register("rate")} />
         </Field>
-        <Field label="Data" htmlFor="mr-date">
+        <Field label="Date" htmlFor="mr-date">
           <Input id="mr-date" type="date" {...register("date")} />
         </Field>
       </FormGrid>
       <div className="mt-3 flex justify-end">
         <Button type="submit" size="sm" loading={pending}>
-          Salvar taxa manual
+          Save manual rate
         </Button>
       </div>
     </form>
@@ -263,22 +263,22 @@ function PasswordForm() {
         const r = await changePasswordAction(v);
         setBusy(false);
         if (r.ok) {
-          toast.success(r.message ?? "Senha alterada");
+          toast.success(r.message ?? "Password changed");
           reset();
-        } else toast.error(r.error ?? "Erro");
+        } else toast.error(r.error ?? "Something went wrong");
       })}
     >
-      <Field label="Senha atual" error={err(e, "current")} htmlFor="pw-cur">
+      <Field label="Current password" error={err(e, "current")} htmlFor="pw-cur">
         <Input id="pw-cur" type="password" autoComplete="current-password" {...register("current")} />
       </Field>
-      <Field label="Nova senha" error={err(e, "next")} htmlFor="pw-new">
+      <Field label="New password" error={err(e, "next")} htmlFor="pw-new">
         <Input id="pw-new" type="password" autoComplete="new-password" {...register("next")} />
       </Field>
-      <Field label="Confirmar nova senha" error={err(e, "confirm")} htmlFor="pw-conf">
+      <Field label="Confirm new password" error={err(e, "confirm")} htmlFor="pw-conf">
         <Input id="pw-conf" type="password" autoComplete="new-password" {...register("confirm")} />
       </Field>
       <Button type="submit" variant="secondary" className="w-full" loading={busy}>
-        Alterar senha
+        Change password
       </Button>
     </form>
   );

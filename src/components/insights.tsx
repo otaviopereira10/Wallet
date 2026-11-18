@@ -13,7 +13,7 @@ const TONES = {
 export function InsightList({ items, limit }: { items: Insight[]; limit?: number }) {
   const list = limit ? items.slice(0, limit) : items;
   if (!list.length)
-    return <p className="text-sm text-muted">Cadastre suas contas, receitas e despesas para receber um resumo inteligente baseado nos seus dados.</p>;
+    return <p className="text-sm text-muted">Add your accounts, income and expenses to get a smart summary based on your own data.</p>;
   return (
     <ul className="space-y-2.5">
       {list.map((i) => {

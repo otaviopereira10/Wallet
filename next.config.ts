@@ -11,15 +11,21 @@ const supabaseOrigin = (() => {
   }
 })();
 
+// Vercel preview deployments inject a feedback toolbar from vercel.live.
+// Production deployments never load it, so production keeps the tight policy.
+const vercelPreview = process.env.VERCEL_ENV === "preview";
+const live = (extra: string) => (vercelPreview ? ` ${extra}` : "");
+
 // Content-Security-Policy: the app talks only to itself (all external APIs are
 // called from the server), so the browser policy can stay tight.
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}${isDev ? " ws: wss:" : ""}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${live("https://vercel.live")}`,
+  `style-src 'self' 'unsafe-inline'${live("https://vercel.live")}`,
+  `img-src 'self' data: blob:${live("https://vercel.live https://vercel.com")}`,
+  `font-src 'self' data:${live("https://vercel.live https://assets.vercel.com")}`,
+  `connect-src 'self'${supabaseOrigin ? ` ${supabaseOrigin}` : ""}${isDev ? " ws: wss:" : ""}${live("https://vercel.live wss://ws-us3.pusher.com")}`,
+  `frame-src ${vercelPreview ? "https://vercel.live" : "'none'"}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -33,8 +39,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite", "postgres"],
   experimental: {
     serverActions: {
-      // Backups and CSV imports are sent through Server Actions.
-      bodySizeLimit: "10mb",
+      // Backups and CSV imports are sent through Server Actions. Vercel caps
+      // request bodies at 4.5 MB, so the app keeps uploads under 4 MB.
+      bodySizeLimit: "4.5mb",
     },
   },
   async headers() {

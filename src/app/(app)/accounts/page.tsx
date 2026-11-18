@@ -6,7 +6,7 @@ import { getAppData } from "@/server/context";
 import { txRows } from "@/server/view";
 import { AccountsClient } from "./accounts-client";
 
-export const metadata: Metadata = { title: "Contas & saldos" };
+export const metadata: Metadata = { title: "Accounts" };
 
 export default async function AccountsPage() {
   const data = await getAppData();
@@ -35,9 +35,9 @@ export default async function AccountsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Dinheiro"
-        title="Contas & saldos"
-        description="Onde está o seu dinheiro. O saldo real considera apenas movimentações pagas ou recebidas."
+        eyebrow="Your money"
+        title="Accounts"
+        description="Where your money is. Balances only include money that was actually paid or received."
       />
       <AccountsClient
         accounts={accounts}

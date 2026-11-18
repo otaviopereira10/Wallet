@@ -75,9 +75,9 @@ export default async function DebtPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <PageHeader
-        eyebrow="Planejamento"
-        title="University Debt Manager"
-        description="Saldo atualizado = saldo anterior + acréscimos semestrais + juros − pagamentos. Cada acréscimo é lançado na data certa."
+        eyebrow="Planning"
+        title="University Debt"
+        description="Your student loan: balance = starting balance + semester charges + interest − payments. Each semester charge is added on its real date."
       />
       <DebtClient data={data} debts={a.debts.map((x) => ({ id: x.debt.id, name: x.debt.name }))} />
     </>

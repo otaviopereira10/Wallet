@@ -17,13 +17,13 @@ async function receive(
     [v.incomeId],
   );
   const i = inc[0];
-  if (!i) throw new UserError("Receita não encontrada.");
+  if (!i) throw new UserError("Income not found.");
   const valid = occurrencesBetween(
     { start: i.start_date, frequency: i.frequency as never, interval: i.custom_interval, unit: i.custom_unit as never, end: i.end_date },
     v.occurrence,
     v.occurrence,
   );
-  if (!valid.length) throw new UserError("Esta data não corresponde a um recebimento previsto.");
+  if (!valid.length) throw new UserError("This date does not match an expected payment.");
   const acc = await getAccount(db, v.accountId);
   const { accountAmount, fxRate } = await amountInAccount(db, acc.currency, toCents(v.amount), i.currency, v.fxRate);
   await db.query(
@@ -38,7 +38,7 @@ export async function createIncome(raw: unknown) {
     incomeSchema,
     raw,
     async (v, { db }) => {
-      if (v.receivedNow && !v.accountId) throw new UserError("Escolha a conta de destino para registrar o recebimento.");
+      if (v.receivedNow && !v.accountId) throw new UserError("Choose the account the money went into.");
       const rows = await db.query<{ id: string }>(
         `insert into incomes (name, amount, currency, category, start_date, frequency, custom_interval, custom_unit, end_date, account_id, notes)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning id`,
@@ -50,7 +50,7 @@ export async function createIncome(raw: unknown) {
       }
       return rows[0].id;
     },
-    { message: "Receita cadastrada" },
+    { message: "Income added" },
   );
 }
 
@@ -65,9 +65,9 @@ export async function updateIncome(raw: unknown) {
         [v.id, v.name, v.amount, v.currency, v.category, v.startDate, v.frequency, v.frequency === "custom" ? v.customInterval : null,
           v.frequency === "custom" ? v.customUnit : null, v.endDate, v.accountId, v.notes],
       );
-      if (!r.length) throw new UserError("Receita não encontrada.");
+      if (!r.length) throw new UserError("Income not found.");
     },
-    { message: "Receita atualizada" },
+    { message: "Income updated" },
   );
 }
 
@@ -85,14 +85,14 @@ export async function deleteIncome(raw: unknown) {
     async (v, { db }) => {
       await db.query("update transactions set income_id = null, income_occurrence = null where income_id = $1", [v.id]);
       const r = await db.query("delete from incomes where id = $1 returning id", [v.id]);
-      if (!r.length) throw new UserError("Receita não encontrada.");
+      if (!r.length) throw new UserError("Income not found.");
     },
-    { message: "Fonte de renda excluída (recebimentos anteriores foram mantidos)" },
+    { message: "Income source deleted (past payments were kept)" },
   );
 }
 
 export async function receiveIncome(raw: unknown) {
-  return run(receiveIncomeSchema, raw, async (v, { db }) => receive(db, v), { message: "Recebimento confirmado" });
+  return run(receiveIncomeSchema, raw, async (v, { db }) => receive(db, v), { message: "Payment received" });
 }
 
 export async function skipIncomeOccurrence(raw: unknown) {
@@ -105,7 +105,7 @@ export async function skipIncomeOccurrence(raw: unknown) {
         [v.incomeId, v.occurrence],
       );
     },
-    { message: "Recebimento marcado como não recebido" },
+    { message: "Marked as not received" },
   );
 }
 

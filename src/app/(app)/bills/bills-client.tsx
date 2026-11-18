@@ -68,11 +68,11 @@ export interface PlannerData {
 
 const PRIORITY_TONE = { essential: "pink", important: "info", optional: "neutral" } as const;
 const STATUS = {
-  overdue: { label: "Atrasada", tone: "danger" },
-  pending: { label: "Pendente", tone: "warning" },
-  partial: { label: "Parcial", tone: "info" },
-  paid: { label: "Paga", tone: "success" },
-  waived: { label: "Dispensada", tone: "neutral" },
+  overdue: { label: "Overdue", tone: "danger" },
+  pending: { label: "Not paid", tone: "warning" },
+  partial: { label: "Partly paid", tone: "info" },
+  paid: { label: "Paid", tone: "success" },
+  waived: { label: "Skipped", tone: "neutral" },
 } as const;
 
 export function BillsClient({
@@ -99,11 +99,11 @@ export function BillsClient({
 
   const open = occurrences.filter((o) => o.status === "pending" || o.status === "partial" || o.status === "overdue");
   const groups = [
-    { key: "overdue", title: "Atrasadas", items: open.filter((o) => o.status === "overdue") },
-    { key: "today", title: "Vencem hoje", items: open.filter((o) => o.daysUntilDue === 0 && o.status !== "overdue") },
-    { key: "7", title: "Próximos 7 dias", items: open.filter((o) => o.daysUntilDue >= 1 && o.daysUntilDue <= 7) },
-    { key: "30", title: "Próximos 30 dias", items: open.filter((o) => o.daysUntilDue > 7 && o.daysUntilDue <= 30) },
-    { key: "later", title: "Mais adiante", items: open.filter((o) => o.daysUntilDue > 30) },
+    { key: "overdue", title: "Overdue", items: open.filter((o) => o.status === "overdue") },
+    { key: "today", title: "Due today", items: open.filter((o) => o.daysUntilDue === 0 && o.status !== "overdue") },
+    { key: "7", title: "Next 7 days", items: open.filter((o) => o.daysUntilDue >= 1 && o.daysUntilDue <= 7) },
+    { key: "30", title: "Next 30 days", items: open.filter((o) => o.daysUntilDue > 7 && o.daysUntilDue <= 30) },
+    { key: "later", title: "Later", items: open.filter((o) => o.daysUntilDue > 30) },
   ];
   const history = occurrences.filter((o) => o.payments.length || o.status === "waived").reverse();
 
@@ -113,23 +113,23 @@ export function BillsClient({
         <p className="font-semibold text-ink">{o.name}</p>
         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
           <span>
-            {f.date(o.dueDate)} · {o.status === "overdue" ? `venceu ${relativeDays(o.daysUntilDue)}` : `vence ${relativeDays(o.daysUntilDue)}`}
+            {f.date(o.dueDate)} · {o.status === "overdue" ? `was due ${relativeDays(o.daysUntilDue)}` : `due ${relativeDays(o.daysUntilDue)}`}
           </span>
           <Badge tone={PRIORITY_TONE[o.priority]}>{PRIORITY_LABELS[o.priority]}</Badge>
           <Badge tone={STATUS[o.status].tone}>{STATUS[o.status].label}</Badge>
-          {o.paid > 0 && <span>· pago {f.money(o.paid, o.currency)}</span>}
-          {o.estLateCost > 0 && <span className="text-danger">· custo estimado do atraso {f.money(o.estLateCost, o.currency)}</span>}
+          {o.paid > 0 && <span>· paid {f.money(o.paid, o.currency)}</span>}
+          {o.estLateCost > 0 && <span className="text-danger">· estimated late cost {f.money(o.estLateCost, o.currency)}</span>}
         </p>
       </div>
       <div className="text-right">
         <p className="tabular font-semibold">{f.money(o.remaining, o.currency)}</p>
-        {o.minimumRemaining > 0 && o.minimumRemaining < o.remaining && <p className="text-[11px] text-muted">mínimo {f.money(o.minimumRemaining, o.currency)}</p>}
+        {o.minimumRemaining > 0 && o.minimumRemaining < o.remaining && <p className="text-[11px] text-muted">minimum {f.money(o.minimumRemaining, o.currency)}</p>}
       </div>
       <div className="flex items-center gap-1">
         <Button size="sm" onClick={() => setPaying(o)}>
-          Pagar
+          Pay
         </Button>
-        <ActionMenu items={[{ label: "Editar este vencimento", icon: <Pencil />, onSelect: () => setEditingOcc(o) }]} />
+        <ActionMenu items={[{ label: "Edit this due date", icon: <Pencil />, onSelect: () => setEditingOcc(o) }]} />
       </div>
     </li>
   );
@@ -137,12 +137,12 @@ export function BillsClient({
   return (
     <>
       <div className="mb-6 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Para quitar as contas do mês" value={f.money(totals.month)} icon={<CalendarClock />} tone="pink" sub="Inclui as atrasadas" />
-        <StatCard label="Atrasadas" value={f.money(totals.overdue)} icon={<AlertTriangle />} tone={totals.counts.overdue ? "danger" : "neutral"} sub={`${totals.counts.overdue} conta(s)`} />
-        <StatCard label="Já pago neste mês" value={f.money(totals.paidThisMonth)} icon={<CheckCircle2 />} tone="success" />
+        <StatCard label="Left to pay this month" value={f.money(totals.month)} icon={<CalendarClock />} tone="pink" sub="Includes overdue bills" />
+        <StatCard label="Overdue" value={f.money(totals.overdue)} icon={<AlertTriangle />} tone={totals.counts.overdue ? "danger" : "neutral"} sub={`${totals.counts.overdue} bill(s)`} />
+        <StatCard label="Paid this month" value={f.money(totals.paidThisMonth)} icon={<CheckCircle2 />} tone="success" />
         <div className="flex items-center justify-center rounded-2xl border border-dashed border-border-strong p-4">
           <Button onClick={() => setCreating(true)}>
-            <Plus /> Nova conta a pagar
+            <Plus /> New bill
           </Button>
         </div>
       </div>
@@ -150,22 +150,22 @@ export function BillsClient({
       <Tabs
         defaultValue={initialTab}
         tabs={[
-          { value: "overview", label: "Vencimentos", count: open.length },
-          { value: "planner", label: "Smart Payment Planner" },
-          { value: "bills", label: "Contas cadastradas", count: bills.length },
-          { value: "history", label: "Histórico" },
+          { value: "overview", label: "To pay", count: open.length },
+          { value: "planner", label: "Payment Planner" },
+          { value: "bills", label: "All bills", count: bills.length },
+          { value: "history", label: "History" },
         ]}
       >
         <TabPanel value="overview">
           {!open.length ? (
             <EmptyState
               icon={<CalendarClock />}
-              title={bills.length ? "Nenhuma conta em aberto" : "Nenhuma conta cadastrada"}
-              description={bills.length ? "Tudo pago por enquanto." : "Cadastre aluguel, telefone, internet e outras obrigações com o vencimento."}
+              title={bills.length ? "Nothing to pay right now" : "No bills yet"}
+              description={bills.length ? "Everything is paid for now." : "Add rent, phone, internet and other bills with their due dates."}
               action={
                 !bills.length && (
                   <Button onClick={() => setCreating(true)}>
-                    <Plus /> Cadastrar conta
+                    <Plus /> Add bill
                   </Button>
                 )
               }
@@ -206,29 +206,29 @@ export function BillsClient({
                         <Badge tone={PRIORITY_TONE[b.priority]}>{PRIORITY_LABELS[b.priority]}</Badge>
                         <Badge>{FREQUENCY_LABELS[b.recurrence]}</Badge>
                         <Badge>{b.categoryLabel}</Badge>
-                        {b.allowsPartial && <Badge tone="info">aceita parcial</Badge>}
-                        {!b.active && <Badge tone="warning">Pausada</Badge>}
+                        {b.allowsPartial && <Badge tone="info">partial OK</Badge>}
+                        {!b.active && <Badge tone="warning">Paused</Badge>}
                       </p>
                     </div>
                     <ActionMenu
                       items={[
-                        { label: "Editar", icon: <Pencil />, onSelect: () => setEditingBill(b.initial) },
-                        { label: b.active ? "Pausar" : "Reativar", icon: b.active ? <Pause /> : <Play />, onSelect: () => run(() => setBillActive({ id: b.id, active: !b.active })) },
-                        { label: "Excluir", icon: <Trash2 />, danger: true, onSelect: () => setDeletingBill(b) },
+                        { label: "Edit", icon: <Pencil />, onSelect: () => setEditingBill(b.initial) },
+                        { label: b.active ? "Pause" : "Resume", icon: b.active ? <Pause /> : <Play />, onSelect: () => run(() => setBillActive({ id: b.id, active: !b.active })) },
+                        { label: "Delete", icon: <Trash2 />, danger: true, onSelect: () => setDeletingBill(b) },
                       ]}
                     />
                   </div>
                   <p className="tabular mt-3 text-xl font-semibold">{f.money(b.amount, b.currency)}</p>
                   <p className="mt-1 text-xs text-muted">
-                    {b.nextDue ? `Próximo vencimento em aberto: ${f.date(b.nextDue)}` : "Sem vencimentos em aberto"}
+                    {b.nextDue ? `Next unpaid due date: ${f.date(b.nextDue)}` : "Nothing due right now"}
                     {(b.lateFee > 0 || Number(b.interestRate) > 0) &&
-                      ` · atraso: ${b.lateFee ? f.money(b.lateFee, b.currency) : ""}${b.lateFee && Number(b.interestRate) ? " + " : ""}${Number(b.interestRate) ? `${b.interestRate}% a.a.` : ""}`}
+                      ` · if late: ${b.lateFee ? f.money(b.lateFee, b.currency) : ""}${b.lateFee && Number(b.interestRate) ? " + " : ""}${Number(b.interestRate) ? `${b.interestRate}%/yr` : ""}`}
                   </p>
                 </Card>
               ))}
             </div>
           ) : (
-            <EmptyState icon={<CalendarClock />} title="Nenhuma conta cadastrada" action={<Button onClick={() => setCreating(true)}><Plus /> Cadastrar conta</Button>} />
+            <EmptyState icon={<CalendarClock />} title="No bills yet" action={<Button onClick={() => setCreating(true)}><Plus /> Add bill</Button>} />
           )}
         </TabPanel>
 
@@ -241,7 +241,7 @@ export function BillsClient({
                     <li key={o.occurrenceId} className="py-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="font-semibold">
-                          {o.name} <span className="font-normal text-muted">· vencimento {f.date(o.dueDate)}</span>
+                          {o.name} <span className="font-normal text-muted">· due {f.date(o.dueDate)}</span>
                         </p>
                         <Badge tone={STATUS[o.status].tone}>{STATUS[o.status].label}</Badge>
                       </div>
@@ -249,11 +249,11 @@ export function BillsClient({
                         {o.payments.map((p) => (
                           <li key={p.id} className="flex items-center justify-between gap-2 text-sm text-muted">
                             <span>
-                              Pago em {f.date(p.date)} {p.transactionId ? "" : "(sem saída registrada)"}
+                              Paid on {f.date(p.date)} {p.transactionId ? "" : "(not taken from an account)"}
                             </span>
                             <span className="flex items-center gap-2">
                               <span className="tabular font-medium text-ink">{f.money(p.amount, o.currency)}</span>
-                              <Button variant="ghost" size="icon-sm" aria-label="Desfazer pagamento" onClick={() => setDeletingPay(p)}>
+                              <Button variant="ghost" size="icon-sm" aria-label="Undo payment" onClick={() => setDeletingPay(p)}>
                                 <RotateCcw />
                               </Button>
                             </span>
@@ -266,18 +266,18 @@ export function BillsClient({
               </CardContent>
             </Card>
           ) : (
-            <p className="text-sm text-muted">Os pagamentos registrados aparecem aqui.</p>
+            <p className="text-sm text-muted">Payments you record will show up here.</p>
           )}
         </TabPanel>
       </Tabs>
 
-      <Modal open={creating} onOpenChange={setCreating} title="Nova conta a pagar" size="lg">
+      <Modal open={creating} onOpenChange={setCreating} title="New bill" size="lg">
         <BillForm onDone={() => setCreating(false)} />
       </Modal>
-      <Modal open={!!editingBill} onOpenChange={(o) => !o && setEditingBill(null)} title="Editar conta" size="lg">
+      <Modal open={!!editingBill} onOpenChange={(o) => !o && setEditingBill(null)} title="Edit bill" size="lg">
         {editingBill && <BillForm initial={editingBill} onDone={() => setEditingBill(null)} />}
       </Modal>
-      <Modal open={!!paying} onOpenChange={(o) => !o && setPaying(null)} title={`Pagar ${paying?.name ?? ""}`} description={paying ? `Vencimento ${f.date(paying.dueDate)} · falta ${f.money(paying.remaining, paying.currency)}` : undefined}>
+      <Modal open={!!paying} onOpenChange={(o) => !o && setPaying(null)} title={`Pay ${paying?.name ?? ""}`} description={paying ? `Due ${f.date(paying.dueDate)} · ${f.money(paying.remaining, paying.currency)} left` : undefined}>
         {paying && (
           <BillPaymentForm
             occurrenceId={paying.occurrenceId}
@@ -289,7 +289,7 @@ export function BillsClient({
           />
         )}
       </Modal>
-      <Modal open={!!editingOcc} onOpenChange={(o) => !o && setEditingOcc(null)} title={`Vencimento de ${f.date(editingOcc?.dueDate)}`} description={editingOcc?.name}>
+      <Modal open={!!editingOcc} onOpenChange={(o) => !o && setEditingOcc(null)} title={`Due date: ${f.date(editingOcc?.dueDate)}`} description={editingOcc?.name}>
         {editingOcc && (
           <OccurrenceEditForm
             occurrenceId={editingOcc.occurrenceId}
@@ -305,16 +305,16 @@ export function BillsClient({
       <ConfirmDialog
         open={!!deletingBill}
         onOpenChange={(o) => !o && setDeletingBill(null)}
-        title={`Excluir “${deletingBill?.name}”?`}
-        description="Os vencimentos futuros serão removidos. Pagamentos já registrados continuam no histórico de despesas e no saldo."
+        title={`Delete “${deletingBill?.name}”?`}
+        description="Upcoming due dates will be removed. Payments you already recorded stay in your expenses and balance."
         onConfirm={() => (deletingBill ? run(() => deleteBill({ id: deletingBill.id })) : undefined)}
       />
       <ConfirmDialog
         open={!!deletingPay}
         onOpenChange={(o) => !o && setDeletingPay(null)}
-        title="Desfazer este pagamento?"
-        description="O vencimento volta a ficar em aberto e a saída de dinheiro correspondente é removida."
-        confirmLabel="Desfazer"
+        title="Undo this payment?"
+        description="The bill will show as unpaid again and the money will go back to the account."
+        confirmLabel="Undo"
         onConfirm={() => (deletingPay ? run(() => deleteBillPayment({ id: deletingPay.id, transactionId: deletingPay.transactionId })) : undefined)}
       />
     </>
@@ -342,8 +342,8 @@ function Planner({ data }: { data: PlannerData }) {
     return (
       <EmptyState
         icon={<ListOrdered />}
-        title="Nada para planejar nos próximos 30 dias"
-        description="O planner analisa contas e despesas pendentes que vencem em até 30 dias (e as atrasadas)."
+        title="Nothing to plan in the next 30 days"
+        description="The planner looks at bills and pending expenses due in the next 30 days (plus anything overdue)."
       />
     );
 
@@ -360,17 +360,17 @@ function Planner({ data }: { data: PlannerData }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Disponível agora" value={f.money(data.cash)} icon={<Wallet />} tone="pink" sub="Saldo real das contas do dia a dia" />
-        <StatCard label="Obrigações (30 dias)" value={f.money(plan.totalRequired)} sub={`Mínimos: ${f.money(plan.totalMinimum)}`} />
+        <StatCard label="Available now" value={f.money(data.cash)} icon={<Wallet />} tone="pink" sub="Real money in your everyday accounts" />
+        <StatCard label="Due in 30 days" value={f.money(plan.totalRequired)} sub={`Minimum payments: ${f.money(plan.totalMinimum)}`} />
         <StatCard
-          label="Livre após o plano"
+          label="Free after paying"
           value={f.money(evaluation.safeToSpend)}
           tone={evaluation.safeToSpend > 0 ? "success" : "warning"}
           icon={<ShieldCheck />}
-          sub={`Mantendo ${f.money(data.buffer)} de reserva mínima`}
-          info={<InfoTip>Quanto você pode gastar sem comprometer os pagamentos listados, depois de separar o valor de cada um e a reserva mínima.</InfoTip>}
+          sub={`Keeping ${f.money(data.buffer)} as a safety cushion`}
+          info={<InfoTip>How much you can spend without risking the payments below, after setting aside money for each one and your safety cushion.</InfoTip>}
         />
-        <StatCard label="Falta para cobrir tudo" value={f.money(plan.shortfall)} tone={plan.shortfall ? "danger" : "success"} icon={plan.shortfall ? <ShieldAlert /> : <CheckCircle2 />} />
+        <StatCard label="Short by" value={f.money(plan.shortfall)} tone={plan.shortfall ? "danger" : "success"} icon={plan.shortfall ? <ShieldAlert /> : <CheckCircle2 />} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -378,17 +378,17 @@ function Planner({ data }: { data: PlannerData }) {
           <Card className={plan.highestRisk.risk === "high" ? "border-danger/40" : undefined}>
             <CardHeader>
               <div>
-                <CardTitle>Maior risco de atraso</CardTitle>
-                <CardDescription>Combina prioridade, proximidade do vencimento, valor descoberto e custo do atraso.</CardDescription>
+                <CardTitle>Most at risk of being late</CardTitle>
+                <CardDescription>Based on priority, how soon it is due, how much is not covered and the cost of paying late.</CardDescription>
               </div>
               <Badge tone={plan.highestRisk.risk === "high" ? "danger" : plan.highestRisk.risk === "medium" ? "warning" : "success"}>
-                risco {plan.highestRisk.risk === "high" ? "alto" : plan.highestRisk.risk === "medium" ? "médio" : "baixo (coberta)"}
+                {plan.highestRisk.risk === "high" ? "high risk" : plan.highestRisk.risk === "medium" ? "medium risk" : "low risk (covered)"}
               </Badge>
             </CardHeader>
             <CardContent>
               <p className="font-semibold">{plan.highestRisk.item.name}</p>
               <p className="text-sm text-muted">
-                {f.money(plan.highestRisk.item.amount)} · vence {relativeDays(plan.highestRisk.daysUntilDue)} · custo de 30 dias de atraso: {f.money(plan.highestRisk.costOfDelay30)}
+                {f.money(plan.highestRisk.item.amount)} · due {relativeDays(plan.highestRisk.daysUntilDue)} · cost of paying 30 days late: {f.money(plan.highestRisk.costOfDelay30)}
               </p>
             </CardContent>
           </Card>
@@ -396,8 +396,8 @@ function Planner({ data }: { data: PlannerData }) {
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Reserva para emergências</CardTitle>
-              <CardDescription>Quanto manter disponível para imprevistos.</CardDescription>
+              <CardTitle>Money to keep for emergencies</CardTitle>
+              <CardDescription>How much to keep available for surprises.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -406,12 +406,12 @@ function Planner({ data }: { data: PlannerData }) {
                 <p className="tabular text-xl font-semibold">{f.money(emergency)}</p>
                 <p className="text-sm text-muted">
                   {data.buffer > 0
-                    ? "Sua reserva mínima configurada. O plano não usa esse valor para contas importantes ou opcionais."
-                    : "Sugestão: 1 mês das suas despesas essenciais registradas. Configure sua reserva mínima em Configurações."}
+                    ? "Your safety cushion. The plan never uses it for important or optional bills."
+                    : "Suggestion: one month of your essential expenses. Set your safety cushion in Settings."}
                 </p>
               </>
             ) : (
-              <p className="text-sm text-muted">Defina sua reserva mínima em Configurações para que o plano a proteja.</p>
+              <p className="text-sm text-muted">Set a safety cushion in Settings so the plan protects it.</p>
             )}
           </CardContent>
         </Card>
@@ -430,10 +430,10 @@ function Planner({ data }: { data: PlannerData }) {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>{simulating ? "Sua simulação" : "Ordem recomendada de pagamento"}</CardTitle>
+            <CardTitle>{simulating ? "Your what-if plan" : "Recommended order"}</CardTitle>
             <CardDescription>
-              Critérios: prioridade (essencial → importante → opcional), atraso, vencimento, custo do atraso e valor. Uma conta opcional nunca passa à frente de uma
-              essencial.
+              Order: priority (essential → important → optional), overdue first, due date, cost of paying late, then amount. An optional bill never
+              goes before an essential one.
             </CardDescription>
           </div>
           <div className="flex shrink-0 gap-2">
@@ -442,11 +442,11 @@ function Planner({ data }: { data: PlannerData }) {
                 setSimulating(false);
                 setManual(Object.fromEntries(plan.order.map((o) => [o.item.id, centsToInput(o.allocated)])));
               }}>
-                Voltar à recomendação
+                Back to recommendation
               </Button>
             ) : (
               <Button variant="secondary" size="sm" onClick={() => setSimulating(true)}>
-                Simular outra distribuição
+                Try a different split
               </Button>
             )}
           </div>
@@ -461,16 +461,16 @@ function Planner({ data }: { data: PlannerData }) {
                     <p className="font-semibold">{o.item.name}</p>
                     <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                       <Badge tone={PRIORITY_TONE[o.item.priority]}>{PRIORITY_LABELS[o.item.priority]}</Badge>
-                      <span>{o.overdue ? `atrasada ${relativeDays(o.daysUntilDue)}` : `vence ${relativeDays(o.daysUntilDue)} (${f.date(o.item.dueDate, "short")})`}</span>
+                      <span>{o.overdue ? `overdue · was due ${relativeDays(o.daysUntilDue)}` : `due ${relativeDays(o.daysUntilDue)} (${f.date(o.item.dueDate, "short")})`}</span>
                       <span>· total {f.money(o.item.amount)}</span>
-                      {o.item.allowsPartial && o.item.minimum < o.item.amount && <span>· mínimo {f.money(o.item.minimum)}</span>}
+                      {o.item.allowsPartial && o.item.minimum < o.item.amount && <span>· minimum {f.money(o.item.minimum)}</span>}
                     </p>
                     {!simulating && <p className="mt-1.5 text-[13px] text-muted">{o.reason}</p>}
                   </div>
                   <div className="text-right">
                     {simulating ? (
                       <Input
-                        aria-label={`Valor para ${o.item.name}`}
+                        aria-label={`Amount for ${o.item.name}`}
                         inputMode="decimal"
                         className="tabular h-9 w-32 text-right"
                         value={manual[o.item.id] ?? ""}
@@ -478,10 +478,10 @@ function Planner({ data }: { data: PlannerData }) {
                       />
                     ) : (
                       <>
-                        <p className="text-[11px] uppercase tracking-wide text-muted">reservar</p>
+                        <p className="text-[11px] uppercase tracking-wide text-muted">set aside</p>
                         <p className="tabular font-semibold">{f.money(o.allocated)}</p>
                         <Badge tone={o.payWhen === "now" ? "pink" : o.payWhen === "by_due" ? "success" : "danger"}>
-                          {o.payWhen === "now" ? "Pagar primeiro" : o.payWhen === "by_due" ? "Pode pagar até o vencimento" : "Precisa de mais dinheiro"}
+                          {o.payWhen === "now" ? "Pay first" : o.payWhen === "by_due" ? "Pay by the due date" : "Needs more money"}
                         </Badge>
                       </>
                     )}
@@ -492,7 +492,7 @@ function Planner({ data }: { data: PlannerData }) {
           </ol>
           {plan.tieExplanations.length > 0 && !simulating && (
             <details className="mt-4 rounded-xl bg-surface-2/60 p-3 text-sm">
-              <summary className="cursor-pointer font-medium">Como os empates foram decididos</summary>
+              <summary className="cursor-pointer font-medium">How ties were decided</summary>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
                 {plan.tieExplanations.map((t) => (
                   <li key={t}>{t}</li>
@@ -502,17 +502,17 @@ function Planner({ data }: { data: PlannerData }) {
           )}
           <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted">
-              Distribuído: <strong className="tabular text-ink">{f.money(evaluation.allocated)}</strong> · sobra{" "}
+              Set aside: <strong className="tabular text-ink">{f.money(evaluation.allocated)}</strong> · left over{" "}
               <strong className={cn("tabular", evaluation.leftover < 0 ? "text-danger" : "text-ink")}>{f.money(evaluation.leftover)}</strong>
             </p>
             <Button onClick={() => setRecording(true)} disabled={!toRecord.length}>
-              Registrar estes pagamentos
+              Record these payments
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Modal open={recording} onOpenChange={setRecording} title="Registrar pagamentos do plano" description="Confirme somente os pagamentos que você já fez de verdade.">
+      <Modal open={recording} onOpenChange={setRecording} title="Record planned payments" description="Only confirm payments you have actually made.">
         <div className="space-y-4">
           <ul className="divide-y divide-border rounded-xl border border-border px-3">
             {toRecord.map(([id, v]) => {
@@ -525,13 +525,13 @@ function Planner({ data }: { data: PlannerData }) {
               );
             })}
           </ul>
-          <Field label="Conta usada" htmlFor="plan-acc">
+          <Field label="Paid from" htmlFor="plan-acc">
             <AccountSelect id="plan-acc" value={account} onChange={(e) => setAccount(e.target.value)} />
           </Field>
-          <Field label="Data dos pagamentos" htmlFor="plan-date">
+          <Field label="Payment date" htmlFor="plan-date">
             <Input id="plan-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-          <p className="text-xs text-muted">A Isabelle Wallet não realiza pagamentos reais: isto apenas registra o que você pagou.</p>
+          <p className="text-xs text-muted">Isabelle Wallet never makes real payments: this only records what you paid.</p>
           <div className="flex justify-end">
             <Button
               loading={pending}
@@ -547,7 +547,7 @@ function Planner({ data }: { data: PlannerData }) {
                 )
               }
             >
-              Confirmar registro
+              Confirm
             </Button>
           </div>
         </div>

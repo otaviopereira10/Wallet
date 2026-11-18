@@ -35,7 +35,7 @@ export async function run<S extends z.ZodType, T>(
         const key = issue.path.join(".") || "_";
         (fieldErrors[key] ??= []).push(issue.message);
       }
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos", fieldErrors };
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data", fieldErrors };
     }
     const data = await withUser(user.id, (db) => handler(parsed.data, { user, db }));
     if (!opts.skipRefresh) refresh();
@@ -49,17 +49,17 @@ export function toActionError(err: unknown): { ok: false; error: string } {
   if (err instanceof UserError || err instanceof UnauthorizedError) return { ok: false, error: err.message };
   const code = (err as { code?: string })?.code;
   const map: Record<string, string> = {
-    "23505": "Este registro já existe (possível duplicação).",
-    "23503": "Este registro está ligado a outro item. Ajuste ou arquive em vez de excluir.",
-    "23514": "Algum valor está fora do permitido.",
-    "23502": "Preencha todos os campos obrigatórios.",
-    "42501": "Acesso negado.",
-    "22P02": "Formato de dado inválido.",
+    "23505": "This already exists (possible duplicate).",
+    "23503": "This is linked to something else. Edit or archive it instead of deleting.",
+    "23514": "One of the values is not allowed.",
+    "23502": "Please fill in all required fields.",
+    "42501": "Access denied.",
+    "22P02": "Invalid data format.",
   };
   if (code && map[code]) return { ok: false, error: map[code] };
   // Log only the error type — never the payload with financial data.
   console.error("[action] unexpected error:", code ?? (err instanceof Error ? err.name : typeof err));
-  return { ok: false, error: "Não foi possível concluir a operação. Tente novamente." };
+  return { ok: false, error: "Something went wrong. Please try again." };
 }
 
 export const dec = centsToDecimalString;
@@ -70,7 +70,7 @@ export async function getAccount(db: Db, id: string): Promise<{ id: string; curr
     "select id, currency, archived from accounts where id = $1 and user_id = auth.uid()",
     [id],
   );
-  if (!rows[0]) throw new UserError("Conta não encontrada.");
+  if (!rows[0]) throw new UserError("Account not found.");
   return rows[0];
 }
 
@@ -92,13 +92,13 @@ export async function amountInAccount(
     const rows = (await db.query("select * from fx_rates order by fetched_at desc limit 200")).map(mapFxRate);
     rate = new FxConverter(rows).latest(currency, accountCurrency)?.rate ?? null;
   }
-  if (!rate) throw new UserError(`Sem cotação ${currency}→${accountCurrency}. Informe a taxa de câmbio ou atualize a cotação em Configurações.`);
+  if (!rate) throw new UserError(`No ${currency}→${accountCurrency} exchange rate. Type the rate or refresh it in Settings.`);
   const accountAmount = mulCents(amount, rate);
-  if (accountAmount <= 0) throw new UserError("Valor convertido inválido.");
+  if (accountAmount <= 0) throw new UserError("Invalid converted amount.");
   return { accountAmount, fxRate: rate };
 }
 
-export const idSchema = z.object({ id: z.string().uuid("Identificador inválido") });
+export const idSchema = z.object({ id: z.string().uuid("Invalid identifier") });
 
 /** Today's date in the user's configured time zone. */
 export async function userToday(db: Db): Promise<string> {

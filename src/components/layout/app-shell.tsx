@@ -65,16 +65,16 @@ export function AppShell({ children, notifications, openBills, debts }: ShellPro
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-surface/70 backdrop-blur lg:flex">
         <div className="px-6 pb-4 pt-6">
-          <Link href="/dashboard" aria-label="Isabelle Wallet — início">
+          <Link href="/dashboard" aria-label="Isabelle Wallet — home">
             <Wordmark />
           </Link>
         </div>
         <div className="px-4">
           <Button className="w-full" onClick={() => setQuickOpen(true)}>
-            <Plus /> Nova movimentação
+            <Plus /> Add money in or out
           </Button>
         </div>
-        <nav className="scrollbar-thin mt-4 flex-1 overflow-y-auto px-3 pb-6" aria-label="Navegação principal">
+        <nav className="scrollbar-thin mt-4 flex-1 overflow-y-auto px-3 pb-6" aria-label="Main navigation">
           {groups.map((g) => (
             <div key={g} className="mt-4 first:mt-1">
               <p className="px-3 pb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted/80">{g}</p>
@@ -87,6 +87,7 @@ export function AppShell({ children, notifications, openBills, debts }: ShellPro
                     isActive(n.href) ? "bg-pink-50 text-pink-600" : "text-ink/75 hover:bg-surface-2 hover:text-ink",
                   )}
                   aria-current={isActive(n.href) ? "page" : undefined}
+                  title={n.hint}
                 >
                   <n.icon className={cn("size-[18px] transition", isActive(n.href) ? "text-pink-500" : "text-muted group-hover:text-ink")} />
                   {n.label}
@@ -105,7 +106,7 @@ export function AppShell({ children, notifications, openBills, debts }: ShellPro
       {/* Mobile bottom navigation */}
       <nav
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
-        aria-label="Navegação móvel"
+        aria-label="Mobile navigation"
       >
         <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2">
           {MOBILE_PRIMARY.slice(0, 2).map((href) => (
@@ -115,7 +116,7 @@ export function AppShell({ children, notifications, openBills, debts }: ShellPro
             <button
               type="button"
               onClick={() => setQuickOpen(true)}
-              aria-label="Nova movimentação"
+              aria-label="Add money in or out"
               className="-mt-5 grid size-14 place-items-center rounded-full bg-pink-500 text-on-primary shadow-[0_10px_24px_-8px_var(--c-pink-500)] transition active:scale-95"
             >
               <Plus className="size-6" />
@@ -128,7 +129,7 @@ export function AppShell({ children, notifications, openBills, debts }: ShellPro
             className="flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted"
           >
             <Menu className="size-5" />
-            Mais
+            More
           </button>
         </div>
       </nav>
@@ -142,7 +143,7 @@ export function AppShell({ children, notifications, openBills, debts }: ShellPro
 
 function MobileLink({ href, active }: { href: string; active: boolean }) {
   const item = NAV.find((n) => n.href === href)!;
-  const short: Record<string, string> = { "/dashboard": "Início", "/expenses": "Despesas", "/bills": "Contas" };
+  const short: Record<string, string> = { "/dashboard": "Home", "/expenses": "Expenses", "/bills": "Bills" };
   return (
     <Link href={href} className={cn("flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium", active ? "text-pink-600" : "text-muted")}>
       <item.icon className="size-5" />
@@ -159,9 +160,9 @@ function MoreSheet({ open, onOpenChange, isActive }: { open: boolean; onOpenChan
         <Dialog.Content className="dialog-content fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-3xl border border-border bg-surface p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
           <div className="mb-4 flex items-center justify-between">
             <Dialog.Title className="font-display text-xl">Menu</Dialog.Title>
-            <Dialog.Description className="sr-only">Todas as seções da Isabelle Wallet</Dialog.Description>
+            <Dialog.Description className="sr-only">All Isabelle Wallet pages</Dialog.Description>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="Fechar">
+              <Button variant="ghost" size="icon-sm" aria-label="Close">
                 <X />
               </Button>
             </Dialog.Close>
@@ -193,22 +194,22 @@ function Topbar({ onSearch, onQuickAdd, notifications }: { onSearch: () => void;
   return (
     <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-2 px-4 sm:px-6 lg:px-10">
-        <Link href="/dashboard" className="lg:hidden" aria-label="Início">
+        <Link href="/dashboard" className="lg:hidden" aria-label="Home">
           <Wordmark className="[&_svg]:size-8" />
         </Link>
         <button
           type="button"
           onClick={onSearch}
           className="ml-auto flex h-10 items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm text-muted transition hover:border-border-strong sm:w-72 lg:ml-0"
-          aria-label="Pesquisar"
+          aria-label="Search"
         >
           <Search className="size-4" />
-          <span className="hidden sm:inline">Pesquisar…</span>
+          <span className="hidden sm:inline">Search…</span>
           <kbd className="ml-auto hidden rounded-md border border-border px-1.5 text-[10px] font-semibold sm:inline">Ctrl K</kbd>
         </button>
         <div className="flex items-center gap-1 lg:ml-auto">
           <Button size="sm" className="hidden sm:inline-flex lg:hidden" onClick={onQuickAdd}>
-            <Plus /> Nova
+            <Plus /> Add
           </Button>
           <ThemeToggle />
           <Notifications items={notifications} />
@@ -217,7 +218,7 @@ function Topbar({ onSearch, onQuickAdd, notifications }: { onSearch: () => void;
               <button
                 type="button"
                 className="ml-1 grid size-9 place-items-center rounded-full bg-gradient-to-br from-pink-300 to-pink-500 text-sm font-semibold text-white"
-                aria-label="Menu da conta"
+                aria-label="Account menu"
               >
                 {(app.displayName ?? app.email ?? "I").slice(0, 1).toUpperCase()}
               </button>
@@ -225,20 +226,20 @@ function Topbar({ onSearch, onQuickAdd, notifications }: { onSearch: () => void;
             <DropdownMenu.Portal>
               <DropdownMenu.Content align="end" sideOffset={8} className="fade-in z-50 w-60 rounded-2xl border border-border bg-surface p-1.5 shadow-pop">
                 <div className="px-3 py-2">
-                  <p className="truncate text-sm font-semibold text-ink">{app.displayName ?? "Minha conta"}</p>
+                  <p className="truncate text-sm font-semibold text-ink">{app.displayName ?? "My account"}</p>
                   <p className="truncate text-xs text-muted">{app.email}</p>
                 </div>
                 <DropdownMenu.Separator className="my-1 h-px bg-border" />
                 <DropdownMenu.Item asChild>
                   <Link href="/settings" className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm outline-none data-[highlighted]:bg-surface-2">
-                    <Settings className="size-4" /> Configurações
+                    <Settings className="size-4" /> Settings
                   </Link>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   onSelect={() => void signOutAction()}
                   className="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-danger outline-none data-[highlighted]:bg-danger-bg"
                 >
-                  <LogOut className="size-4" /> Sair
+                  <LogOut className="size-4" /> Sign out
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -259,12 +260,12 @@ function ThemeToggle() {
     document.cookie = `iw_theme=${t}; path=/; max-age=31536000; samesite=lax`;
   };
   const Icon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
-  const label = { light: "Tema claro", dark: "Tema escuro", system: "Tema do sistema" }[theme];
+  const label = { light: "Light theme", dark: "Dark theme", system: "Device theme" }[theme];
   return (
     <Button
       variant="ghost"
       size="icon"
-      aria-label={`${label} — alternar`}
+      aria-label={`${label} — switch`}
       title={label}
       onClick={() => {
         setLocal(next);
@@ -296,7 +297,7 @@ function Notifications({ items }: { items: AppNotification[] }) {
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
-        <Button variant="ghost" size="icon" aria-label={`Notificações (${visible.length})`} className="relative">
+        <Button variant="ghost" size="icon" aria-label={`Notifications (${visible.length})`} className="relative">
           <Bell />
           {visible.length > 0 && (
             <span className="absolute right-1.5 top-1.5 grid min-w-4 place-items-center rounded-full bg-pink-500 px-1 text-[10px] font-bold leading-4 text-white">
@@ -308,16 +309,16 @@ function Notifications({ items }: { items: AppNotification[] }) {
       <Popover.Portal>
         <Popover.Content align="end" sideOffset={8} className="fade-in z-50 w-[min(92vw,380px)] rounded-2xl border border-border bg-surface shadow-pop">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <p className="text-sm font-semibold">Notificações</p>
+            <p className="text-sm font-semibold">Notifications</p>
             {visible.length > 0 && (
               <button type="button" className="flex items-center gap-1 text-xs font-medium text-pink-600" onClick={() => dismiss(visible.map((v) => v.id))}>
-                <CheckCheck className="size-3.5" /> Marcar todas como lidas
+                <CheckCheck className="size-3.5" /> Mark all as read
               </button>
             )}
           </div>
           <div className="scrollbar-thin max-h-96 overflow-y-auto p-2">
             {visible.length === 0 ? (
-              <p className="px-3 py-8 text-center text-sm text-muted">Tudo em dia por aqui ✨</p>
+              <p className="px-3 py-8 text-center text-sm text-muted">All caught up ✨</p>
             ) : (
               visible.map((n) => (
                 <div key={n.id} className="group flex items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-surface-2">
@@ -326,7 +327,7 @@ function Notifications({ items }: { items: AppNotification[] }) {
                     <p className="text-sm font-medium text-ink">{n.title}</p>
                     <p className="text-xs text-muted">{n.detail}</p>
                   </Link>
-                  <button type="button" aria-label="Dispensar" className="text-muted opacity-60 hover:opacity-100" onClick={() => dismiss([n.id])}>
+                  <button type="button" aria-label="Dismiss" className="text-muted opacity-60 hover:opacity-100" onClick={() => dismiss([n.id])}>
                     <X className="size-3.5" />
                   </button>
                 </div>
@@ -373,13 +374,13 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
     onOpenChange(false);
     router.push(href);
   };
-  const pages = NAV.filter((n) => !q || norm(`${n.label} ${n.keywords ?? ""}`).includes(norm(q)));
+  const pages = NAV.filter((n) => !q || norm(`${n.label} ${n.hint} ${n.keywords ?? ""}`).includes(norm(q)));
   const groups = [...new Set(hits.map((h) => h.group))];
   return (
     <Command.Dialog
       open={open}
       onOpenChange={onOpenChange}
-      label="Pesquisa global"
+      label="Search"
       shouldFilter={false}
       overlayClassName="dialog-overlay fixed inset-0 z-50 bg-[#302630]/35 backdrop-blur-[2px]"
       contentClassName="dialog-content fixed left-1/2 top-[12vh] z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-3xl border border-border bg-surface shadow-pop"
@@ -389,14 +390,14 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
         <Command.Input
           value={q}
           onValueChange={setQ}
-          placeholder="Busque páginas, despesas, contas, metas…"
+          placeholder="Search pages, expenses, bills, goals…"
           className="h-14 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted"
         />
       </div>
       <Command.List className="scrollbar-thin max-h-[60vh] overflow-y-auto p-2">
-        <Command.Empty className="px-3 py-8 text-center text-sm text-muted">{loading ? "Buscando…" : "Nada encontrado."}</Command.Empty>
+        <Command.Empty className="px-3 py-8 text-center text-sm text-muted">{loading ? "Searching…" : "Nothing found."}</Command.Empty>
         {pages.length > 0 && (
-          <Command.Group heading="Páginas" className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted">
+          <Command.Group heading="Pages" className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[11px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted">
             {pages.map((n) => (
               <Command.Item
                 key={n.href}
@@ -404,7 +405,11 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
                 onSelect={() => go(n.href)}
                 className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm data-[selected=true]:bg-pink-50 data-[selected=true]:text-pink-600"
               >
-                <n.icon className="size-4" /> {n.label}
+                <n.icon className="size-4 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block">{n.label}</span>
+                  <span className="block truncate text-xs text-muted">{n.hint}</span>
+                </span>
               </Command.Item>
             ))}
           </Command.Group>

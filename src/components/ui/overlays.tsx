@@ -48,11 +48,11 @@ export function Modal({
               {description ? (
                 <Dialog.Description className="mt-1 text-sm text-muted">{description}</Dialog.Description>
               ) : (
-                <Dialog.Description className="sr-only">{typeof title === "string" ? title : "Formulário"}</Dialog.Description>
+                <Dialog.Description className="sr-only">{typeof title === "string" ? title : "Form"}</Dialog.Description>
               )}
             </div>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="Fechar">
+              <Button variant="ghost" size="icon-sm" aria-label="Close">
                 <X />
               </Button>
             </Dialog.Close>
@@ -72,7 +72,7 @@ export function ConfirmDialog({
   trigger,
   title,
   description,
-  confirmLabel = "Excluir",
+  confirmLabel = "Delete",
   onConfirm,
   tone = "danger",
   open,
@@ -102,7 +102,7 @@ export function ConfirmDialog({
           <AlertDialog.Description className="mt-2 text-sm text-muted">{description}</AlertDialog.Description>
           <div className="mt-6 flex justify-end gap-2">
             <AlertDialog.Cancel asChild>
-              <Button variant="outline">Cancelar</Button>
+              <Button variant="outline">Cancel</Button>
             </AlertDialog.Cancel>
             <Button
               variant={tone === "danger" ? "danger" : "primary"}
@@ -137,7 +137,7 @@ export interface MenuItem {
   disabled?: boolean;
 }
 
-export function ActionMenu({ items, label = "Ações" }: { items: Array<MenuItem | null | false>; label?: string }) {
+export function ActionMenu({ items, label = "Actions" }: { items: Array<MenuItem | null | false>; label?: string }) {
   const list = items.filter(Boolean) as MenuItem[];
   return (
     <DropdownMenu.Root>
@@ -217,7 +217,7 @@ export const TabPanel = ({ value, children, className }: { value: string; childr
 // ---------------------------------------------------------------------------
 // Tooltip explaining financial terms
 // ---------------------------------------------------------------------------
-export function InfoTip({ children, label = "Saiba mais" }: { children: React.ReactNode; label?: string }) {
+export function InfoTip({ children, label = "What does this mean?" }: { children: React.ReactNode; label?: string }) {
   return (
     <Tooltip.Provider delayDuration={150}>
       <Popover.Root>

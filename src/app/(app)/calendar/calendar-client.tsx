@@ -34,21 +34,21 @@ export interface CalEvent {
 }
 
 const KIND: Record<CalKind, { label: string; dot: string; chip: string }> = {
-  income_received: { label: "Recebimento", dot: "bg-success", chip: "bg-success-bg text-success" },
-  income_expected: { label: "Recebimento previsto", dot: "bg-success/50 ring-1 ring-success", chip: "border border-success/40 text-success" },
-  bill_due: { label: "Vencimento", dot: "bg-pink-500", chip: "bg-pink-50 text-pink-600" },
-  bill_overdue: { label: "Atrasada", dot: "bg-danger", chip: "bg-danger-bg text-danger" },
-  bill_paid: { label: "Pagamento realizado", dot: "bg-sage", chip: "bg-success-bg text-success" },
-  expense_paid: { label: "Despesa", dot: "bg-muted", chip: "bg-surface-2 text-muted" },
-  expense_pending: { label: "Pagamento previsto", dot: "bg-warning", chip: "bg-warning-bg text-warning" },
-  debt_increment: { label: "Acréscimo da faculdade", dot: "bg-plum", chip: "bg-surface-2 text-plum" },
-  debt_planned: { label: "Pagamento da dívida previsto", dot: "bg-plum/50 ring-1 ring-plum", chip: "border border-plum/40 text-plum" },
-  debt_payment: { label: "Pagamento da dívida", dot: "bg-plum", chip: "bg-surface-2 text-plum" },
-  goal: { label: "Meta", dot: "bg-gold", chip: "bg-warning-bg text-gold" },
-  subscription: { label: "Assinatura", dot: "bg-info", chip: "bg-info-bg text-info" },
+  income_received: { label: "Money in", dot: "bg-success", chip: "bg-success-bg text-success" },
+  income_expected: { label: "Expected income", dot: "bg-success/50 ring-1 ring-success", chip: "border border-success/40 text-success" },
+  bill_due: { label: "Bill due", dot: "bg-pink-500", chip: "bg-pink-50 text-pink-600" },
+  bill_overdue: { label: "Overdue", dot: "bg-danger", chip: "bg-danger-bg text-danger" },
+  bill_paid: { label: "Paid", dot: "bg-sage", chip: "bg-success-bg text-success" },
+  expense_paid: { label: "Expense", dot: "bg-muted", chip: "bg-surface-2 text-muted" },
+  expense_pending: { label: "Upcoming payment", dot: "bg-warning", chip: "bg-warning-bg text-warning" },
+  debt_increment: { label: "Semester charge", dot: "bg-plum", chip: "bg-surface-2 text-plum" },
+  debt_planned: { label: "Planned debt payment", dot: "bg-plum/50 ring-1 ring-plum", chip: "border border-plum/40 text-plum" },
+  debt_payment: { label: "Debt payment", dot: "bg-plum", chip: "bg-surface-2 text-plum" },
+  goal: { label: "Goal", dot: "bg-gold", chip: "bg-warning-bg text-gold" },
+  subscription: { label: "Subscription", dot: "bg-info", chip: "bg-info-bg text-info" },
 };
 
-const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function CalendarClient({
   monthKey,
@@ -91,13 +91,13 @@ export function CalendarClient({
       <Card>
         <CardContent className="pt-5">
           <div className="mb-4 flex items-center justify-between">
-            <Button asChild variant="ghost" size="icon-sm" aria-label="Mês anterior">
+            <Button asChild variant="ghost" size="icon-sm" aria-label="Previous month">
               <Link href={`/calendar?month=${prevKey}`}>
                 <ChevronLeft />
               </Link>
             </Button>
             <h2 className="font-display text-xl first-letter:uppercase">{monthLabel}</h2>
-            <Button asChild variant="ghost" size="icon-sm" aria-label="Próximo mês">
+            <Button asChild variant="ghost" size="icon-sm" aria-label="Next month">
               <Link href={`/calendar?month=${nextKey}`}>
                 <ChevronRight />
               </Link>
@@ -110,7 +110,7 @@ export function CalendarClient({
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1" role="grid" aria-label={`Calendário de ${monthLabel}`}>
+          <div className="grid grid-cols-7 gap-1" role="grid" aria-label={`Calendar for ${monthLabel}`}>
             {cells.map((d) => {
               const inMonth = d.startsWith(monthKey);
               const evs = byDate.get(d) ?? [];
@@ -120,7 +120,7 @@ export function CalendarClient({
                   type="button"
                   role="gridcell"
                   aria-selected={selected === d}
-                  aria-label={`${f.date(d, "long")}: ${evs.length} evento(s)`}
+                  aria-label={`${f.date(d, "long")}: ${evs.length} event(s)`}
                   onClick={() => setSelected(d)}
                   className={cn(
                     "flex min-h-16 flex-col items-stretch rounded-xl border p-1.5 text-left transition sm:min-h-24",
@@ -134,7 +134,7 @@ export function CalendarClient({
                   <span className="mt-1 hidden flex-col gap-0.5 sm:flex">
                     {evs.slice(0, 3).map((e) => (
                       <span key={e.id} className={cn("truncate rounded-md px-1 py-px text-[10px] font-medium", KIND[e.kind].chip)}>
-                        {e.title.replace(/^(Vence|Pago|Previsto|Acréscimo previsto|Acréscimo|Recorrente): /, "")}
+                        {e.title.replace(/^(Due|Paid|Expected|Upcoming charge|Semester charge|Repeats|Saved for|Goal date): /, "")}
                       </span>
                     ))}
                     {evs.length > 3 && <span className="text-[10px] text-muted">+{evs.length - 3}</span>}
@@ -163,7 +163,7 @@ export function CalendarClient({
 
       <Card className="h-fit xl:sticky xl:top-20">
         <CardContent className="pt-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-pink-500">{selected === today ? "Hoje" : "Dia selecionado"}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-pink-500">{selected === today ? "Today" : "Selected day"}</p>
           <h3 className="font-display text-xl first-letter:uppercase">{f.date(selected, "long")}</h3>
           {dayEvents.length ? (
             <ul className="mt-4 space-y-2">
@@ -179,23 +179,23 @@ export function CalendarClient({
               ))}
             </ul>
           ) : (
-            <p className="mt-4 text-sm text-muted">Nada registrado ou previsto para este dia.</p>
+            <p className="mt-4 text-sm text-muted">Nothing recorded or expected on this day.</p>
           )}
           <div className="mt-5 grid grid-cols-2 gap-2">
             <Button variant="secondary" size="sm" onClick={() => setAdding("expense")}>
-              <Minus /> Despesa
+              <Minus /> Expense
             </Button>
             <Button variant="secondary" size="sm" onClick={() => setAdding("income")}>
-              <Plus /> Receita
+              <Plus /> Income
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Modal open={adding === "expense"} onOpenChange={(o) => !o && setAdding(null)} title={`Despesa em ${f.date(selected)}`}>
+      <Modal open={adding === "expense"} onOpenChange={(o) => !o && setAdding(null)} title={`Expense on ${f.date(selected)}`}>
         <ExpenseForm initial={{ date: selected, status: selected > today ? "pending" : "paid" }} onDone={() => setAdding(null)} />
       </Modal>
-      <Modal open={adding === "income"} onOpenChange={(o) => !o && setAdding(null)} title={`Receita em ${f.date(selected)}`}>
+      <Modal open={adding === "income"} onOpenChange={(o) => !o && setAdding(null)} title={`Income on ${f.date(selected)}`}>
         <IncomeTxForm initial={{ date: selected }} onDone={() => setAdding(null)} />
       </Modal>
     </div>

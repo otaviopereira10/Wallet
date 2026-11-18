@@ -17,7 +17,7 @@ export interface AskResult {
 }
 
 const schema = z.object({
-  question: z.string().transform(sanitize).pipe(z.string().min(3, "Escreva uma pergunta").max(500, "Pergunta muito longa")),
+  question: z.string().transform(sanitize).pipe(z.string().min(3, "Type a question").max(500, "Question is too long")),
   useAI: z.boolean().default(false),
 });
 
@@ -31,36 +31,36 @@ export async function askIsabelle(raw: unknown): Promise<ActionResult<AskResult>
     const answer = answerQuestion(parsed.data.question, s, a);
     let ai: AskResult["ai"] = null;
     if (parsed.data.useAI) {
-      if (!s.profile.aiEnabled) ai = { ok: false, error: "Ative a IA em Configurações para usar respostas geradas por IA." };
-      else if (!aiAvailable()) ai = { ok: false, error: "A IA não está configurada no servidor (AI_API_KEY)." };
+      if (!s.profile.aiEnabled) ai = { ok: false, error: "Turn on AI in Settings to get AI-written explanations." };
+      else if (!aiAvailable()) ai = { ok: false, error: "AI is not set up on the server (AI_API_KEY)." };
       else {
         const fmt = a.fmt;
         const data = {
-          hoje: s.today,
-          moeda_principal: s.profile.baseCurrency,
-          saldo_total: fmt(a.totalBalance),
-          saldo_disponivel: fmt(a.spendableBalance),
-          livre_no_mes: fmt(a.safeMonth.amount),
-          reserva_minima: fmt(s.profile.emergencyBuffer),
-          receitas_mes: fmt(a.month.income),
-          despesas_mes: fmt(a.month.netExpenses),
-          contas_abertas_30_dias: a.views
+          today: s.today,
+          base_currency: s.profile.baseCurrency,
+          total_balance: fmt(a.totalBalance),
+          available_balance: fmt(a.spendableBalance),
+          free_this_month: fmt(a.safeMonth.amount),
+          safety_cushion: fmt(s.profile.emergencyBuffer),
+          income_this_month: fmt(a.month.income),
+          expenses_this_month: fmt(a.month.netExpenses),
+          open_bills_next_30_days: a.views
             .filter((v) => v.remaining > 0 && v.daysUntilDue <= 30)
             .slice(0, 12)
-            .map((v) => ({ nome: v.bill.name, valor: formatMoney(v.remaining, v.bill.currency), vencimento: v.occurrence.dueDate, prioridade: v.bill.priority })),
-          dividas: a.debts.map((d) => ({
-            nome: d.debt.name,
-            saldo: formatMoney(d.balance, d.debt.currency),
-            acrescimo: formatMoney(d.debt.incrementAmount, d.debt.currency),
-            proximo_acrescimo: d.nextIncrement,
-            pagamento_planejado: formatMoney(d.debt.plannedMonthlyPayment, d.debt.currency),
-            minimo_para_nao_crescer: formatMoney(d.breakEven, d.debt.currency),
+            .map((v) => ({ name: v.bill.name, amount: formatMoney(v.remaining, v.bill.currency), due_date: v.occurrence.dueDate, priority: v.bill.priority })),
+          debts: a.debts.map((d) => ({
+            name: d.debt.name,
+            balance: formatMoney(d.balance, d.debt.currency),
+            semester_charge: formatMoney(d.debt.incrementAmount, d.debt.currency),
+            next_charge_date: d.nextIncrement,
+            planned_monthly_payment: formatMoney(d.debt.plannedMonthlyPayment, d.debt.currency),
+            minimum_to_stop_growth: formatMoney(d.breakEven, d.debt.currency),
           })),
-          metas: a.goals.map((g) => ({ nome: g.goal.name, alvo: formatMoney(g.goal.targetAmount, g.goal.currency), acumulado: formatMoney(g.saved, g.goal.currency) })),
-          orcamento: a.budget.lines.map((l) => ({ categoria: categoryLabel(l.category), limite: fmt(l.limit), gasto: fmt(l.spent), projecao: fmt(l.projected) })),
-          capacidade_mensal: a.capacity.surplus === null ? "desconhecida" : fmt(a.capacity.surplus),
-          premissas: a.capacity.assumptions,
-          dados_faltando: a.capacity.missing,
+          goals: a.goals.map((g) => ({ name: g.goal.name, target: formatMoney(g.goal.targetAmount, g.goal.currency), saved: formatMoney(g.saved, g.goal.currency) })),
+          budget: a.budget.lines.map((l) => ({ category: categoryLabel(l.category), limit: fmt(l.limit), spent: fmt(l.spent), projected: fmt(l.projected) })),
+          monthly_left_over: a.capacity.surplus === null ? "unknown" : fmt(a.capacity.surplus),
+          assumptions: a.capacity.assumptions,
+          missing_data: a.capacity.missing,
         };
         ai = await explainWithAI(parsed.data.question, answer, data);
       }

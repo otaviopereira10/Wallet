@@ -23,13 +23,13 @@ interface Created {
 }
 
 const STEPS = [
-  { key: "profile", title: "Suas preferências", text: "Moeda principal, fuso horário e a reserva mínima que você quer manter." },
-  { key: "accounts", title: "Contas e saldo inicial", text: "Cadastre onde seu dinheiro está hoje e quanto há em cada conta." },
-  { key: "incomes", title: "Receitas", text: "Bolsa, salário, ajuda familiar… Recorrentes entram nas projeções futuras." },
-  { key: "recurring", title: "Despesas recorrentes", text: "Assinaturas e gastos que se repetem, como academia ou streaming." },
-  { key: "bills", title: "Contas a pagar", text: "Aluguel, telefone, internet — com vencimento e prioridade." },
-  { key: "debt", title: "Dívida universitária", text: "Saldo atual e o acréscimo de 5.500 por semestre (você pode ajustar)." },
-  { key: "goals", title: "Objetivos financeiros", text: "Reserva de emergência, viagem, faculdade…" },
+  { key: "profile", title: "Your preferences", text: "Your main currency, time zone and the safety cushion you always want to keep in your accounts." },
+  { key: "accounts", title: "Accounts & balances", text: "Where your money is today (checking, savings, cash, card) and how much is in each one." },
+  { key: "incomes", title: "Income", text: "Scholarship, salary, family help… Repeating income is used to plan the months ahead." },
+  { key: "recurring", title: "Repeating expenses", text: "Subscriptions and costs that repeat, like the gym or streaming." },
+  { key: "bills", title: "Bills", text: "Rent, phone, internet — with due date and how important each one is." },
+  { key: "debt", title: "University debt", text: "What you owe today and the 5,500 added each semester (you can change this)." },
+  { key: "goals", title: "Savings goals", text: "Emergency fund, a trip, college…" },
 ] as const;
 
 export function OnboardingWizard({ profile, created }: { profile: ProfileValues; created: Created }) {
@@ -42,7 +42,7 @@ export function OnboardingWizard({ profile, created }: { profile: ProfileValues;
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
   const resetForm = () => setFormKey((k) => k + 1);
-  const finish = () => run(() => completeOnboarding({ done: true }), { success: "Tudo pronto! Bem-vinda à sua Isabelle Wallet.", onSuccess: () => router.push("/dashboard") });
+  const finish = () => run(() => completeOnboarding({ done: true }), { success: "All set! Welcome to your Isabelle Wallet.", onSuccess: () => router.push("/dashboard") });
 
   const list = (items: string[], empty: string) =>
     items.length ? (
@@ -62,17 +62,17 @@ export function OnboardingWizard({ profile, created }: { profile: ProfileValues;
       <div className="mb-8 flex items-center justify-between">
         <Wordmark />
         <button type="button" onClick={finish} className="text-sm font-medium text-muted hover:text-ink" disabled={pending}>
-          Pular e configurar depois
+          Skip and set up later
         </button>
       </div>
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between text-xs font-medium text-muted">
           <span>
-            Passo {step + 1} de {STEPS.length}
+            Step {step + 1} of {STEPS.length}
           </span>
           <span>{Math.round(((step + 1) / STEPS.length) * 100)}%</span>
         </div>
-        <ProgressBar value={((step + 1) / STEPS.length) * 100} label="Progresso da configuração" />
+        <ProgressBar value={((step + 1) / STEPS.length) * 100} label="Setup progress" />
         <ol className="mt-4 hidden gap-1 sm:flex">
           {STEPS.map((s, i) => (
             <li key={s.key} className="flex-1">
@@ -96,25 +96,25 @@ export function OnboardingWizard({ profile, created }: { profile: ProfileValues;
         <h1 className="font-display text-2xl font-medium tracking-tight sm:text-3xl">{current.title}</h1>
         <p className="mb-6 mt-1.5 text-sm text-muted">{current.text}</p>
 
-        {current.key === "profile" && <ProfileForm initial={profile} compact detectTimezone submitLabel="Salvar e continuar" onDone={next} />}
+        {current.key === "profile" && <ProfileForm initial={profile} compact detectTimezone submitLabel="Save and continue" onDone={next} />}
 
         {current.key === "accounts" && (
           <>
-            {list(created.accounts, "Nenhuma conta ainda. Comece pela conta que você mais usa.")}
+            {list(created.accounts, "No accounts yet. Start with the one you use most.")}
             <AccountForm key={formKey} onDone={resetForm} />
           </>
         )}
 
         {current.key === "incomes" && (
           <>
-            {list(created.incomes, "Nenhuma receita cadastrada.")}
+            {list(created.incomes, "No income added yet.")}
             <IncomeSourceForm key={formKey} onDone={resetForm} />
           </>
         )}
 
         {current.key === "recurring" && (
           <>
-            {list(created.recurring, "Nenhuma despesa recorrente cadastrada.")}
+            {list(created.recurring, "No repeating expenses added yet.")}
             <div className="mb-5 inline-flex rounded-full border border-border p-1 text-sm">
               {(["subscription", "expense"] as const).map((m) => (
                 <button
@@ -123,7 +123,7 @@ export function OnboardingWizard({ profile, created }: { profile: ProfileValues;
                   onClick={() => setRecurringMode(m)}
                   className={cn("rounded-full px-4 py-1.5 font-medium", recurringMode === m ? "bg-pink-500 text-on-primary" : "text-muted")}
                 >
-                  {m === "subscription" ? "Assinatura" : "Despesa recorrente"}
+                  {m === "subscription" ? "Subscription" : "Repeating expense"}
                 </button>
               ))}
             </div>
@@ -133,7 +133,7 @@ export function OnboardingWizard({ profile, created }: { profile: ProfileValues;
 
         {current.key === "bills" && (
           <>
-            {list(created.bills, "Nenhuma conta a pagar cadastrada.")}
+            {list(created.bills, "No bills added yet.")}
             <BillForm key={formKey} onDone={resetForm} />
           </>
         )}
@@ -153,7 +153,7 @@ export function OnboardingWizard({ profile, created }: { profile: ProfileValues;
 
         {current.key === "goals" && (
           <>
-            {list(created.goals, "Nenhuma meta criada.")}
+            {list(created.goals, "No goals yet.")}
             <GoalForm key={formKey} onDone={resetForm} />
           </>
         )}
@@ -161,19 +161,19 @@ export function OnboardingWizard({ profile, created }: { profile: ProfileValues;
 
       <div className="mt-6 flex items-center justify-between">
         <Button variant="ghost" onClick={back} disabled={step === 0}>
-          <ArrowLeft /> Voltar
+          <ArrowLeft /> Back
         </Button>
         {step < STEPS.length - 1 ? (
           <Button variant="outline" onClick={next}>
-            {step === 0 ? "Pular" : "Próximo"} <ArrowRight />
+            {step === 0 ? "Skip" : "Next"} <ArrowRight />
           </Button>
         ) : (
           <Button onClick={finish} loading={pending}>
-            Concluir e ver meu dashboard
+            Finish and open my dashboard
           </Button>
         )}
       </div>
-      <p className="mt-6 text-center text-xs text-muted">Nenhum dado é preenchido automaticamente — o ambiente começa vazio e tudo pode ser editado depois.</p>
+      <p className="mt-6 text-center text-xs text-muted">Nothing is filled in for you — you start with a clean slate and can change everything later. Each step is optional.</p>
     </div>
   );
 }

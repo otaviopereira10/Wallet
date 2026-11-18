@@ -23,26 +23,26 @@ export const INCOME_CATEGORIES = ["scholarship", "salary", "side_work", "family"
 export type IncomeCategory = (typeof INCOME_CATEGORIES)[number];
 
 export const CATEGORY_LABELS: Record<string, string> = {
-  housing: "Moradia",
-  food: "Alimentação",
-  groceries: "Mercado",
-  transport: "Transporte",
-  education: "Educação",
-  health: "Saúde",
-  fitness: "Academia",
-  entertainment: "Entretenimento",
-  personal: "Compras pessoais",
-  subscriptions: "Assinaturas",
-  travel: "Viagens",
-  emergency: "Emergências",
-  other: "Outros",
-  scholarship: "Bolsa de estudos",
-  salary: "Salário",
-  side_work: "Trabalho extra",
-  family: "Ajuda familiar",
-  transfer: "Transferências",
-  other_income: "Outras receitas",
-  debt: "Dívida universitária",
+  housing: "Housing",
+  food: "Food & dining",
+  groceries: "Groceries",
+  transport: "Transportation",
+  education: "Education",
+  health: "Health",
+  fitness: "Gym & fitness",
+  entertainment: "Entertainment",
+  personal: "Personal shopping",
+  subscriptions: "Subscriptions",
+  travel: "Travel",
+  emergency: "Emergencies",
+  other: "Other",
+  scholarship: "Scholarship",
+  salary: "Salary",
+  side_work: "Side work",
+  family: "Family support",
+  transfer: "Transfers in",
+  other_income: "Other income",
+  debt: "University debt",
 };
 
 /** Default priority class for each expense category (used by the planner and insights). */
@@ -65,76 +65,76 @@ export const CATEGORY_PRIORITY: Record<ExpenseCategory, Priority> = {
 export const NON_ESSENTIAL_CATEGORIES: ExpenseCategory[] = ["entertainment", "personal", "travel", "subscriptions"];
 
 export const PRIORITY_LABELS: Record<Priority, string> = {
-  essential: "Essencial",
-  important: "Importante",
-  optional: "Opcional",
+  essential: "Essential",
+  important: "Important",
+  optional: "Optional",
 };
 
 export const PAYMENT_METHODS = ["cash", "debit_card", "credit_card", "pix", "bank_transfer", "zelle", "check", "other"] as const;
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  cash: "Dinheiro",
-  debit_card: "Cartão de débito",
-  credit_card: "Cartão de crédito",
+  cash: "Cash",
+  debit_card: "Debit card",
+  credit_card: "Credit card",
   pix: "Pix",
-  bank_transfer: "Transferência bancária",
+  bank_transfer: "Bank transfer",
   zelle: "Zelle",
-  check: "Cheque",
-  other: "Outro",
+  check: "Check",
+  other: "Other",
 };
 
 export const ACCOUNT_TYPES = ["checking", "savings", "cash", "credit_card", "investment", "other"] as const;
 export const ACCOUNT_TYPE_LABELS: Record<string, string> = {
-  checking: "Conta corrente",
-  savings: "Poupança",
-  cash: "Dinheiro em espécie",
-  credit_card: "Cartão de crédito",
-  investment: "Investimentos",
-  other: "Outra",
+  checking: "Checking",
+  savings: "Savings",
+  cash: "Cash",
+  credit_card: "Credit card",
+  investment: "Investments",
+  other: "Other",
 };
 
 export const INCOME_FREQUENCIES = ["once", "weekly", "biweekly", "monthly", "semiannual", "yearly", "custom"] as const;
 export const FREQUENCY_LABELS: Record<string, string> = {
-  once: "Única",
-  none: "Não se repete",
-  weekly: "Semanal",
-  biweekly: "Quinzenal",
-  monthly: "Mensal",
-  quarterly: "Trimestral",
-  semiannual: "Semestral",
-  yearly: "Anual",
-  custom: "Personalizada",
+  once: "One time",
+  none: "Does not repeat",
+  weekly: "Weekly",
+  biweekly: "Every 2 weeks",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  semiannual: "Every 6 months",
+  yearly: "Yearly",
+  custom: "Custom",
 };
 
 export const BILL_RECURRENCES = ["once", "weekly", "biweekly", "monthly", "quarterly", "semiannual", "yearly"] as const;
 export const EXPENSE_RECURRENCES = ["none", "weekly", "biweekly", "monthly", "quarterly", "semiannual", "yearly"] as const;
 export const SUBSCRIPTION_CYCLES = ["weekly", "monthly", "quarterly", "semiannual", "yearly"] as const;
 export const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
-  active: "Ativa",
-  cancel_planned: "Quero cancelar",
-  cancelled: "Cancelada",
+  active: "Active",
+  cancel_planned: "Want to cancel",
+  cancelled: "Cancelled",
 };
 
 export const GOAL_KINDS = ["emergency", "travel", "electronics", "purchase", "college", "debt_payoff", "other"] as const;
 export const GOAL_KIND_LABELS: Record<string, string> = {
-  emergency: "Reserva de emergência",
-  travel: "Viagem",
-  electronics: "Eletrônicos",
-  purchase: "Compra importante",
-  college: "Reserva para a faculdade",
-  debt_payoff: "Quitação da dívida",
-  other: "Outro objetivo",
+  emergency: "Emergency fund",
+  travel: "Trip",
+  electronics: "Electronics",
+  purchase: "Big purchase",
+  college: "College fund",
+  debt_payoff: "Debt payoff",
+  other: "Other goal",
 };
-export const GOAL_PRIORITY_LABELS: Record<string, string> = { high: "Alta", medium: "Média", low: "Baixa" };
+export const GOAL_PRIORITY_LABELS: Record<string, string> = { high: "High", medium: "Medium", low: "Low" };
 
 export const TX_KIND_LABELS: Record<string, string> = {
-  income: "Receita",
-  expense: "Despesa",
-  refund: "Reembolso",
-  transfer: "Transferência",
-  debt_payment: "Pagamento de dívida",
+  income: "Income",
+  expense: "Expense",
+  refund: "Refund",
+  transfer: "Transfer",
+  debt_payment: "Debt payment",
 };
 
 export function categoryLabel(key: string | null | undefined): string {
-  if (!key) return "Sem categoria";
+  if (!key) return "No category";
   return CATEGORY_LABELS[key] ?? key;
 }

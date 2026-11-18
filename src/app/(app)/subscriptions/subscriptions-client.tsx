@@ -50,12 +50,12 @@ export function SubscriptionsClient({
   return (
     <>
       <div className="mb-6 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total mensal" value={f.money(totals.activeMonthly)} icon={<Repeat />} tone="pink" sub={`${totals.count} assinatura(s) ativas`} />
-        <StatCard label="Estimativa anual" value={f.money(totals.activeYearly)} />
-        <StatCard label="Economia se cancelar as marcadas" value={`${f.money(totals.cancelPlannedMonthly)}/mês`} tone="success" sub={`${f.money(totals.cancelPlannedMonthly * 12)} por ano`} />
+        <StatCard label="Per month" value={f.money(totals.activeMonthly)} icon={<Repeat />} tone="pink" sub={`${totals.count} active subscription(s)`} />
+        <StatCard label="Per year" value={f.money(totals.activeYearly)} />
+        <StatCard label="Savings if you cancel the flagged ones" value={`${f.money(totals.cancelPlannedMonthly)}/month`} tone="success" sub={`${f.money(totals.cancelPlannedMonthly * 12)} per year`} />
         <div className="flex items-center justify-center rounded-2xl border border-dashed border-border-strong p-4">
           <Button onClick={() => setCreating(true)}>
-            <Plus /> Nova assinatura
+            <Plus /> New subscription
           </Button>
         </div>
       </div>
@@ -63,11 +63,11 @@ export function SubscriptionsClient({
       {!subs.length ? (
         <EmptyState
           icon={<Repeat />}
-          title="Nenhuma assinatura cadastrada"
-          description="Netflix, Spotify, iCloud, apps e academia — cadastre para acompanhar quanto custam por mês e por ano."
+          title="No subscriptions yet"
+          description="Netflix, Spotify, iCloud, apps and the gym — add them to see what they cost per month and per year."
           action={
             <Button onClick={() => setCreating(true)}>
-              <Plus /> Cadastrar assinatura
+              <Plus /> Add subscription
             </Button>
           }
         />
@@ -80,34 +80,34 @@ export function SubscriptionsClient({
                   <p className="truncate font-semibold">{s.name}</p>
                   <p className="mt-1 flex flex-wrap gap-1.5">
                     <Badge>{s.cycleLabel}</Badge>
-                    {s.status === "cancel_planned" && <Badge tone="warning">Quero cancelar</Badge>}
-                    {s.status === "cancelled" && <Badge>Cancelada</Badge>}
+                    {s.status === "cancel_planned" && <Badge tone="warning">Want to cancel</Badge>}
+                    {s.status === "cancelled" && <Badge>Cancelled</Badge>}
                     {s.status !== "cancelled" &&
                       (s.usage === "unknown" ? (
-                        <Badge tone="neutral">Sem dados de uso</Badge>
+                        <Badge tone="neutral">No usage info</Badge>
                       ) : s.usage === "low" ? (
-                        <Badge tone="danger">Sem uso há {s.daysSinceUse} dias</Badge>
+                        <Badge tone="danger">Not used for {s.daysSinceUse} days</Badge>
                       ) : (
-                        <Badge tone="success">Em uso</Badge>
+                        <Badge tone="success">In use</Badge>
                       ))}
                   </p>
                 </div>
                 <ActionMenu
                   items={[
-                    s.status !== "cancelled" && { label: "Registrar cobrança", icon: <CalendarCheck />, onSelect: () => setCharging(s) },
-                    s.status !== "cancelled" && { label: "Pular esta cobrança", icon: <SkipForward />, onSelect: () => run(() => skipSubscriptionCharge({ id: s.id })) },
-                    s.status !== "cancelled" && { label: "Usei hoje", icon: <CheckCircle2 />, onSelect: () => run(() => markSubscriptionUsed({ id: s.id })) },
-                    s.status === "active" && { label: "Marcar para cancelar", icon: <BellRing />, onSelect: () => run(() => setSubscriptionStatus({ id: s.id, status: "cancel_planned" })) },
-                    s.status !== "cancelled" && { label: "Já cancelei", icon: <XCircle />, onSelect: () => run(() => setSubscriptionStatus({ id: s.id, status: "cancelled" })) },
-                    s.status !== "active" && { label: "Reativar", icon: <Repeat />, onSelect: () => run(() => setSubscriptionStatus({ id: s.id, status: "active" })) },
-                    { label: "Editar", icon: <Pencil />, onSelect: () => setEditing(s.initial) },
-                    { label: "Excluir", icon: <Trash2 />, danger: true, onSelect: () => setDeleting(s) },
+                    s.status !== "cancelled" && { label: "Record a charge", icon: <CalendarCheck />, onSelect: () => setCharging(s) },
+                    s.status !== "cancelled" && { label: "Skip this charge", icon: <SkipForward />, onSelect: () => run(() => skipSubscriptionCharge({ id: s.id })) },
+                    s.status !== "cancelled" && { label: "I used it today", icon: <CheckCircle2 />, onSelect: () => run(() => markSubscriptionUsed({ id: s.id })) },
+                    s.status === "active" && { label: "Flag to cancel", icon: <BellRing />, onSelect: () => run(() => setSubscriptionStatus({ id: s.id, status: "cancel_planned" })) },
+                    s.status !== "cancelled" && { label: "I cancelled it", icon: <XCircle />, onSelect: () => run(() => setSubscriptionStatus({ id: s.id, status: "cancelled" })) },
+                    s.status !== "active" && { label: "Make active again", icon: <Repeat />, onSelect: () => run(() => setSubscriptionStatus({ id: s.id, status: "active" })) },
+                    { label: "Edit", icon: <Pencil />, onSelect: () => setEditing(s.initial) },
+                    { label: "Delete", icon: <Trash2 />, danger: true, onSelect: () => setDeleting(s) },
                   ]}
                 />
               </div>
               <p className="tabular mt-3 text-xl font-semibold">{f.money(s.amount, s.currency)}</p>
               <p className="tabular text-xs text-muted">
-                ≈ {f.money(s.monthly, s.currency)}/mês · {f.money(s.yearly, s.currency)}/ano
+                ≈ {f.money(s.monthly, s.currency)}/month · {f.money(s.yearly, s.currency)}/year
               </p>
               {s.status !== "cancelled" && (
                 <p
@@ -117,14 +117,14 @@ export function SubscriptionsClient({
                   )}
                 >
                   {s.chargeOverdue
-                    ? `Cobrança de ${f.date(s.nextChargeDate)} aguardando registro`
-                    : `Próxima cobrança ${relativeDays(s.daysUntilCharge)} (${f.date(s.nextChargeDate)})`}
+                    ? `Charge from ${f.date(s.nextChargeDate)} not recorded yet`
+                    : `Next charge ${relativeDays(s.daysUntilCharge)} (${f.date(s.nextChargeDate)})`}
                 </p>
               )}
-              {s.totalCharged > 0 && <p className="mt-2 text-xs text-muted">Total já registrado: {f.money(s.totalCharged, s.currency)}</p>}
+              {s.totalCharged > 0 && <p className="mt-2 text-xs text-muted">Recorded so far: {f.money(s.totalCharged, s.currency)}</p>}
               {s.status !== "cancelled" && (s.chargeSoon || s.chargeOverdue) && (
                 <Button size="sm" className="mt-3 w-full" onClick={() => setCharging(s)}>
-                  Registrar cobrança
+                  Record charge
                 </Button>
               )}
             </Card>
@@ -132,13 +132,13 @@ export function SubscriptionsClient({
         </div>
       )}
 
-      <Modal open={creating} onOpenChange={setCreating} title="Nova assinatura">
+      <Modal open={creating} onOpenChange={setCreating} title="New subscription">
         <SubscriptionForm onDone={() => setCreating(false)} />
       </Modal>
-      <Modal open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title="Editar assinatura">
+      <Modal open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title="Edit subscription">
         {editing && <SubscriptionForm initial={editing} onDone={() => setEditing(null)} />}
       </Modal>
-      <Modal open={!!charging} onOpenChange={(o) => !o && setCharging(null)} title={`Cobrança de ${charging?.name ?? ""}`} description="Registra a despesa e avança a próxima data de cobrança.">
+      <Modal open={!!charging} onOpenChange={(o) => !o && setCharging(null)} title={`${charging?.name ?? ""} charge`} description="Records the expense and moves the next charge date forward.">
         {charging && (
           <SubscriptionChargeForm
             subscriptionId={charging.id}
@@ -153,8 +153,8 @@ export function SubscriptionsClient({
       <ConfirmDialog
         open={!!deleting}
         onOpenChange={(o) => !o && setDeleting(null)}
-        title={`Excluir “${deleting?.name}”?`}
-        description="Cobranças já registradas continuam no histórico de despesas."
+        title={`Delete “${deleting?.name}”?`}
+        description="Charges you already recorded stay in your expenses."
         onConfirm={() => (deleting ? run(() => deleteSubscription({ id: deleting.id })) : undefined)}
       />
     </>

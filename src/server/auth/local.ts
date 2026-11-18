@@ -45,7 +45,7 @@ export function authSecret(): Uint8Array {
   if (cachedSecret) return cachedSecret;
   let secret = env.authSecret;
   if (!secret) {
-    if (env.isProduction) throw new Error("AUTH_SECRET é obrigatório em produção no modo local.");
+    if (env.isProduction) throw new Error("AUTH_SECRET is required in production when using local mode.");
     const file = path.resolve(process.cwd(), ".data", "auth-secret");
     if (existsSync(file)) secret = readFileSync(file, "utf8").trim();
     else {
@@ -54,7 +54,7 @@ export function authSecret(): Uint8Array {
       writeFileSync(file, secret, { mode: 0o600 });
     }
   }
-  if (secret.length < 32) throw new Error("AUTH_SECRET deve ter pelo menos 32 caracteres.");
+  if (secret.length < 32) throw new Error("AUTH_SECRET must have at least 32 characters.");
   cachedSecret = new TextEncoder().encode(secret);
   return cachedSecret;
 }
@@ -87,7 +87,7 @@ export async function localSignUp(email: string, password: string): Promise<{ id
   const hash = await hashPassword(password);
   return asSystem(async (db) => {
     const existing = await db.query("select 1 from auth.users where email = $1", [email]);
-    if (existing.length) throw new AuthError("Este e-mail já está cadastrado.");
+    if (existing.length) throw new AuthError("This email is already registered.");
     const rows = await db.query<{ id: string; email: string }>(
       "insert into auth.users (email, encrypted_password) values ($1, $2) returning id, email",
       [email, hash],
@@ -109,7 +109,7 @@ export async function localSignIn(email: string, password: string): Promise<{ id
       [key],
     ),
   );
-  if (lock[0]?.locked) throw new AuthError(`Muitas tentativas. Tente novamente em até ${LOCK_MINUTES} minutos.`);
+  if (lock[0]?.locked) throw new AuthError(`Too many attempts. Try again in up to ${LOCK_MINUTES} minutes.`);
   const rows = await asSystem((db) =>
     db.query<{ id: string; email: string; encrypted_password: string }>(
       "select id, email, encrypted_password from auth.users where email = $1",
@@ -131,7 +131,7 @@ export async function localSignIn(email: string, password: string): Promise<{ id
         [key],
       ),
     );
-    throw new AuthError("E-mail ou senha incorretos.");
+    throw new AuthError("Wrong email or password.");
   }
   await asSystem((db) => db.query("delete from auth.login_attempts where key = $1", [key]));
   return { id: rows[0].id, email: rows[0].email };
@@ -141,7 +141,7 @@ export async function localChangePassword(userId: string, current: string, next:
   const rows = await asSystem((db) =>
     db.query<{ encrypted_password: string }>("select encrypted_password from auth.users where id = $1", [userId]),
   );
-  if (!rows[0] || !(await verifyPassword(current, rows[0].encrypted_password))) throw new AuthError("Senha atual incorreta.");
+  if (!rows[0] || !(await verifyPassword(current, rows[0].encrypted_password))) throw new AuthError("Your current password is wrong.");
   const hash = await hashPassword(next);
   await asSystem((db) => db.query("update auth.users set encrypted_password = $2 where id = $1", [userId, hash]));
 }

@@ -33,7 +33,7 @@ export async function requireUser(): Promise<SessionUser> {
 
 export class UnauthorizedError extends Error {
   constructor() {
-    super("Sessão expirada. Entre novamente.");
+    super("Your session expired. Please sign in again.");
   }
 }
 

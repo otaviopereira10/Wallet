@@ -65,19 +65,19 @@ export function IncomeClient({
   return (
     <>
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
-        <StatCard label="Recebido neste mês" value={f.money(monthIncome)} tone="success" icon={<ArrowDownLeft />} />
+        <StatCard label="Received this month" value={f.money(monthIncome)} tone="success" icon={<ArrowDownLeft />} />
         <StatCard
-          label="Renda mensal recorrente"
+          label="Regular monthly income"
           value={monthlyExpected === null ? "—" : f.money(monthlyExpected)}
-          sub="Média mensal das fontes recorrentes ativas"
-          info={<InfoTip>Semanal × 52/12, quinzenal × 26/12, semestral ÷ 6, anual ÷ 12. Receitas únicas não entram.</InfoTip>}
+          sub="Monthly average of your repeating income"
+          info={<InfoTip>Weekly × 52/12, every 2 weeks × 26/12, every 6 months ÷ 6, yearly ÷ 12. One-time income is not included.</InfoTip>}
         />
         <div className="flex flex-col justify-center gap-2 rounded-2xl border border-dashed border-border-strong p-4">
           <Button onClick={() => setCreating(true)}>
-            <Plus /> Nova fonte de renda
+            <Plus /> New income source
           </Button>
           <Button variant="outline" onClick={() => setOneOff(true)}>
-            <CheckCircle2 /> Registrar valor recebido
+            <CheckCircle2 /> Record money received
           </Button>
         </div>
       </div>
@@ -87,9 +87,9 @@ export function IncomeClient({
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
-                <CalendarCheck className="size-4 text-info" /> Aguardando confirmação
+                <CalendarCheck className="size-4 text-info" /> Waiting for you to confirm
               </CardTitle>
-              <CardDescription>Recebimentos previstos que já passaram. Eles só entram no saldo depois de confirmados.</CardDescription>
+              <CardDescription>Expected payments whose date has passed. They only count in your balance after you confirm them.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -98,15 +98,15 @@ export function IncomeClient({
                 <li key={`${p.incomeId}-${p.date}`} className="flex flex-wrap items-center gap-3 py-2.5">
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{p.name}</p>
-                    <p className="text-xs text-muted">Previsto para {f.date(p.date)}</p>
+                    <p className="text-xs text-muted">Expected on {f.date(p.date)}</p>
                   </div>
                   <span className="tabular font-semibold">{f.money(p.amount, p.currency)}</span>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => setReceiving(p)}>
-                      Confirmar
+                      I got it
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => run(() => skipIncomeOccurrence({ incomeId: p.incomeId, occurrence: p.date }))}>
-                      Não recebi
+                      Did not arrive
                     </Button>
                   </div>
                 </li>
@@ -119,20 +119,20 @@ export function IncomeClient({
       <Tabs
         defaultValue="sources"
         tabs={[
-          { value: "sources", label: "Fontes de renda", count: sources.length },
-          { value: "projection", label: "Projeção" },
-          { value: "history", label: "Recebimentos", count: receipts.length },
+          { value: "sources", label: "Income sources", count: sources.length },
+          { value: "projection", label: "Next 6 months" },
+          { value: "history", label: "Received", count: receipts.length },
         ]}
       >
         <TabPanel value="sources">
           {!sources.length ? (
             <EmptyState
               icon={<ArrowDownLeft />}
-              title="Nenhuma fonte de renda"
-              description="Cadastre sua bolsa, salário, trabalhos extras ou ajuda familiar — com a frequência certa."
+              title="No income sources yet"
+              description="Add your scholarship, salary, side work or family support — and how often it arrives."
               action={
                 <Button onClick={() => setCreating(true)}>
-                  <Plus /> Cadastrar receita
+                  <Plus /> Add income
                 </Button>
               }
             />
@@ -146,26 +146,26 @@ export function IncomeClient({
                       <p className="mt-0.5 flex flex-wrap gap-1.5 text-xs text-muted">
                         <Badge tone="success">{s.categoryLabel}</Badge>
                         <Badge>{s.frequencyLabel}</Badge>
-                        {!s.active && <Badge tone="warning">Pausada</Badge>}
+                        {!s.active && <Badge tone="warning">Paused</Badge>}
                       </p>
                     </div>
                     <ActionMenu
                       items={[
-                        { label: "Editar", icon: <Pencil />, onSelect: () => setEditing({ ...s, amount: s.amountInput }) },
+                        { label: "Edit", icon: <Pencil />, onSelect: () => setEditing({ ...s, amount: s.amountInput }) },
                         {
-                          label: s.active ? "Pausar" : "Reativar",
+                          label: s.active ? "Pause" : "Resume",
                           icon: s.active ? <Pause /> : <Play />,
                           onSelect: () => run(() => setIncomeActive({ id: s.id, active: !s.active })),
                         },
-                        { label: "Excluir", icon: <Trash2 />, danger: true, onSelect: () => setDeleting(s) },
+                        { label: "Delete", icon: <Trash2 />, danger: true, onSelect: () => setDeleting(s) },
                       ]}
                     />
                   </div>
                   <p className="tabular mt-3 text-xl font-semibold">{f.money(s.amount, s.currency)}</p>
                   <div className="mt-2 flex flex-wrap justify-between gap-2 text-xs text-muted">
-                    <span>{s.next ? `Próximo: ${f.date(s.next)}` : "Sem próximos recebimentos"}</span>
-                    {s.monthly > 0 && <span>≈ {f.money(s.monthly)}/mês</span>}
-                    <span>{s.received} recebimento(s) confirmados</span>
+                    <span>{s.next ? `Next: ${f.date(s.next)}` : "No upcoming payments"}</span>
+                    {s.monthly > 0 && <span>≈ {f.money(s.monthly)}/month</span>}
+                    <span>{s.received} payment(s) received</span>
                   </div>
                 </Card>
               ))}
@@ -177,10 +177,10 @@ export function IncomeClient({
           <Card>
             <CardHeader>
               <div>
-                <CardTitle>Dinheiro previsto nos próximos meses</CardTitle>
+                <CardTitle>Expected money in the next months</CardTitle>
                 <CardDescription>
-                  Parte do saldo disponível de hoje e soma receitas recorrentes previstas, menos contas, assinaturas, despesas recorrentes e pagamentos
-                  planejados. Gastos variáveis do dia a dia não estão incluídos.
+                  Starts from what you have today, adds expected repeating income, and subtracts bills, subscriptions, repeating expenses and planned
+                  payments. Everyday spending is not included.
                 </CardDescription>
               </div>
             </CardHeader>
@@ -188,11 +188,11 @@ export function IncomeClient({
               <table className="w-full min-w-[560px] text-sm">
                 <thead>
                   <tr className="text-left text-xs text-muted">
-                    <th className="pb-2 font-medium">Mês</th>
-                    <th className="pb-2 text-right font-medium">Receitas previstas</th>
-                    <th className="pb-2 text-right font-medium">Saídas programadas</th>
-                    <th className="pb-2 text-right font-medium">Resultado</th>
-                    <th className="pb-2 text-right font-medium">Saldo projetado</th>
+                    <th className="pb-2 font-medium">Month</th>
+                    <th className="pb-2 text-right font-medium">Expected in</th>
+                    <th className="pb-2 text-right font-medium">Scheduled out</th>
+                    <th className="pb-2 text-right font-medium">Difference</th>
+                    <th className="pb-2 text-right font-medium">Expected balance</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -207,13 +207,13 @@ export function IncomeClient({
                   ))}
                 </tbody>
               </table>
-              <p className="mt-3 text-xs text-muted">Projeção, não garantia: depende de as receitas caírem nas datas previstas.</p>
+              <p className="mt-3 text-xs text-muted">An estimate, not a guarantee: it depends on your income arriving on time.</p>
             </CardContent>
           </Card>
           {upcoming.length > 0 && (
             <Card className="mt-4">
               <CardHeader>
-                <CardTitle>Próximos recebimentos previstos</CardTitle>
+                <CardTitle>Upcoming expected payments</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="divide-y divide-border">
@@ -234,7 +234,7 @@ export function IncomeClient({
         <TabPanel value="history">
           <div className="relative mb-4">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
-            <Input className="pl-10" placeholder="Pesquisar recebimentos…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Pesquisar recebimentos" />
+            <Input className="pl-10" placeholder="Search received money…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search received money" />
           </div>
           {filtered.length ? (
             <Card className="overflow-hidden">
@@ -251,12 +251,12 @@ export function IncomeClient({
                     <ActionMenu
                       items={[
                         r.source !== "income" && {
-                          label: "Editar",
+                          label: "Edit",
                           icon: <Pencil />,
                           onSelect: () =>
                             setEditingTx({ id: r.id, description: r.description, amount: r.amountInput, currency: r.currency, category: r.category ?? "other_income", date: r.date, accountId: r.accountId, notes: r.notes }),
                         },
-                        { label: r.source === "income" ? "Desfazer confirmação" : "Excluir", icon: r.source === "income" ? <XCircle /> : <Trash2 />, danger: true, onSelect: () => setDeletingTx(r) },
+                        { label: r.source === "income" ? "Undo confirmation" : "Delete", icon: r.source === "income" ? <XCircle /> : <Trash2 />, danger: true, onSelect: () => setDeletingTx(r) },
                       ]}
                     />
                   </li>
@@ -264,24 +264,24 @@ export function IncomeClient({
               </ul>
             </Card>
           ) : (
-            <p className="text-sm text-muted">Nenhum recebimento registrado.</p>
+            <p className="text-sm text-muted">Nothing received yet.</p>
           )}
         </TabPanel>
       </Tabs>
 
-      <Modal open={creating} onOpenChange={setCreating} title="Nova fonte de renda">
+      <Modal open={creating} onOpenChange={setCreating} title="New income source">
         <IncomeSourceForm onDone={() => setCreating(false)} />
       </Modal>
-      <Modal open={oneOff} onOpenChange={setOneOff} title="Registrar valor recebido">
+      <Modal open={oneOff} onOpenChange={setOneOff} title="Record money received">
         <IncomeTxForm onDone={() => setOneOff(false)} />
       </Modal>
-      <Modal open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title="Editar fonte de renda">
+      <Modal open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title="Edit income source">
         {editing && <IncomeSourceForm initial={editing} onDone={() => setEditing(null)} />}
       </Modal>
-      <Modal open={!!editingTx} onOpenChange={(o) => !o && setEditingTx(null)} title="Editar recebimento">
+      <Modal open={!!editingTx} onOpenChange={(o) => !o && setEditingTx(null)} title="Edit received money">
         {editingTx && <IncomeTxForm initial={editingTx} onDone={() => setEditingTx(null)} />}
       </Modal>
-      <Modal open={!!receiving} onOpenChange={(o) => !o && setReceiving(null)} title={`Confirmar: ${receiving?.name ?? ""}`} description={receiving ? `Previsto para ${f.date(receiving.date)}` : undefined}>
+      <Modal open={!!receiving} onOpenChange={(o) => !o && setReceiving(null)} title={`Confirm: ${receiving?.name ?? ""}`} description={receiving ? `Expected on ${f.date(receiving.date)}` : undefined}>
         {receiving && (
           <ReceiveIncomeForm
             incomeId={receiving.incomeId}
@@ -296,15 +296,15 @@ export function IncomeClient({
       <ConfirmDialog
         open={!!deleting}
         onOpenChange={(o) => !o && setDeleting(null)}
-        title={`Excluir “${deleting?.name}”?`}
-        description="A fonte de renda deixa de aparecer nas projeções. Os recebimentos já confirmados continuam no histórico e no saldo."
+        title={`Delete “${deleting?.name}”?`}
+        description="This income source stops appearing in forecasts. Payments you already confirmed stay in your history and balance."
         onConfirm={() => (deleting ? run(() => deleteIncome({ id: deleting.id })) : undefined)}
       />
       <ConfirmDialog
         open={!!deletingTx}
         onOpenChange={(o) => !o && setDeletingTx(null)}
-        title={deletingTx?.source === "income" ? "Desfazer confirmação?" : "Excluir recebimento?"}
-        description="O valor sairá do saldo real da conta."
+        title={deletingTx?.source === "income" ? "Undo this confirmation?" : "Delete this entry?"}
+        description="The amount will be removed from the account balance."
         onConfirm={() => (deletingTx ? run(() => deleteTransaction({ id: deletingTx.id })) : undefined)}
       />
     </>

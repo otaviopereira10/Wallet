@@ -13,18 +13,18 @@ const DEFAULT_MODEL = "claude-opus-5-5";
 // Models that accept the server-side refusal fallback (`fallbacks: "default"`).
 const FALLBACK_MODELS = new Set(["claude-opus-5-5", "claude-opus-5", "claude-fable-5-2", "claude-fable-5-1", "claude-sonnet-5-5"]);
 
-const SYSTEM_PROMPT = `Você é a Isabelle, assistente financeira pessoal do aplicativo Isabelle Wallet. Você conversa com a dona da conta em português do Brasil.
+const SYSTEM_PROMPT = `You are Isabelle, the personal finance assistant inside the Isabelle Wallet app. You talk to the account owner in clear, simple English.
 
-Regras obrigatórias:
-- Use somente os números, datas e nomes que aparecem em RESPOSTA_CALCULADA e DADOS. Nunca invente valores, receitas, despesas, taxas de juros ou cotações.
-- RESPOSTA_CALCULADA foi produzida pelo motor financeiro do app e é a fonte da verdade. Você pode explicá-la e organizá-la, mas não pode contradizê-la nem recalcular com outros números.
-- Se faltar informação para responder, diga exatamente o que falta e onde cadastrar no app.
-- Organize a resposta em quatro partes curtas: **Situação** (problema ou oportunidade), **O que fazer** (ação recomendada), **Impacto estimado** e **Riscos e limitações**.
-- Projeções não são garantias: mencione as premissas usadas.
-- Nunca recomende atrasar contas essenciais (moradia, alimentação, saúde, transporte, educação) para pagar algo de menor importância.
-- Você não realiza pagamentos nem movimenta dinheiro; apenas orienta.
-- Você não é consultora de investimentos licenciada; não recomende produtos financeiros específicos.
-- Seja direta e acolhedora, em no máximo 200 palavras.`;
+Rules you must follow:
+- Use only the numbers, dates and names that appear in CALCULATED_ANSWER and DATA. Never invent amounts, income, expenses, interest rates or exchange rates.
+- CALCULATED_ANSWER comes from the app's financial engine and is the source of truth. You may explain and organize it, but never contradict it or recalculate with other numbers.
+- If information is missing, say exactly what is missing and where to add it in the app.
+- Organize the answer in four short parts: **Situation** (problem or opportunity), **What to do** (recommended action), **Estimated impact**, and **Risks and limits**.
+- Projections are not guarantees: mention the assumptions used.
+- Never suggest paying an essential bill (housing, food, health, transportation, education) late to pay for something less important.
+- You do not make payments or move money; you only give guidance.
+- You are not a licensed financial adviser; do not recommend specific financial products.
+- Be direct and warm, in at most 200 words.`;
 
 export function aiAvailable(): boolean {
   return !!env.aiApiKey;
@@ -35,7 +35,7 @@ export async function explainWithAI(
   calculated: unknown,
   data: unknown,
 ): Promise<{ ok: true; text: string; model: string } | { ok: false; error: string }> {
-  if (!env.aiApiKey) return { ok: false, error: "IA não configurada no servidor." };
+  if (!env.aiApiKey) return { ok: false, error: "AI is not set up on the server." };
   const model = env.aiModel ?? DEFAULT_MODEL;
   const client = new Anthropic({
     apiKey: env.aiApiKey,
@@ -53,28 +53,28 @@ export async function explainWithAI(
       messages: [
         {
           role: "user",
-          content: `PERGUNTA:\n${question}\n\nRESPOSTA_CALCULADA:\n${JSON.stringify(calculated)}\n\nDADOS:\n${JSON.stringify(data)}`,
+          content: `QUESTION:\n${question}\n\nCALCULATED_ANSWER:\n${JSON.stringify(calculated)}\n\nDATA:\n${JSON.stringify(data)}`,
         },
       ],
     });
     if (response.stop_reason === "refusal") {
-      return { ok: false, error: "A IA não pôde responder a esta pergunta. A resposta calculada acima continua válida." };
+      return { ok: false, error: "The AI could not answer this question. The calculated answer above is still valid." };
     }
     const text = response.content
       .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
       .map((b) => b.text)
       .join("\n")
       .trim();
-    if (!text) return { ok: false, error: "A IA não retornou texto." };
+    if (!text) return { ok: false, error: "The AI returned no text." };
     return { ok: true, text, model: response.model };
   } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) return { ok: false, error: "Chave da API de IA inválida (verifique AI_API_KEY)." };
-    if (error instanceof Anthropic.PermissionDeniedError) return { ok: false, error: "A chave da API não tem permissão para este modelo." };
-    if (error instanceof Anthropic.NotFoundError) return { ok: false, error: `Modelo de IA não encontrado: ${model}.` };
-    if (error instanceof Anthropic.RateLimitError) return { ok: false, error: "Limite de uso da IA atingido. Tente novamente em instantes." };
-    if (error instanceof Anthropic.BadRequestError) return { ok: false, error: "A requisição à IA foi recusada (configuração inválida)." };
-    if (error instanceof Anthropic.APIConnectionError) return { ok: false, error: "Sem conexão com o serviço de IA." };
-    if (error instanceof Anthropic.APIError) return { ok: false, error: `Serviço de IA indisponível (${error.status ?? "erro"}).` };
-    return { ok: false, error: "Falha ao consultar a IA." };
+    if (error instanceof Anthropic.AuthenticationError) return { ok: false, error: "Invalid AI API key (check AI_API_KEY)." };
+    if (error instanceof Anthropic.PermissionDeniedError) return { ok: false, error: "The API key does not have access to this model." };
+    if (error instanceof Anthropic.NotFoundError) return { ok: false, error: `AI model not found: ${model}.` };
+    if (error instanceof Anthropic.RateLimitError) return { ok: false, error: "AI usage limit reached. Try again in a moment." };
+    if (error instanceof Anthropic.BadRequestError) return { ok: false, error: "The AI request was rejected (invalid configuration)." };
+    if (error instanceof Anthropic.APIConnectionError) return { ok: false, error: "Could not reach the AI service." };
+    if (error instanceof Anthropic.APIError) return { ok: false, error: `AI service unavailable (${error.status ?? "error"}).` };
+    return { ok: false, error: "The AI request failed." };
   }
 }

@@ -18,7 +18,7 @@ export async function createSubscription(raw: unknown) {
         [v.name, v.amount, v.currency, v.billingCycle, v.nextChargeDate, v.category, v.accountId, v.status, v.lastUsedOn, v.usageNote, v.notes],
       );
     },
-    { message: "Assinatura cadastrada" },
+    { message: "Subscription added" },
   );
 }
 
@@ -32,9 +32,9 @@ export async function updateSubscription(raw: unknown) {
            account_id = $8, status = $9, last_used_on = $10, usage_note = $11, notes = $12 where id = $1 returning id`,
         [v.id, v.name, v.amount, v.currency, v.billingCycle, v.nextChargeDate, v.category, v.accountId, v.status, v.lastUsedOn, v.usageNote, v.notes],
       );
-      if (!r.length) throw new UserError("Assinatura não encontrada.");
+      if (!r.length) throw new UserError("Subscription not found.");
     },
-    { message: "Assinatura atualizada" },
+    { message: "Subscription updated" },
   );
 }
 
@@ -45,7 +45,7 @@ export async function setSubscriptionStatus(raw: unknown) {
     async (v, { db }) => {
       await db.query("update subscriptions set status = $2 where id = $1", [v.id, v.status]);
     },
-    { message: "Status atualizado" },
+    { message: "Status updated" },
   );
 }
 
@@ -53,7 +53,7 @@ export async function markSubscriptionUsed(raw: unknown) {
   return run(idSchema, raw, async (v, { db }) => {
     const today = await userToday(db);
     await db.query("update subscriptions set last_used_on = $2 where id = $1", [v.id, today]);
-  }, { message: "Uso registrado" });
+  }, { message: "Marked as used today" });
 }
 
 async function advance(db: Parameters<Parameters<typeof run>[2]>[1]["db"], id: string) {
@@ -61,7 +61,7 @@ async function advance(db: Parameters<Parameters<typeof run>[2]>[1]["db"], id: s
     "select next_charge_date::text, billing_cycle from subscriptions where id = $1",
     [id],
   );
-  if (!s[0]) throw new UserError("Assinatura não encontrada.");
+  if (!s[0]) throw new UserError("Subscription not found.");
   const next = advanceOnce({ start: s[0].next_charge_date, frequency: s[0].billing_cycle }, s[0].next_charge_date);
   await db.query("update subscriptions set next_charge_date = $2 where id = $1", [id, next]);
   return next;
@@ -77,7 +77,7 @@ export async function recordSubscriptionCharge(raw: unknown) {
         "select name, currency, category, status from subscriptions where id = $1",
         [v.subscriptionId],
       );
-      if (!s[0]) throw new UserError("Assinatura não encontrada.");
+      if (!s[0]) throw new UserError("Subscription not found.");
       const acc = await getAccount(db, v.accountId);
       const { accountAmount, fxRate } = await amountInAccount(db, acc.currency, toCents(v.amount), s[0].currency, v.fxRate);
       await db.query(
@@ -87,13 +87,13 @@ export async function recordSubscriptionCharge(raw: unknown) {
       );
       return advance(db, v.subscriptionId);
     },
-    { message: "Cobrança registrada" },
+    { message: "Charge recorded" },
   );
 }
 
 export async function skipSubscriptionCharge(raw: unknown) {
   return run(z.object({ id: uuid, confirmDate: isoDate.optional() }), raw, async (v, { db }) => advance(db, v.id), {
-    message: "Cobrança pulada — próxima data atualizada",
+    message: "Charge skipped — next date updated",
   });
 }
 
@@ -103,8 +103,8 @@ export async function deleteSubscription(raw: unknown) {
     raw,
     async (v, { db }) => {
       const r = await db.query("delete from subscriptions where id = $1 returning id", [v.id]);
-      if (!r.length) throw new UserError("Assinatura não encontrada.");
+      if (!r.length) throw new UserError("Subscription not found.");
     },
-    { message: "Assinatura excluída (cobranças registradas foram mantidas)" },
+    { message: "Subscription deleted (recorded charges were kept)" },
   );
 }

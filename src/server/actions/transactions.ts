@@ -30,7 +30,7 @@ export async function createExpense(raw: unknown) {
       );
       return rows[0].id;
     },
-    { message: "Despesa registrada" },
+    { message: "Expense added" },
   );
 }
 
@@ -43,7 +43,7 @@ export async function updateExpense(raw: unknown) {
         "select kind, series_id from transactions where id = $1",
         [v.id],
       );
-      if (!current[0] || current[0].kind !== "expense") throw new UserError("Despesa não encontrada.");
+      if (!current[0] || current[0].kind !== "expense") throw new UserError("Expense not found.");
       const amount = toCents(v.amount);
       let accountAmount: number | null = null;
       let fxRate: string | null = null;
@@ -60,7 +60,7 @@ export async function updateExpense(raw: unknown) {
           v.description, v.paymentMethod ?? null, v.notes, v.recurrence, seriesId],
       );
     },
-    { message: "Despesa atualizada" },
+    { message: "Expense updated" },
   );
 }
 
@@ -74,8 +74,8 @@ export async function markExpensePaid(raw: unknown) {
         [v.id],
       );
       const t = rows[0];
-      if (!t || t.kind !== "expense") throw new UserError("Despesa não encontrada.");
-      if (t.status === "paid") throw new UserError("Esta despesa já está paga.");
+      if (!t || t.kind !== "expense") throw new UserError("Expense not found.");
+      if (t.status === "paid") throw new UserError("This expense is already paid.");
       const acc = await getAccount(db, v.accountId);
       const { accountAmount, fxRate } = await amountInAccount(db, acc.currency, toCents(t.amount), t.currency, v.fxRate);
       await db.query(
@@ -83,7 +83,7 @@ export async function markExpensePaid(raw: unknown) {
         [v.id, v.accountId, dec(accountAmount), fxRate, v.date],
       );
     },
-    { message: "Despesa marcada como paga" },
+    { message: "Expense marked as paid" },
   );
 }
 
@@ -95,7 +95,7 @@ export async function addNextOccurrence(raw: unknown) {
     async (v, { db }) => {
       const rows = await db.query<Record<string, string | null>>("select * from transactions where id = $1 and kind = 'expense'", [v.id]);
       const t = rows[0];
-      if (!t || t.recurrence === "none") throw new UserError("Esta despesa não é recorrente.");
+      if (!t || t.recurrence === "none") throw new UserError("This expense does not repeat.");
       const latest = await db.query<{ date: string }>(
         "select max(date)::text as date from transactions where coalesce(series_id, id) = coalesce($1::uuid, $2::uuid)",
         [t.series_id, t.id],
@@ -110,7 +110,7 @@ export async function addNextOccurrence(raw: unknown) {
       if (!t.series_id) await db.query("update transactions set series_id = id where id = $1", [t.id]);
       return next;
     },
-    { message: "Próxima ocorrência criada como pendente" },
+    { message: "Next one added as pending" },
   );
 }
 
@@ -127,7 +127,7 @@ export async function createIncomeTransaction(raw: unknown) {
         [v.date, v.amount, v.currency, v.accountId, dec(accountAmount), fxRate, v.category, v.description, v.notes],
       );
     },
-    { message: "Receita registrada" },
+    { message: "Income recorded" },
   );
 }
 
@@ -143,9 +143,9 @@ export async function updateIncomeTransaction(raw: unknown) {
            category = $8, description = $9, notes = $10 where id = $1 and kind = 'income' returning id`,
         [v.id, v.date, v.amount, v.currency, v.accountId, dec(accountAmount), fxRate, v.category, v.description, v.notes],
       );
-      if (!r.length) throw new UserError("Receita não encontrada.");
+      if (!r.length) throw new UserError("Income not found.");
     },
-    { message: "Receita atualizada" },
+    { message: "Income updated" },
   );
 }
 
@@ -162,14 +162,14 @@ export async function createTransfer(raw: unknown) {
       if (from.currency === to.currency) toAmount = amount;
       else if (v.toAmount) toAmount = toCents(v.toAmount);
       else ({ accountAmount: toAmount, fxRate } = await amountInAccount(db, to.currency, amount, from.currency));
-      if (toAmount <= 0) throw new UserError("Informe o valor recebido na conta de destino.");
+      if (toAmount <= 0) throw new UserError("Enter the amount received in the destination account.");
       await db.query(
         `insert into transactions (kind, status, date, amount, currency, account_id, account_amount, to_account_id, to_amount, fx_rate, category, description)
          values ('transfer', 'paid', $1, $2, $3, $4, $2, $5, $6, $7, 'transfer', $8)`,
-        [v.date, v.amount, from.currency, v.fromAccountId, v.toAccountId, dec(toAmount), fxRate, v.description ?? "Transferência entre contas"],
+        [v.date, v.amount, from.currency, v.fromAccountId, v.toAccountId, dec(toAmount), fxRate, v.description ?? "Transfer between accounts"],
       );
     },
-    { message: "Transferência registrada (não conta como receita nem despesa)" },
+    { message: "Transfer recorded (not counted as income or expense)" },
   );
 }
 
@@ -182,13 +182,13 @@ export async function createRefund(raw: unknown) {
       const { accountAmount, fxRate } = await amountInAccount(db, acc.currency, toCents(v.amount), v.currency, v.fxRate);
       if (v.refundOf) {
         const orig = await db.query<{ amount: string; kind: string }>("select amount, kind from transactions where id = $1", [v.refundOf]);
-        if (!orig[0] || orig[0].kind !== "expense") throw new UserError("Despesa original não encontrada.");
+        if (!orig[0] || orig[0].kind !== "expense") throw new UserError("Original expense not found.");
         const already = await db.query<{ total: string | null }>(
           "select sum(amount)::text as total from transactions where refund_of = $1 and kind = 'refund'",
           [v.refundOf],
         );
         if (toCents(already[0]?.total ?? "0") + toCents(v.amount) > toCents(orig[0].amount))
-          throw new UserError("O reembolso total não pode ser maior que a despesa original.");
+          throw new UserError("Total refunds cannot be more than the original expense.");
       }
       await db.query(
         `insert into transactions (kind, status, date, amount, currency, account_id, account_amount, fx_rate, category, description, refund_of)
@@ -196,7 +196,7 @@ export async function createRefund(raw: unknown) {
         [v.date, v.amount, v.currency, v.accountId, dec(accountAmount), fxRate, v.category, v.description, v.refundOf],
       );
     },
-    { message: "Reembolso registrado" },
+    { message: "Refund recorded" },
   );
 }
 
@@ -206,8 +206,8 @@ export async function deleteTransaction(raw: unknown) {
     raw,
     async (v, { db }) => {
       const r = await db.query("delete from transactions where id = $1 returning id", [v.id]);
-      if (!r.length) throw new UserError("Movimentação não encontrada.");
+      if (!r.length) throw new UserError("Entry not found.");
     },
-    { message: "Movimentação excluída" },
+    { message: "Entry deleted" },
   );
 }

@@ -19,9 +19,9 @@ export default async function CashFlowPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <PageHeader
-        eyebrow="Planejamento"
-        title="Cash Flow Forecast"
-        description="Veja seu dinheiro antes de gastá-lo. O ponto de partida é o saldo real de hoje; tudo depois é previsão."
+        eyebrow="Planning"
+        title="Cash Flow"
+        description="See your money before you spend it. It starts from what you really have today; everything after today is an estimate."
       />
       <CashFlowClient
         today={s.today}

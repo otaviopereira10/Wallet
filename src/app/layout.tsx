@@ -9,7 +9,7 @@ const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", dis
 
 export const metadata: Metadata = {
   title: { default: "Isabelle Wallet", template: "%s · Isabelle Wallet" },
-  description: "Plataforma pessoal e privada de controle financeiro.",
+  description: "A private, personal money manager.",
   robots: { index: false, follow: false, nocache: true },
   applicationName: "Isabelle Wallet",
 };
@@ -31,7 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const theme = (await cookies()).get("iw_theme")?.value;
   const initial = theme === "dark" ? "dark" : "light";
   return (
-    <html lang="pt-BR" data-theme={initial} className={`${jakarta.variable} ${fraunces.variable}`} suppressHydrationWarning>
+    <html lang="en" data-theme={initial} className={`${jakarta.variable} ${fraunces.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

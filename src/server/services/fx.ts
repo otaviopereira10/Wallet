@@ -26,7 +26,7 @@ async function getJson(url: string): Promise<unknown> {
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" }, cache: "no-store" });
-    if (!res.ok) throw new Error(`Provedor de câmbio respondeu ${res.status}`);
+    if (!res.ok) throw new Error(`Exchange rate provider answered ${res.status}`);
     return await res.json();
   } finally {
     clearTimeout(timer);
@@ -44,7 +44,7 @@ export async function fetchUsdBrl(history?: { from: string; to: string }): Promi
     const base = env.fxApiBase ?? "https://economia.awesomeapi.com.br/json";
     const data = (await getJson(`${base}/last/USD-BRL`)) as { USDBRL?: { bid?: string; create_date?: string } };
     const rate = validRate(data.USDBRL?.bid);
-    if (!rate) throw new Error("Resposta inválida do provedor de câmbio");
+    if (!rate) throw new Error("Invalid answer from the exchange rate provider");
     return { source: "awesomeapi", rates: [{ rateDate: (data.USDBRL?.create_date ?? new Date().toISOString()).slice(0, 10), rate }] };
   }
   const base = env.fxApiBase ?? "https://api.frankfurter.dev/v1";
@@ -61,7 +61,7 @@ export async function fetchUsdBrl(history?: { from: string; to: string }): Promi
   }
   const data = (await getJson(`${base}/latest?base=USD&symbols=BRL`)) as { date?: string; rates?: { BRL?: number } };
   const rate = validRate(data.rates?.BRL);
-  if (!rate || !data.date) throw new Error("Resposta inválida do provedor de câmbio");
+  if (!rate || !data.date) throw new Error("Invalid answer from the exchange rate provider");
   return { source: "frankfurter", rates: [{ rateDate: data.date, rate }] };
 }
 
@@ -96,9 +96,9 @@ export async function refreshRates(userId: string, today: string): Promise<{ ok:
     count += await storeRates(userId, latest.source, latest.rates);
     return { ok: true, count };
   } catch (err) {
-    const message = err instanceof Error && err.name === "AbortError" ? "Tempo esgotado ao consultar a cotação" : "Não foi possível atualizar a cotação agora";
+    const message = err instanceof Error && err.name === "AbortError" ? "The exchange rate request timed out" : "Could not update the exchange rate right now";
     console.warn("[fx] refresh failed:", err instanceof Error ? err.message : "unknown");
-    return { ok: false, error: `${message}. A última cotação conhecida continua em uso; você pode informar uma taxa manual.` };
+    return { ok: false, error: `${message}. The last known rate is still in use; you can type a rate manually.` };
   }
 }
 

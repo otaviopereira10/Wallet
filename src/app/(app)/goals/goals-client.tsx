@@ -65,18 +65,18 @@ export function GoalsClient({
   return (
     <>
       <div className="mb-6 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Economia acumulada" value={f.money(totalSaved)} icon={<PiggyBank />} tone="pink" />
-        <StatCard label="Contribuição mensal planejada" value={f.money(plannedGoals)} />
+        <StatCard label="Total saved" value={f.money(totalSaved)} icon={<PiggyBank />} tone="pink" />
+        <StatCard label="Planned per month" value={f.money(plannedGoals)} />
         <StatCard
-          label="Posso guardar por mês"
+          label="You can save per month"
           value={capacity === null ? "—" : f.money(capacity)}
           tone="success"
-          info={<InfoTip>Sobra mensal estimada (renda recorrente − obrigações recorrentes − gastos variáveis médios) menos o pagamento planejado da dívida.</InfoTip>}
-          sub={capacity === null ? "Cadastre receitas recorrentes para calcular" : "Sem prejudicar as contas"}
+          info={<InfoTip>What is left each month (repeating income − repeating bills − average everyday spending), minus your planned debt payment.</InfoTip>}
+          sub={capacity === null ? "Add repeating income to calculate this" : "Without risking your bills"}
         />
         <div className="flex items-center justify-center rounded-2xl border border-dashed border-border-strong p-4">
           <Button onClick={() => setCreating(true)}>
-            <Plus /> Nova meta
+            <Plus /> New goal
           </Button>
         </div>
       </div>
@@ -86,9 +86,9 @@ export function GoalsClient({
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="size-4 text-pink-500" /> Quanto guardar em cada meta
+                <Lightbulb className="size-4 text-pink-500" /> How much to put in each goal
               </CardTitle>
-              <CardDescription>Divisão da sua capacidade de poupança por prioridade (alta 3 : média 2 : baixa 1), respeitando o que cada meta ainda precisa.</CardDescription>
+              <CardDescription>What you can save, split by priority (high 3 : medium 2 : low 1), without giving a goal more than it still needs.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>
@@ -96,14 +96,14 @@ export function GoalsClient({
               {active.map((g) => (
                 <li key={g.id} className="flex items-center justify-between rounded-xl bg-surface-2/60 px-3 py-2 text-sm">
                   <span className="truncate">{g.name}</span>
-                  <span className="tabular font-semibold">{g.recommended ? `${f.money(g.recommended)}/mês` : g.completed ? "concluída" : "—"}</span>
+                  <span className="tabular font-semibold">{g.recommended ? `${f.money(g.recommended)}/month` : g.completed ? "done" : "—"}</span>
                 </li>
               ))}
             </ul>
-            {emergencyMonths !== null && <p className="mt-3 text-xs text-muted">Sua reserva de emergência cobre {emergencyMonths.toFixed(1)} mês(es) de despesas essenciais.</p>}
+            {emergencyMonths !== null && <p className="mt-3 text-xs text-muted">Your emergency fund covers {emergencyMonths.toFixed(1)} month(s) of essential expenses.</p>}
             {(assumptions.length > 0 || missing.length > 0) && (
               <p className="mt-2 text-xs text-muted">
-                {assumptions.join(" ")} {missing.length ? `Dados faltando: ${missing.join(", ")}.` : ""}
+                {assumptions.join(" ")} {missing.length ? `Missing: ${missing.join(", ")}.` : ""}
               </p>
             )}
           </CardContent>
@@ -113,11 +113,11 @@ export function GoalsClient({
       {!active.length ? (
         <EmptyState
           icon={<PiggyBank />}
-          title="Nenhuma meta ainda"
-          description="Crie sua reserva de emergência, uma viagem, eletrônicos ou a reserva para a faculdade."
+          title="No goals yet"
+          description="Create your emergency fund, a trip, electronics or a college fund."
           action={
             <Button onClick={() => setCreating(true)}>
-              <Plus /> Criar meta
+              <Plus /> Create goal
             </Button>
           }
         />
@@ -130,7 +130,7 @@ export function GoalsClient({
       )}
       {archived.length > 0 && (
         <>
-          <h3 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-[0.12em] text-muted">Arquivadas</h3>
+          <h3 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-[0.12em] text-muted">Archived</h3>
           <div className="grid gap-3 opacity-80 md:grid-cols-2">
             {archived.map((g) => (
               <GoalCard key={g.id} g={g} onContribute={() => setContributing(g)} onEdit={() => setEditing(g.initial)} onDelete={() => setDeleting(g)} />
@@ -139,20 +139,20 @@ export function GoalsClient({
         </>
       )}
 
-      <Modal open={creating} onOpenChange={setCreating} title="Nova meta">
+      <Modal open={creating} onOpenChange={setCreating} title="New goal">
         <GoalForm onDone={() => setCreating(false)} />
       </Modal>
-      <Modal open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title="Editar meta">
+      <Modal open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title="Edit goal">
         {editing && <GoalForm initial={editing} onDone={() => setEditing(null)} />}
       </Modal>
-      <Modal open={!!contributing} onOpenChange={(o) => !o && setContributing(null)} title={`Contribuir para “${contributing?.name ?? ""}”`}>
+      <Modal open={!!contributing} onOpenChange={(o) => !o && setContributing(null)} title={`Add to “${contributing?.name ?? ""}”`}>
         {contributing && <ContributionForm goalId={contributing.id} currency={contributing.currency} onDone={() => setContributing(null)} />}
       </Modal>
       <ConfirmDialog
         open={!!deleting}
         onOpenChange={(o) => !o && setDeleting(null)}
-        title={`Excluir “${deleting?.name}”?`}
-        description="A meta e o histórico de contribuições serão apagados. Para guardar o histórico, prefira arquivar."
+        title={`Delete “${deleting?.name}”?`}
+        description="The goal and its contribution history will be deleted. To keep the history, archive it instead."
         onConfirm={() => (deleting ? run(() => deleteGoal({ id: deleting.id })) : undefined)}
       />
     </>
@@ -166,44 +166,44 @@ export function GoalsClient({
             <p className="truncate font-semibold">{g.name}</p>
             <p className="mt-1 flex flex-wrap gap-1.5">
               <Badge tone="pink">{g.kindLabel}</Badge>
-              <Badge>Prioridade {g.priorityLabel.toLowerCase()}</Badge>
+              <Badge>{g.priorityLabel} priority</Badge>
               {g.completed && (
                 <Badge tone="success">
-                  <CheckCircle2 className="size-3" /> Concluída
+                  <CheckCircle2 className="size-3" /> Done
                 </Badge>
               )}
-              {g.onTrack === false && <Badge tone="warning">Abaixo do necessário</Badge>}
-              {g.onTrack === true && !g.completed && <Badge tone="success">No prazo</Badge>}
+              {g.onTrack === false && <Badge tone="warning">Behind schedule</Badge>}
+              {g.onTrack === true && !g.completed && <Badge tone="success">On track</Badge>}
             </p>
           </div>
           <ActionMenu
             items={[
-              { label: "Editar", icon: <Pencil />, onSelect: onEdit },
-              { label: g.archived ? "Desarquivar" : "Arquivar", icon: g.archived ? <ArchiveRestore /> : <Archive />, onSelect: () => run(() => setGoalArchived({ id: g.id, archived: !g.archived })) },
-              { label: "Excluir", icon: <Trash2 />, danger: true, onSelect: onDelete },
+              { label: "Edit", icon: <Pencil />, onSelect: onEdit },
+              { label: g.archived ? "Unarchive" : "Archive", icon: g.archived ? <ArchiveRestore /> : <Archive />, onSelect: () => run(() => setGoalArchived({ id: g.id, archived: !g.archived })) },
+              { label: "Delete", icon: <Trash2 />, danger: true, onSelect: onDelete },
             ]}
           />
         </div>
         <div className="mt-4 flex items-baseline justify-between">
           <p className="tabular text-xl font-semibold">{f.money(g.saved, g.currency)}</p>
-          <p className="tabular text-sm text-muted">de {f.money(g.target, g.currency)}</p>
+          <p className="tabular text-sm text-muted">of {f.money(g.target, g.currency)}</p>
         </div>
         <ProgressBar className="mt-2" value={g.percent} tone={g.completed ? "success" : "pink"} label={`${g.name}: ${g.percent}%`} />
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-          <Info label="Faltam" value={f.money(g.remaining, g.currency)} />
-          <Info label="Contribuição planejada" value={g.monthly ? `${f.money(g.monthly, g.currency)}/mês` : "não definida"} />
+          <Info label="Still to save" value={f.money(g.remaining, g.currency)} />
+          <Info label="Planned per month" value={g.monthly ? `${f.money(g.monthly, g.currency)}/month` : "not set"} />
           <Info
-            label="Estimativa de conclusão"
-            value={g.completed ? "Concluída" : g.estimatedDate ? `${f.date(g.estimatedDate)} (${monthsToText(g.monthsToTarget)})` : "Defina uma contribuição mensal"}
+            label="Expected to reach it"
+            value={g.completed ? "Done" : g.estimatedDate ? `${f.date(g.estimatedDate)} (${monthsToText(g.monthsToTarget)})` : "Set a monthly amount"}
           />
           <Info
-            label={g.deadline ? `Para chegar até ${f.date(g.deadline)}` : "Data limite"}
-            value={g.deadline ? (g.requiredMonthly !== null ? `${f.money(g.requiredMonthly, g.currency)}/mês` : "—") : "sem data limite"}
+            label={g.deadline ? `To reach it by ${f.date(g.deadline)}` : "Target date"}
+            value={g.deadline ? (g.requiredMonthly !== null ? `${f.money(g.requiredMonthly, g.currency)}/month` : "—") : "no target date"}
           />
         </div>
         {g.contributions.length > 0 && (
           <details className="mt-3 text-xs">
-            <summary className="cursor-pointer text-muted">Últimas contribuições</summary>
+            <summary className="cursor-pointer text-muted">Recent contributions</summary>
             <ul className="mt-1.5 space-y-1">
               {g.contributions.map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-2">
@@ -212,7 +212,7 @@ export function GoalsClient({
                   </span>
                   <span className="flex items-center gap-1">
                     <span className={`tabular ${c.amount < 0 ? "text-danger" : ""}`}>{f.money(c.amount, g.currency, { signed: true })}</span>
-                    <button type="button" aria-label="Remover contribuição" className="text-muted hover:text-danger" onClick={() => run(() => deleteContribution({ id: c.id }))}>
+                    <button type="button" aria-label="Remove contribution" className="text-muted hover:text-danger" onClick={() => run(() => deleteContribution({ id: c.id }))}>
                       <Trash2 className="size-3.5" />
                     </button>
                   </span>
@@ -222,7 +222,7 @@ export function GoalsClient({
           </details>
         )}
         <Button className="mt-4 w-full" variant="secondary" onClick={onContribute}>
-          <Plus /> Registrar contribuição
+          <Plus /> Add money to this goal
         </Button>
       </Card>
     );

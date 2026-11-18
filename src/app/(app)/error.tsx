@@ -10,10 +10,10 @@ export default function AppError({ reset }: { error: Error & { digest?: string }
         <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-danger-bg text-danger">
           <TriangleAlert className="size-6" />
         </span>
-        <h1 className="mt-4 font-display text-2xl">Algo não saiu como esperado</h1>
-        <p className="mt-2 text-sm text-muted">Não foi possível carregar esta página. Seus dados estão seguros — tente novamente em instantes.</p>
+        <h1 className="mt-4 font-display text-2xl">Something went wrong</h1>
+        <p className="mt-2 text-sm text-muted">This page could not load. Your data is safe — please try again in a moment.</p>
         <Button className="mt-6" onClick={reset}>
-          <RotateCcw /> Tentar novamente
+          <RotateCcw /> Try again
         </Button>
       </div>
     </div>

@@ -25,9 +25,9 @@ const params = (v: z.output<typeof debtSchema>) => [
 
 function check(v: z.output<typeof debtSchema>) {
   if (Number(v.incrementAmount) > 0 && !v.incrementAnchorDate)
-    throw new UserError("Informe a próxima data de acréscimo (ou deixe o acréscimo em zero).");
+    throw new UserError("Add the next semester charge date (or set the charge to zero).");
   if (v.incrementsEndDate && v.incrementAnchorDate && v.incrementsEndDate < v.incrementAnchorDate)
-    throw new UserError("A data de término dos acréscimos deve ser depois da próxima data de acréscimo.");
+    throw new UserError("The last charge date must be after the next charge date.");
 }
 
 export async function createDebt(raw: unknown) {
@@ -44,7 +44,7 @@ export async function createDebt(raw: unknown) {
       );
       return r[0].id;
     },
-    { message: "Dívida cadastrada" },
+    { message: "Debt added" },
   );
 }
 
@@ -60,9 +60,9 @@ export async function updateDebt(raw: unknown) {
            payment_day = $13, target_payoff_date = $14, notes = $15 where id = $1 returning id`,
         [v.id, ...params(v)],
       );
-      if (!r.length) throw new UserError("Dívida não encontrada.");
+      if (!r.length) throw new UserError("Debt not found.");
     },
-    { message: "Configuração da dívida atualizada" },
+    { message: "Debt settings updated" },
   );
 }
 
@@ -74,7 +74,7 @@ export async function setPlannedPayment(raw: unknown) {
     async (v, { db }) => {
       await db.query("update debts set planned_monthly_payment = $2 where id = $1", [v.id, v.amount]);
     },
-    { message: "Pagamento mensal planejado atualizado" },
+    { message: "Planned monthly payment updated" },
   );
 }
 
@@ -84,9 +84,9 @@ export async function deleteDebt(raw: unknown) {
     raw,
     async (v, { db }) => {
       const r = await db.query("delete from debts where id = $1 returning id", [v.id]);
-      if (!r.length) throw new UserError("Dívida não encontrada.");
+      if (!r.length) throw new UserError("Debt not found.");
     },
-    { message: "Dívida excluída (os pagamentos continuam como saídas no histórico)" },
+    { message: "Debt deleted (payments stay in your money-out history)" },
   );
 }
 
@@ -100,16 +100,16 @@ export async function payDebt(raw: unknown) {
     raw,
     async (v, { db }) => {
       const d = await db.query<{ name: string; currency: Currency }>("select name, currency from debts where id = $1", [v.debtId]);
-      if (!d[0]) throw new UserError("Dívida não encontrada.");
+      if (!d[0]) throw new UserError("Debt not found.");
       let transactionId: string | null = null;
       if (v.recordOutflow) {
-        if (!v.accountId) throw new UserError("Escolha a conta de onde saiu o pagamento.");
+        if (!v.accountId) throw new UserError("Choose the account the payment came from.");
         const acc = await getAccount(db, v.accountId);
         const { accountAmount, fxRate } = await amountInAccount(db, acc.currency, toCents(v.amount), d[0].currency, v.fxRate);
         const tx = await db.query<{ id: string }>(
           `insert into transactions (kind, status, date, amount, currency, account_id, account_amount, fx_rate, category, description, debt_id)
            values ('debt_payment', 'paid', $1, $2, $3, $4, $5, $6, 'debt', $7, $8) returning id`,
-          [v.date, v.amount, d[0].currency, v.accountId, dec(accountAmount), fxRate, `Pagamento: ${d[0].name}`, v.debtId],
+          [v.date, v.amount, d[0].currency, v.accountId, dec(accountAmount), fxRate, `Payment: ${d[0].name}`, v.debtId],
         );
         transactionId = tx[0].id;
       }
@@ -121,7 +121,7 @@ export async function payDebt(raw: unknown) {
         v.note,
       ]);
     },
-    { message: "Pagamento da dívida registrado" },
+    { message: "Debt payment recorded" },
   );
 }
 
@@ -130,7 +130,7 @@ export async function addDebtEvent(raw: unknown) {
     debtEventSchema,
     raw,
     async (v, { db }) => {
-      if (v.type === "increment" && Number(v.amount) < 0) throw new UserError("Um acréscimo deve ser positivo.");
+      if (v.type === "increment" && Number(v.amount) < 0) throw new UserError("A charge must be a positive amount.");
       await db.query("insert into debt_events (debt_id, date, type, amount, note) values ($1, $2, $3, $4, $5)", [
         v.debtId,
         v.date,
@@ -139,7 +139,7 @@ export async function addDebtEvent(raw: unknown) {
         v.note,
       ]);
     },
-    { message: "Movimentação adicionada ao histórico" },
+    { message: "Added to the history" },
   );
 }
 
@@ -153,11 +153,11 @@ export async function removeDebtEvent(raw: unknown) {
         "select automatic, transaction_id from debt_events where id = $1",
         [v.id],
       );
-      if (!e[0]) throw new UserError("Movimentação não encontrada.");
+      if (!e[0]) throw new UserError("Entry not found.");
       if (e[0].automatic) await db.query("update debt_events set voided = $2 where id = $1", [v.id, !v.restore]);
       else if (e[0].transaction_id) await db.query("delete from transactions where id = $1", [e[0].transaction_id]);
       else await db.query("delete from debt_events where id = $1", [v.id]);
     },
-    { message: "Histórico atualizado" },
+    { message: "History updated" },
   );
 }

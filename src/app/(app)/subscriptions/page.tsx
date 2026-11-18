@@ -5,7 +5,7 @@ import { centsToInput } from "@/lib/format";
 import { getAppData } from "@/server/context";
 import { SubscriptionsClient } from "./subscriptions-client";
 
-export const metadata: Metadata = { title: "Assinaturas" };
+export const metadata: Metadata = { title: "Subscriptions" };
 
 export default async function SubscriptionsPage() {
   const { snapshot: s, analysis: a } = await getAppData();
@@ -49,9 +49,9 @@ export default async function SubscriptionsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Dinheiro"
-        title="Assinaturas"
-        description="Serviços recorrentes como streaming, iCloud, aplicativos e academia. Pouco uso só é sinalizado quando você informa quando usou."
+        eyebrow="Your money"
+        title="Subscriptions"
+        description="Services you pay for regularly, like streaming, iCloud, apps and the gym. “Rarely used” only appears when you tell the app when you last used it."
       />
       <SubscriptionsClient subs={subs} totals={a.subTotals} />
     </>

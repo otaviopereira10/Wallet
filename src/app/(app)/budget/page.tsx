@@ -17,9 +17,9 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader
-        eyebrow="Planejamento"
+        eyebrow="Planning"
         title="Monthly Budget"
-        description="Limites mensais por categoria. Despesas pendentes contam como gasto comprometido; reembolsos são descontados."
+        description="Set a monthly spending limit for each category and see how you are doing. Pending expenses count as spent; refunds are subtracted."
       />
       <BudgetClient
         monthKey={key}

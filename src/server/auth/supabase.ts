@@ -6,7 +6,7 @@ import { env } from "../env";
 /** Supabase client bound to the request cookies (Server Components, Actions, Route Handlers). */
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
-  if (!env.supabaseUrl || !env.supabaseKey) throw new Error("Supabase não configurado.");
+  if (!env.supabaseUrl || !env.supabaseKey) throw new Error("Supabase is not configured.");
   return createServerClient(env.supabaseUrl, env.supabaseKey, {
     cookies: {
       getAll() {

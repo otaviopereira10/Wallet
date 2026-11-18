@@ -18,7 +18,7 @@ export function isISODate(value: string): boolean {
 
 export function parts(date: ISODate): { y: number; m: number; d: number } {
   const match = ISO_RE.exec(date);
-  if (!match) throw new Error(`Data inválida: ${date}`);
+  if (!match) throw new Error(`Invalid date: ${date}`);
   return { y: Number(match[1]), m: Number(match[2]), d: Number(match[3]) };
 }
 

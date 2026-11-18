@@ -1,42 +1,46 @@
 # Isabelle Wallet
 
-Plataforma pessoal, privada e inteligente de controle financeiro — com identidade visual
-rosa, modo escuro, interface responsiva e cálculos financeiros precisos e testados.
+A private, personal money manager — pink design, dark mode, works on phone and desktop,
+and every number is calculated precisely from the data you enter.
 
-> A Isabelle Wallet **organiza, calcula e recomenda**. Ela nunca realiza pagamentos ou
-> movimenta dinheiro de verdade.
+> Isabelle Wallet **organizes, calculates and recommends**. It never makes payments or
+> moves real money.
 
-## O que tem
+**Deploying?** Follow [docs/DEPLOY.md](docs/DEPLOY.md) — a step-by-step guide to put the app
+on Vercel with Supabase.
 
-| Módulo | Destaques |
+## What's inside
+
+| Page | What it does |
 |---|---|
-| **Dashboard** | saldo disponível, recebido/gasto no mês, contas pendentes, já pago, dívida, economia, “quanto ainda posso gastar”, próximas contas, receitas × despesas, evolução do patrimônio e “Seu resumo financeiro” calculado dos seus dados |
-| **Contas & saldos** | contas em USD/BRL, saldo inicial, transferências (não contam como receita/despesa) |
-| **Receitas** | fontes únicas e recorrentes (semanal, quinzenal, mensal, semestral, anual, personalizada), confirmação de recebimento, projeção de 6 meses |
-| **Despesas** | cadastro completo, pesquisa, filtros (período, categoria, valor, status), pendente/pago/atrasado, recorrentes, reembolsos, comparação entre meses, aumentos incomuns, gráficos |
-| **Bills & Payments** | vencimentos de hoje / 7 / 30 dias / atrasados, pagamento parcial, multa e juros, e o **Smart Payment Planner** (ordem recomendada, reservas, maior risco, simulação e registro) |
-| **University Debt Manager** | acréscimo semestral configurável (5.500 por padrão) lançado na data certa, juros opcionais, histórico detalhado, simulador (100/200/300/500/personalizado), estratégias Conservative/Balanced/Aggressive, projeção de 6 meses a 5 anos, alerta de pagamento insuficiente |
-| **Monthly Budget** | limites por categoria, dentro/próximo/ultrapassado, projeção do mês, recomendações |
-| **Cash Flow Forecast** | linha do tempo diária/semanal/mensal, saldo real × previsto, simulações “e se…?” |
-| **Savings Goals** | metas, progresso, estimativas, quanto guardar por meta |
-| **Assinaturas** | mensal/anual, próximas cobranças, “quero cancelar”, uso só com dados reais |
-| **Calendário** | recebimentos, vencimentos, pagamentos, acréscimos da faculdade, metas, por cores |
-| **Financial Reports** | mensal, trimestral, semestral, anual e personalizado; CSV e PDF |
-| **Isabelle Intelligence** | perguntas em linguagem natural respondidas pelo motor financeiro (problema, ação, impacto, riscos, premissas, dados faltando); IA opcional no servidor |
-| **Importar & backup** | CSV com pré-visualização, linhas inválidas e duplicadas; backup JSON e restauração atômica |
-| **Configurações** | perfil, moeda principal, fuso, tema, reserva mínima, alertas, câmbio (automático e manual), senha, apagar dados |
+| **Dashboard** | Money available now, what is safe to spend this month, money in/out this month, upcoming bills, debt, savings, charts, and a "Getting started" checklist for new users |
+| **Ask Isabelle** | Ask questions in plain English ("Can I buy something for $150?") — answers come from your own numbers, with the situation, what to do, impact and risks. Optional AI explanation |
+| **Accounts** | Checking, savings, cash and cards in USD or BRL; transfers between them (never counted as income or spending) |
+| **Income** | One-time and repeating income (weekly, every 2 weeks, monthly, semester, yearly, custom), "mark as received", 6-month projection |
+| **Expenses** | Search, filters, pending/paid, repeating expenses, refunds, month-to-month comparison, unusual increases |
+| **Bills & Payments** | Due today / in 7 days / in 30 days / overdue, partial payments, late fees, and the **Payment Planner** that tells you what to pay first when money is short |
+| **University Debt** | Semester charge added on schedule (5,500 by default, configurable), optional interest, full history, payment simulator, Conservative/Balanced/Aggressive strategies, 6-month to 5-year projection, alert when your payment is too low |
+| **Monthly Budget** | Limits per category, on track / close / over, end-of-month projection |
+| **Cash Flow** | Day/week/month forecast of your balance, real vs. expected, "what if" simulations |
+| **Savings Goals** | Goals with progress, estimated finish date and how much to put in each |
+| **Subscriptions** | Monthly/yearly cost, next charges, "want to cancel", usage tracking |
+| **Calendar** | Every money event by day, color-coded |
+| **Reports** | Monthly, quarterly, semester, yearly or custom — download CSV or PDF |
+| **Import & Backup** | CSV import with preview, invalid-row and duplicate detection; full JSON backup and restore |
+| **Settings** | Profile, main currency, time zone, theme, safety cushion, reminders, exchange rate (automatic and manual), password, delete all data |
+| **Help** | Plain-English guide: what each page does, glossary, how numbers are calculated, FAQ |
 
-Detalhes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/FINANCIAL_RULES.md](docs/FINANCIAL_RULES.md)
+More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/FINANCIAL_RULES.md](docs/FINANCIAL_RULES.md)
 
-## Tecnologias
+## Tech
 
 Next.js 16 (App Router, Server Actions) · React 19 · TypeScript · Tailwind CSS 4 · Radix UI ·
 Recharts · Lucide · React Hook Form + Zod · date-fns · decimal.js · Supabase (Auth + Postgres + RLS) ·
-PGlite (Postgres embutido para uso local) · jsPDF · Vitest · SDK oficial da Anthropic (IA opcional).
+PGlite (embedded Postgres for local use) · jsPDF · Vitest · official Anthropic SDK (optional AI).
 
-## Executar localmente (sem nenhuma conta na nuvem)
+## Run it on your computer (no cloud account needed)
 
-Requisitos: **Node.js 20.9+** (testado com Node 24).
+Requires **Node.js 20.9+**.
 
 ```bash
 npm install
@@ -46,104 +50,92 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:3000, clique em **Criar conta** e siga a configuração inicial.
+Open http://localhost:3000, click **Create account** and follow the setup steps.
 
-No modo local os dados ficam em `.data/pglite` (banco PostgreSQL real, embutido) e o
-primeiro cadastro vira a dona da carteira — novos cadastros ficam bloqueados por padrão.
-Para começar do zero, pare o servidor e apague a pasta `.data`.
+In local mode the data lives in `.data/pglite` (a real, embedded PostgreSQL database) and the
+first account created becomes the owner — new sign-ups are blocked by default. To start over,
+stop the server and delete the `.data` folder.
 
-## Configurar o Supabase (recomendado para publicar)
+## Use Supabase (needed for Vercel)
 
-1. Crie um projeto em https://supabase.com.
-2. Copie `.env.example` para `.env.local` e preencha:
-   - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — *Project Settings → API*.
-   - `DATABASE_URL` — *Project Settings → Database → Connection string → Transaction pooler* (porta 6543), com a senha do banco. **É um segredo.**
+1. Create a project at https://supabase.com.
+2. Copy `.env.example` to `.env.local` and fill in:
+   - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — *Project Settings → API*.
+   - `DATABASE_URL` — *Project Settings → Database → Connection string → Transaction pooler* (port 6543), with your database password. **This is a secret.**
    - `DATA_BACKEND=supabase`
-3. Crie as tabelas e políticas de segurança:
+3. Create the tables and security policies:
 
    ```bash
    npm run db:migrate
    ```
 
-   (Alternativa: cole `supabase/migrations/20261116000000_initial_schema.sql` no *SQL Editor* do Supabase.)
-4. Em *Authentication → URL Configuration*, defina **Site URL** com o endereço do app e adicione `https://SEU-DOMINIO/auth/callback` (e `http://localhost:3000/auth/callback`) em *Redirect URLs*.
-5. Rode `npm run dev`, crie sua conta e confirme pelo e-mail.
-6. Depois de criar a sua conta, desative novos cadastros: *Authentication → Providers → Email → Allow new users to sign up* (desligado) e/ou `ALLOW_SIGNUP=false`.
+   (Alternative: paste each file in `supabase/migrations/` into the Supabase *SQL Editor*, in order.)
+4. In *Authentication → URL Configuration*, set **Site URL** to the app's address and add
+   `https://YOUR-DOMAIN/auth/callback` (and `http://localhost:3000/auth/callback`) to *Redirect URLs*.
+5. Run `npm run dev`, create your account and confirm it from the email.
+6. After creating your account, turn off new sign-ups: *Authentication → Sign In / Providers → Allow new users to sign up* (off) and/or `ALLOW_SIGNUP=false`.
 
-Como funciona a segurança: o servidor conecta ao Postgres e, em **cada transação**, troca
-para o papel `authenticated` com o ID da usuária da sessão. As políticas de RLS garantem
-que cada consulta só enxergue as linhas dela — inclusive se houver um bug no código.
+How the security works: the server connects to Postgres and, in **every transaction**, switches
+to the `authenticated` role with the signed-in user's ID. Row Level Security policies make sure
+each query only sees that user's rows — even if there were a bug in the app code.
 
-## Câmbio (USD ↔ BRL)
+## Exchange rate (USD ↔ BRL)
 
-Funciona sem chave: por padrão usa o **Frankfurter** (taxas de referência do Banco Central
-Europeu). A cotação é atualizada automaticamente a cada 12 h ao abrir o app, ou pelo botão
-**Atualizar** em *Configurações → Câmbio*, onde também é possível informar uma **taxa manual**.
-Se o provedor estiver fora do ar, a última cotação conhecida continua em uso, com data e
-horário. Para usar a AwesomeAPI: `FX_PROVIDER=awesomeapi`.
+Works without any key: by default it uses **Frankfurter** (European Central Bank reference rates).
+The rate refreshes automatically every 12 hours when you open the app, or with **Update** in
+*Settings → Exchange rate*, where you can also enter a **manual rate**. If the provider is down,
+the last known rate keeps being used, with its date and time. To use AwesomeAPI instead:
+`FX_PROVIDER=awesomeapi`.
 
-## IA (opcional)
+## AI (optional)
 
-A Isabelle Intelligence funciona sem IA: todas as respostas vêm do motor financeiro.
-Para adicionar explicações em linguagem natural:
+Ask Isabelle works without AI: every answer comes from the app's own calculations. To add a
+plain-language explanation on top:
 
-1. Crie uma chave em https://console.anthropic.com e defina `AI_API_KEY` (apenas no servidor).
-2. Opcional: `AI_MODEL` (padrão `claude-opus-5-5`).
-3. Ative em *Configurações → Usar IA*.
+1. Create a key at https://console.anthropic.com and set `AI_API_KEY` (server only).
+2. Optional: `AI_MODEL` (default `claude-opus-5-5`).
+3. Turn it on in *Settings → Use AI in Ask Isabelle answers*.
 
-Quando ativada, só é enviado um resumo dos números necessários à pergunta, no momento em
-que você pergunta. O modelo recebe a resposta calculada como fonte da verdade e é instruído
-a não inventar valores. O fallback de recusa do servidor (`fallbacks: "default"`) está habilitado.
+When on, only a summary of the numbers needed for your question is sent, at the moment you ask.
+The model receives the calculated answer as the source of truth and is told not to invent values.
 
-## Testes
+## Tests
 
 ```bash
 npm test
 ```
 
-60 testes cobrem: dinheiro e arredondamento, datas e fusos, recorrências, câmbio, CSV,
-saldos (transferências, pendentes, reembolsos, pagamentos de dívida), contas e pagamentos
-parciais, Smart Payment Planner, acréscimos semestrais, juros, simulador e estratégias da
-dívida, fluxo de caixa, orçamento, metas, assinaturas, assistente, relatórios, **isolamento
-entre usuárias via RLS em PostgreSQL real**, sincronização sem duplicação e backup/restauração.
+The tests cover money and rounding, dates and time zones, recurrences, exchange rates, CSV,
+balances (transfers, pending items, refunds, debt payments), bills and partial payments, the
+Payment Planner, semester charges, interest, the debt simulator and strategies, cash flow,
+budget, goals, subscriptions, the assistant (English and Portuguese questions), reports,
+**user isolation through RLS on a real PostgreSQL database**, idempotent syncing and backup/restore.
 
 ```bash
 npm run typecheck
 ```
 
-## Publicar (Vercel)
+## Security and privacy
 
-1. Configure o Supabase (seção acima) e rode `npm run db:migrate` apontando para ele.
-2. Importe o repositório na Vercel.
-3. Variáveis de ambiente: `DATA_BACKEND=supabase`, `NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL` e, se quiser, `AI_API_KEY`.
-4. Deploy. Atualize *Site URL* e *Redirect URLs* do Supabase com o domínio final.
-
-Self-hosting (VPS/Docker): `npm run build` e `npm start` atrás de HTTPS. No modo local em
-produção, defina `AUTH_SECRET` (≥ 32 caracteres), mantenha `LOCAL_DATA_DIR` em disco
-persistente e rode **uma única instância** (o banco embutido não é compartilhado entre processos).
-
-## Segurança e privacidade
-
-- Rotas protegidas no `proxy.ts` **e** verificação de sessão em cada página, ação e rota de API.
-- RLS forçado em todas as tabelas; `anon` sem acesso; FKs compostas impedem referências cruzadas.
-- Senhas nunca em texto puro (Supabase Auth ou scrypt); bloqueio após tentativas falhas.
-- Validação com Zod no navegador **e** no servidor; textos sanitizados; CSV exportado protegido contra injeção de fórmulas.
-- Segredos só em variáveis de ambiente do servidor; nenhuma chave privada no frontend.
+- Routes are protected in `proxy.ts` **and** the session is checked again in every page, action and API route.
+- RLS enabled and forced on every table; `anon` has no access; composite foreign keys stop cross-user references.
+- Passwords are never stored in plain text (Supabase Auth, or scrypt in local mode); lockout after repeated failures.
+- Zod validation in the browser **and** on the server; text is sanitized; exported CSV is protected against formula injection.
+- Secrets live only in server environment variables; no private key in the frontend.
 - Headers: CSP, `X-Frame-Options: DENY`, `noindex`, `Referrer-Policy`, `Permissions-Policy`.
-- Logs sem valores financeiros (inclusive o log de Server Functions do Next está desativado).
+- Logs never include financial values (Next's Server Function logging is turned off too).
 
-## Estrutura
+## Project structure
 
 ```
 src/
-  app/            páginas (App Router), rotas de API e autenticação
-  components/     UI (primitivos, formulários, gráficos, layout)
-  lib/finance/    motor financeiro puro (testado)
-  lib/            validação, formatação, constantes
-  server/         auth, banco, serviços, Server Actions
-supabase/migrations/   schema + RLS (usado no Supabase e no modo local)
-scripts/migrate.ts     aplica migrations em DATABASE_URL
+  app/            pages (App Router), API routes and auth
+  components/     UI (primitives, forms, charts, layout)
+  lib/finance/    pure financial engine (tested)
+  lib/            validation, formatting, constants
+  server/         auth, database, services, Server Actions
+supabase/migrations/   schema + RLS (used by Supabase and by local mode)
+scripts/migrate.ts     applies migrations to DATABASE_URL
 tests/                 Vitest
-docs/                  arquitetura e regras financeiras
+docs/                  deploy guide, architecture and financial rules
 ```

@@ -12,7 +12,7 @@ export async function updateProfile(raw: unknown) {
     profileSchema,
     raw,
     async (v, { db }) => {
-      if (!isValidTimeZone(v.timezone)) throw new UserError("Fuso horário inválido.");
+      if (!isValidTimeZone(v.timezone)) throw new UserError("Invalid time zone.");
       await db.query(
         `update profiles set display_name = $1, base_currency = $2, locale = $3, timezone = $4, theme = $5, emergency_buffer = $6,
            alert_days_ahead = $7, ai_enabled = $8 where user_id = auth.uid()`,
@@ -20,7 +20,7 @@ export async function updateProfile(raw: unknown) {
       );
       (await cookies()).set("iw_theme", v.theme, { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
     },
-    { message: "Preferências salvas" },
+    { message: "Preferences saved" },
   );
 }
 
@@ -49,7 +49,7 @@ export async function createAccount(raw: unknown) {
       );
       return r[0].id;
     },
-    { message: "Conta criada" },
+    { message: "Account created" },
   );
 }
 
@@ -62,22 +62,22 @@ export async function updateAccount(raw: unknown) {
         "select currency, (select count(*)::text from transactions t where t.account_id = a.id or t.to_account_id = a.id) as n from accounts a where id = $1",
         [v.id],
       );
-      if (!cur[0]) throw new UserError("Conta não encontrada.");
+      if (!cur[0]) throw new UserError("Account not found.");
       if (cur[0].currency !== v.currency && Number(cur[0].n) > 0)
-        throw new UserError("Não é possível mudar a moeda de uma conta com movimentações. Crie uma nova conta.");
+        throw new UserError("You cannot change the currency of an account that has entries. Create a new account instead.");
       await db.query(
         "update accounts set name = $2, type = $3, currency = $4, opening_balance = $5, opening_date = $6, include_in_available = $7 where id = $1",
         [v.id, v.name, v.type, v.currency, v.openingBalance, v.openingDate, v.includeInAvailable],
       );
     },
-    { message: "Conta atualizada" },
+    { message: "Account updated" },
   );
 }
 
 export async function setAccountArchived(raw: unknown) {
   return run(z.object({ id: uuid, archived: z.boolean() }), raw, async (v, { db }) => {
     await db.query("update accounts set archived = $2 where id = $1", [v.id, v.archived]);
-  }, { message: "Conta atualizada" });
+  }, { message: "Account updated" });
 }
 
 export async function deleteAccount(raw: unknown) {
@@ -89,10 +89,10 @@ export async function deleteAccount(raw: unknown) {
         "select count(*)::text as n from transactions where account_id = $1 or to_account_id = $1",
         [v.id],
       );
-      if (Number(used[0].n) > 0) throw new UserError("Esta conta tem movimentações. Arquive-a em vez de excluir.");
+      if (Number(used[0].n) > 0) throw new UserError("This account has entries. Archive it instead of deleting.");
       await db.query("delete from accounts where id = $1", [v.id]);
     },
-    { message: "Conta excluída" },
+    { message: "Account deleted" },
   );
 }
 
@@ -102,7 +102,7 @@ export async function refreshFxNow() {
     const r = await refreshRates(user.id, today);
     if (!r.ok) throw new UserError(r.error);
     return r.count;
-  }, { message: "Cotação atualizada" });
+  }, { message: "Exchange rate updated" });
 }
 
 export async function setManualRate(raw: unknown) {
@@ -110,33 +110,33 @@ export async function setManualRate(raw: unknown) {
     manualRateSchema,
     raw,
     async (v, { db }) => {
-      if (v.base === v.quote) throw new UserError("Escolha moedas diferentes.");
+      if (v.base === v.quote) throw new UserError("Choose two different currencies.");
       await db.query(
         `insert into fx_rates (base, quote, rate, rate_date, source, is_manual, fetched_at) values ($1, $2, $3, $4, 'manual', true, now())
          on conflict (user_id, base, quote, rate_date, source) do update set rate = excluded.rate, fetched_at = now()`,
         [v.base, v.quote, v.rate, v.date],
       );
     },
-    { message: "Taxa manual salva e em uso" },
+    { message: "Manual rate saved and in use" },
   );
 }
 
 export async function deleteManualRates() {
   return run(z.object({}), {}, async (_v, { db }) => {
     await db.query("delete from fx_rates where is_manual");
-  }, { message: "Taxas manuais removidas" });
+  }, { message: "Manual rates removed" });
 }
 
 /** Deletes every financial record of the user (keeps the login and preferences). */
 export async function resetAllData(raw: unknown) {
   return run(
-    z.object({ confirm: z.literal("APAGAR", { message: "Digite APAGAR para confirmar" }) }),
+    z.object({ confirm: z.literal("DELETE", { message: "Type DELETE to confirm" }) }),
     raw,
     async (_v, { db }) => {
       for (const t of ["bill_payments", "debt_events", "goal_contributions", "transactions", "bill_occurrences", "bills", "subscriptions", "incomes", "debts", "goals", "budgets", "fx_rates", "accounts"])
         await db.query(`delete from ${t} where user_id = auth.uid()`);
       await db.query("update profiles set onboarding_completed = false where user_id = auth.uid()");
     },
-    { message: "Todos os dados financeiros foram apagados" },
+    { message: "All your financial data was deleted" },
   );
 }

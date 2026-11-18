@@ -81,9 +81,9 @@ export default async function GoalsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Planejamento"
+        eyebrow="Planning"
         title="Savings Goals"
-        description="Metas e reserva de emergência. Os valores guardados são acompanhados por contribuições que você registra."
+        description="Your emergency fund and other goals. Progress grows with the contributions you record."
       />
       <GoalsClient
         goals={views}

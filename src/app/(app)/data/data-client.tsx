@@ -16,14 +16,14 @@ import { centsToInput } from "@/lib/format";
 import { commitImport, previewImport, restoreBackupAction, type ImportRowResult } from "@/server/actions/data";
 
 const FIELDS = [
-  { key: "date", label: "Data", required: true, guess: /^(data|date|dia)/i },
-  { key: "description", label: "Descrição", required: true, guess: /^(descri|description|hist|memo|nome|name)/i },
-  { key: "amount", label: "Valor", required: true, guess: /^(valor|amount|value|quantia)/i },
-  { key: "type", label: "Tipo (receita/despesa)", required: false, guess: /^(tipo|type|kind)/i },
-  { key: "category", label: "Categoria", required: false, guess: /^(categ)/i },
-  { key: "currency", label: "Moeda", required: false, guess: /^(moeda|currency)/i },
+  { key: "date", label: "Date", required: true, guess: /^(data|date|dia)/i },
+  { key: "description", label: "Description", required: true, guess: /^(descri|description|hist|memo|nome|name)/i },
+  { key: "amount", label: "Amount", required: true, guess: /^(valor|amount|value|quantia)/i },
+  { key: "type", label: "Type (income/expense)", required: false, guess: /^(tipo|type|kind)/i },
+  { key: "category", label: "Category", required: false, guess: /^(categ)/i },
+  { key: "currency", label: "Currency", required: false, guess: /^(moeda|currency)/i },
   { key: "status", label: "Status", required: false, guess: /^(status|situa)/i },
-  { key: "notes", label: "Observações", required: false, guess: /^(obs|notes|nota)/i },
+  { key: "notes", label: "Notes", required: false, guess: /^(obs|notes|nota)/i },
 ] as const;
 type FieldKey = (typeof FIELDS)[number]["key"];
 
@@ -45,7 +45,7 @@ export function DataClient() {
   const [fileName, setFileName] = React.useState("");
   const [hasHeader, setHasHeader] = React.useState(true);
   const [mapping, setMapping] = React.useState<Record<FieldKey, number>>({} as Record<FieldKey, number>);
-  const [dateFormat, setDateFormat] = React.useState<DateFormat>("dmy");
+  const [dateFormat, setDateFormat] = React.useState<DateFormat>(app.locale === "en-US" ? "mdy" : "dmy");
   const [signMode, setSignMode] = React.useState<"negative-expense" | "all-expense" | "all-income">("negative-expense");
   const [accountId, setAccountId] = React.useState(app.accounts.find((a) => !a.archived)?.id ?? "");
   const [defaultCategory, setDefaultCategory] = React.useState("other");
@@ -56,15 +56,15 @@ export function DataClient() {
   const [restoreSummary, setRestoreSummary] = React.useState<Record<string, number> | null>(null);
   const [confirmRestore, setConfirmRestore] = React.useState(false);
 
-  const header = hasHeader ? (rows[0] ?? []) : (rows[0] ?? []).map((_, i) => `Coluna ${i + 1}`);
+  const header = hasHeader ? (rows[0] ?? []) : (rows[0] ?? []).map((_, i) => `Column ${i + 1}`);
   const body = hasHeader ? rows.slice(1) : rows;
   const account = app.accounts.find((a) => a.id === accountId);
 
   const onFile = async (file: File) => {
-    if (file.size > 5_000_000) return toast.error("Arquivo muito grande (máx. 5 MB).");
+    if (file.size > 4_000_000) return toast.error("File too large (max 4 MB).");
     const text = await file.text();
     const parsed = parseCsv(text);
-    if (!parsed.length) return toast.error("O arquivo está vazio ou não é um CSV válido.");
+    if (!parsed.length) return toast.error("The file is empty or not a valid CSV.");
     setRows(parsed);
     setFileName(file.name);
     setPreview(null);
@@ -79,6 +79,7 @@ export function DataClient() {
     // Guess date format from the first data row.
     const sample = parsed[1]?.[guess.date] ?? "";
     if (/^\d{4}-/.test(sample)) setDateFormat("ymd");
+    else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(sample) && Number(sample.split("/")[0]) > 12) setDateFormat("dmy");
     else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(sample) && Number(sample.split("/")[0]) <= 12 && Number(sample.split("/")[1]) > 12) setDateFormat("mdy");
   };
 
@@ -86,8 +87,8 @@ export function DataClient() {
     const get = (k: FieldKey) => (mapping[k] >= 0 ? (r[mapping[k]] ?? "").trim() : "");
     const date = parseDateString(get("date"), dateFormat);
     const cents = parseMoney(get("amount"));
-    if (!date) return { index, raw: r, row: null, localError: `data inválida (“${get("date")}”)` };
-    if (cents === null || cents === 0) return { index, raw: r, row: null, localError: `valor inválido (“${get("amount")}”)` };
+    if (!date) return { index, raw: r, row: null, localError: `invalid date (“${get("date")}”)` };
+    if (cents === null || cents === 0) return { index, raw: r, row: null, localError: `invalid amount (“${get("amount")}”)` };
     let kind: "income" | "expense";
     const t = norm(get("type"));
     if (t) kind = /receita|income|entrada|credito|credit/.test(t) ? "income" : "expense";
@@ -106,7 +107,7 @@ export function DataClient() {
       localError: null,
       row: {
         date,
-        description: get("description") || "(sem descrição)",
+        description: get("description") || "(no description)",
         amount: centsToInput(Math.abs(cents)),
         kind,
         category,
@@ -119,8 +120,8 @@ export function DataClient() {
   const valid = prepared.filter((p) => p.row);
 
   const runPreview = async () => {
-    if (!accountId) return toast.error("Escolha a conta.");
-    if (!valid.length) return toast.error("Nenhuma linha válida para verificar.");
+    if (!accountId) return toast.error("Choose the account.");
+    if (!valid.length) return toast.error("No valid rows to check.");
     setBusy(true);
     try {
       const r = await previewImport({ accountId, rows: valid.map((p) => p.row) });
@@ -137,7 +138,7 @@ export function DataClient() {
       const r = await commitImport({ accountId, rows: valid.map((p) => p.row) });
       if (!r.ok) toast.error(r.error);
       else {
-        toast.success(r.message ?? "Importação concluída");
+        toast.success(r.message ?? "Import finished");
         setRows([]);
         setPreview(null);
         setFileName("");
@@ -159,40 +160,40 @@ export function DataClient() {
         <CardHeader>
           <div>
             <CardTitle className="flex items-center gap-2">
-              <FileUp className="size-4 text-pink-500" /> Importar movimentações (CSV)
+              <FileUp className="size-4 text-pink-500" /> Import transactions (CSV)
             </CardTitle>
-            <CardDescription>Revise tudo antes de confirmar. Linhas inválidas são apontadas e duplicadas são ignoradas.</CardDescription>
+            <CardDescription>1. Choose a file · 2. Match the columns · 3. Check · 4. Import. Invalid rows are flagged and duplicates are skipped — nothing is saved until you confirm.</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border-strong px-6 py-8 text-center transition hover:border-pink-300 hover:bg-pink-50/40">
             <Upload className="size-6 text-pink-500" />
-            <span className="text-sm font-medium">{fileName || "Escolher arquivo .csv"}</span>
-            <span className="text-xs text-muted">Separador vírgula ou ponto e vírgula · até 5.000 linhas</span>
+            <span className="text-sm font-medium">{fileName || "Choose a .csv file"}</span>
+            <span className="text-xs text-muted">Comma or semicolon separated · up to 5,000 rows</span>
             <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
           </label>
 
           {rows.length > 0 && (
             <>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Field label="Conta das movimentações" htmlFor="imp-acc">
+                <Field label="Account for these transactions" htmlFor="imp-acc">
                   <AccountSelect id="imp-acc" value={accountId} onChange={(e) => setAccountId(e.target.value)} />
                 </Field>
-                <Field label="Formato das datas" htmlFor="imp-date">
+                <Field label="Date format" htmlFor="imp-date">
                   <Select id="imp-date" value={dateFormat} onChange={(e) => setDateFormat(e.target.value as DateFormat)}>
-                    <option value="dmy">DD/MM/AAAA</option>
-                    <option value="mdy">MM/DD/AAAA</option>
-                    <option value="ymd">AAAA-MM-DD</option>
+                    <option value="dmy">DD/MM/YYYY</option>
+                    <option value="mdy">MM/DD/YYYY</option>
+                    <option value="ymd">YYYY-MM-DD</option>
                   </Select>
                 </Field>
-                <Field label="Sem coluna de tipo:" htmlFor="imp-sign">
+                <Field label="If there is no type column" htmlFor="imp-sign">
                   <Select id="imp-sign" value={signMode} onChange={(e) => setSignMode(e.target.value as typeof signMode)}>
-                    <option value="negative-expense">Negativo = despesa, positivo = receita</option>
-                    <option value="all-expense">Todas são despesas</option>
-                    <option value="all-income">Todas são receitas</option>
+                    <option value="negative-expense">Negative = expense, positive = income</option>
+                    <option value="all-expense">All are expenses</option>
+                    <option value="all-income">All are income</option>
                   </Select>
                 </Field>
-                <Field label="Categoria padrão (despesas)" htmlFor="imp-cat">
+                <Field label="Default category (expenses)" htmlFor="imp-cat">
                   <Select id="imp-cat" value={defaultCategory} onChange={(e) => setDefaultCategory(e.target.value)}>
                     {EXPENSE_CATEGORIES.map((c) => (
                       <option key={c} value={c}>
@@ -205,10 +206,10 @@ export function DataClient() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-semibold">Colunas do arquivo</p>
+                  <p className="text-sm font-semibold">Match the file’s columns</p>
                   <label className="flex items-center gap-2 text-xs text-muted">
                     <input type="checkbox" className="accent-[var(--c-pink-500)]" checked={hasHeader} onChange={(e) => setHasHeader(e.target.checked)} />
-                    Primeira linha é cabeçalho
+                    First row is a header
                   </label>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -222,10 +223,10 @@ export function DataClient() {
                           setPreview(null);
                         }}
                       >
-                        <option value={-1}>{fd.required ? "Escolha a coluna" : "Não usar"}</option>
+                        <option value={-1}>{fd.required ? "Choose a column" : "Don’t use"}</option>
                         {header.map((h, i) => (
                           <option key={i} value={i}>
-                            {h || `Coluna ${i + 1}`}
+                            {h || `Column ${i + 1}`}
                           </option>
                         ))}
                       </Select>
@@ -239,12 +240,12 @@ export function DataClient() {
                   <thead className="bg-surface-2/60 text-left text-xs text-muted">
                     <tr>
                       <th className="px-3 py-2 font-medium">#</th>
-                      <th className="px-3 py-2 font-medium">Data</th>
-                      <th className="px-3 py-2 font-medium">Descrição</th>
-                      <th className="px-3 py-2 font-medium">Tipo</th>
-                      <th className="px-3 py-2 font-medium">Categoria</th>
-                      <th className="px-3 py-2 text-right font-medium">Valor</th>
-                      <th className="px-3 py-2 font-medium">Situação</th>
+                      <th className="px-3 py-2 font-medium">Date</th>
+                      <th className="px-3 py-2 font-medium">Description</th>
+                      <th className="px-3 py-2 font-medium">Type</th>
+                      <th className="px-3 py-2 font-medium">Category</th>
+                      <th className="px-3 py-2 text-right font-medium">Amount</th>
+                      <th className="px-3 py-2 font-medium">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -257,7 +258,7 @@ export function DataClient() {
                           <td className="px-3 py-2 text-xs text-muted">{p.index + 1}</td>
                           <td className="px-3 py-2">{p.row ? f.date(String(p.row.date), "short") : (p.raw[mapping.date] ?? "")}</td>
                           <td className="max-w-56 truncate px-3 py-2">{p.row ? String(p.row.description) : (p.raw[mapping.description] ?? "")}</td>
-                          <td className="px-3 py-2">{p.row ? (p.row.kind === "income" ? "Receita" : "Despesa") : "—"}</td>
+                          <td className="px-3 py-2">{p.row ? (p.row.kind === "income" ? "Income" : "Expense") : "—"}</td>
                           <td className="px-3 py-2">{p.row ? CATEGORY_LABELS[String(p.row.category)] : "—"}</td>
                           <td className="tabular px-3 py-2 text-right">{p.row ? `${p.row.currency} ${p.row.amount}` : (p.raw[mapping.amount] ?? "")}</td>
                           <td className="px-3 py-2 text-xs">
@@ -270,7 +271,7 @@ export function DataClient() {
                                 <span className={srv.status === "duplicate" ? "text-warning" : "text-danger"}>{srv.errors.join("; ")}</span>
                               )
                             ) : (
-                              <span className="text-muted">a verificar</span>
+                              <span className="text-muted">not checked yet</span>
                             )}
                           </td>
                         </tr>
@@ -278,7 +279,7 @@ export function DataClient() {
                     })}
                   </tbody>
                 </table>
-                {prepared.length > 200 && <p className="px-3 py-2 text-xs text-muted">Mostrando 200 de {prepared.length} linhas.</p>}
+                {prepared.length > 200 && <p className="px-3 py-2 text-xs text-muted">Showing 200 of {prepared.length} rows.</p>}
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -286,28 +287,28 @@ export function DataClient() {
                   {preview ? (
                     <>
                       <CheckCircle2 className="mr-1 inline size-4 text-success" />
-                      {okCount} prontas · {dupCount} duplicadas · {badCount} inválidas
+                      {okCount} ready · {dupCount} duplicates · {badCount} invalid
                     </>
                   ) : (
-                    `${valid.length} de ${prepared.length} linhas com formato válido`
+                    `${valid.length} of ${prepared.length} rows look valid`
                   )}
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={runPreview} loading={busy && !preview}>
-                    Verificar no servidor
+                    Check rows
                   </Button>
                   <Button onClick={runImport} disabled={!preview || okCount === 0} loading={busy && !!preview}>
-                    Importar {preview ? okCount : ""} movimentação(ões)
+                    Import {preview ? okCount : ""} transaction(s)
                   </Button>
                 </div>
               </div>
             </>
           )}
           <details className="text-xs text-muted">
-            <summary className="cursor-pointer">Exemplo de arquivo</summary>
-            <pre className="mt-2 overflow-x-auto rounded-xl bg-surface-2 p-3">{`data;descricao;valor;categoria
-16/11/2026;Mercado;-84,90;Mercado
-15/11/2026;Freelance;350,00;Trabalho extra`}</pre>
+            <summary className="cursor-pointer">Example file</summary>
+            <pre className="mt-2 overflow-x-auto rounded-xl bg-surface-2 p-3">{`date,description,amount,category
+2026-11-16,Grocery store,-84.90,Groceries
+2026-11-15,Freelance job,350.00,Side income`}</pre>
           </details>
         </CardContent>
       </Card>
@@ -317,19 +318,19 @@ export function DataClient() {
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
-                <FileSpreadsheet className="size-4 text-pink-500" /> Exportar CSV
+                <FileSpreadsheet className="size-4 text-pink-500" /> Download CSV
               </CardTitle>
-              <CardDescription>Para Excel, Numbers ou Google Sheets.</CardDescription>
+              <CardDescription>For Excel, Numbers or Google Sheets.</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {[
-              ["transactions", "Todas as movimentações"],
-              ["bills", "Contas e vencimentos"],
-              ["incomes", "Fontes de renda"],
-              ["debt", "Histórico da dívida"],
-              ["goals", "Contribuições para metas"],
-              ["subscriptions", "Assinaturas"],
+              ["transactions", "All transactions"],
+              ["bills", "Bills and due dates"],
+              ["incomes", "Income sources"],
+              ["debt", "Debt history"],
+              ["goals", "Goal contributions"],
+              ["subscriptions", "Subscriptions"],
             ].map(([type, label]) => (
               <Button key={type} asChild variant="outline" size="sm">
                 <a href={`/api/export?type=${type}`} download>
@@ -344,20 +345,20 @@ export function DataClient() {
           <CardHeader>
             <div>
               <CardTitle className="flex items-center gap-2">
-                <DatabaseBackup className="size-4 text-pink-500" /> Backup e restauração
+                <DatabaseBackup className="size-4 text-pink-500" /> Backup & restore
               </CardTitle>
-              <CardDescription>O backup é um arquivo JSON com todos os seus dados. Guarde-o em local seguro.</CardDescription>
+              <CardDescription>A backup is one JSON file with all your data. Keep it somewhere safe.</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button asChild>
               <a href="/api/export?type=backup" download>
-                <Copy /> Baixar backup completo
+                <Copy /> Download full backup
               </a>
             </Button>
             <div className="rounded-2xl border border-border p-4">
-              <p className="text-sm font-medium">Restaurar um backup</p>
-              <p className="mt-0.5 text-xs text-muted">Substitui todos os dados atuais pelos do arquivo. É feito em uma única transação: se algo falhar, nada muda.</p>
+              <p className="text-sm font-medium">Restore a backup</p>
+              <p className="mt-0.5 text-xs text-muted">Replaces all current data with the file’s data. It happens all at once: if anything fails, nothing changes.</p>
               <input
                 type="file"
                 accept="application/json,.json"
@@ -365,7 +366,7 @@ export function DataClient() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  if (file.size > 9_000_000) return toast.error("Arquivo muito grande.");
+                  if (file.size > 4_000_000) return toast.error("File too large (max 4 MB).");
                   const text = await file.text();
                   try {
                     const data = JSON.parse(text);
@@ -376,7 +377,7 @@ export function DataClient() {
                     setRestoreJson(text);
                     setRestoreName(file.name);
                   } catch {
-                    toast.error("Este arquivo não é um backup válido da Isabelle Wallet.");
+                    toast.error("This file is not a valid Isabelle Wallet backup.");
                   }
                 }}
               />
@@ -384,11 +385,11 @@ export function DataClient() {
                 <div className="mt-3 rounded-xl bg-surface-2/60 p-3 text-xs">
                   <p className="font-medium">{restoreName}</p>
                   <p className="mt-1 text-muted">
-                    {restoreSummary.accounts} contas · {restoreSummary.transactions} movimentações · {restoreSummary.incomes} receitas · {restoreSummary.bills} contas a pagar ·{" "}
-                    {restoreSummary.debts} dívidas · {restoreSummary.goals} metas · {restoreSummary.subscriptions} assinaturas · {restoreSummary.budgets} limites
+                    {restoreSummary.accounts} accounts · {restoreSummary.transactions} transactions · {restoreSummary.incomes} income sources · {restoreSummary.bills} bills ·{" "}
+                    {restoreSummary.debts} debts · {restoreSummary.goals} goals · {restoreSummary.subscriptions} subscriptions · {restoreSummary.budgets} budget limits
                   </p>
                   <Button className="mt-3" variant="danger" size="sm" onClick={() => setConfirmRestore(true)}>
-                    <RotateCcw /> Restaurar este backup
+                    <RotateCcw /> Restore this backup
                   </Button>
                 </div>
               )}
@@ -399,21 +400,21 @@ export function DataClient() {
 
       <p className="flex items-start gap-2 text-xs text-muted">
         <CircleAlert className="mt-0.5 size-3.5 shrink-0" />
-        Integrações bancárias não são necessárias. A arquitetura separa importação, validação e gravação, permitindo adicionar um conector bancário opcional no futuro — sempre
-        com sua autorização explícita.
+        No bank connection is needed. Import, checking and saving are separate steps, so an optional bank connector could be added in the future — always
+        with your explicit permission.
       </p>
 
       <ConfirmDialog
         open={confirmRestore}
         onOpenChange={setConfirmRestore}
-        title="Substituir todos os dados?"
-        description="Seus dados atuais serão apagados e substituídos pelo conteúdo do backup. Recomenda-se baixar um backup atual antes."
-        confirmLabel="Restaurar"
+        title="Replace all your data?"
+        description="Your current data will be deleted and replaced by the backup. Download a backup of your current data first if you want to keep it."
+        confirmLabel="Restore"
         onConfirm={async () => {
           if (!restoreJson) return;
           const r = await restoreBackupAction({ json: restoreJson, confirm: true });
           if (r.ok) {
-            toast.success(r.message ?? "Backup restaurado");
+            toast.success(r.message ?? "Backup restored");
             setRestoreJson(null);
             setRestoreSummary(null);
             router.refresh();

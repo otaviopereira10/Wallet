@@ -68,16 +68,16 @@ function daysBetween(a: ISODate, b: ISODate): number {
 
 export function compareItems(a: PlannerItem, b: PlannerItem, today: ISODate): { result: number; criterion: string } {
   const pw = PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority];
-  if (pw !== 0) return { result: pw, criterion: "prioridade" };
+  if (pw !== 0) return { result: pw, criterion: "priority" };
   const ao = a.dueDate < today ? 1 : 0;
   const bo = b.dueDate < today ? 1 : 0;
-  if (ao !== bo) return { result: bo - ao, criterion: "atraso" };
-  if (a.dueDate !== b.dueDate) return { result: a.dueDate < b.dueDate ? -1 : 1, criterion: "vencimento" };
+  if (ao !== bo) return { result: bo - ao, criterion: "being overdue" };
+  if (a.dueDate !== b.dueDate) return { result: a.dueDate < b.dueDate ? -1 : 1, criterion: "due date" };
   const ac = lateCost(a, a.amount, 30);
   const bc = lateCost(b, b.amount, 30);
-  if (ac !== bc) return { result: bc - ac, criterion: "custo do atraso" };
-  if (a.amount !== b.amount) return { result: a.amount - b.amount, criterion: "valor" };
-  return { result: a.name.localeCompare(b.name), criterion: "nome" };
+  if (ac !== bc) return { result: bc - ac, criterion: "cost of paying late" };
+  if (a.amount !== b.amount) return { result: a.amount - b.amount, criterion: "amount" };
+  return { result: a.name.localeCompare(b.name), criterion: "name" };
 }
 
 export function planPayments(input: { cash: Cents; buffer: Cents; items: PlannerItem[]; today: ISODate }): PlannerResult {
@@ -137,16 +137,16 @@ export function planPayments(input: { cash: Cents; buffer: Cents; items: Planner
     const payWhen: PlannerAllocation["payWhen"] =
       allocated === 0 ? "needs_money" : overdue || daysUntilDue <= 3 ? "now" : "by_due";
     let reason: string;
-    if (overdue) reason = `Atrasada há ${-daysUntilDue} dia(s) — pagar o quanto antes para limitar multas e juros.`;
-    else if (it.priority === "essential") reason = "Conta essencial: atrasar pode comprometer necessidades básicas.";
-    else if (it.priority === "important") reason = "Conta importante: tem consequências se atrasar, mas vem depois das essenciais.";
-    else reason = "Opcional: pode ser adiada se faltar dinheiro, sem prejudicar as contas essenciais.";
+    if (overdue) reason = `Overdue by ${-daysUntilDue} day(s) — pay as soon as possible to limit fees and interest.`;
+    else if (it.priority === "essential") reason = "Essential bill: paying late could put basic needs at risk.";
+    else if (it.priority === "important") reason = "Important bill: paying late has consequences, but it comes after essentials.";
+    else reason = "Optional: can wait if money is short, without hurting essential bills.";
     if (idx > 0) {
       const prev = sorted[idx - 1];
       if (prev.priority === it.priority) {
         const { criterion } = compareItems(prev, it, today);
         tieExplanations.push(
-          `“${prev.name}” vem antes de “${it.name}” (mesma prioridade): desempate por ${criterion}.`,
+          `“${prev.name}” comes before “${it.name}” (same priority): decided by ${criterion}.`,
         );
       }
     }
@@ -174,9 +174,9 @@ export function planPayments(input: { cash: Cents; buffer: Cents; items: Planner
   const highestRisk = order.length ? order.reduce((a, b) => (b.riskScore > a.riskScore ? b : a)) : null;
 
   const warnings: string[] = [];
-  if (shortfall > 0) warnings.push("O dinheiro disponível não cobre todas as contas listadas.");
+  if (shortfall > 0) warnings.push("The money available does not cover all the bills listed.");
   if (used > cash - buffer && buffer > 0)
-    warnings.push("Para cobrir contas essenciais, o plano usa parte da sua reserva mínima de segurança.");
+    warnings.push("To cover essential bills, the plan uses part of your safety cushion.");
   return {
     order,
     cash,
@@ -203,11 +203,11 @@ export function evaluateManualPlan(
   for (const it of input.items) {
     const v = Math.max(0, manual[it.id] ?? 0);
     allocated += v;
-    if (v > it.amount) warnings.push(`“${it.name}”: valor acima do que falta pagar.`);
+    if (v > it.amount) warnings.push(`“${it.name}”: more than what is left to pay.`);
     if (v > 0 && v < it.amount && !it.allowsPartial)
-      warnings.push(`“${it.name}” não aceita pagamento parcial.`);
+      warnings.push(`“${it.name}” does not accept partial payments.`);
     if (v > 0 && it.allowsPartial && v < Math.min(it.minimum, it.amount))
-      warnings.push(`“${it.name}”: valor abaixo do mínimo permitido.`);
+      warnings.push(`“${it.name}”: below the minimum payment.`);
   }
   const essentialsUncovered = input.items.filter(
     (it) => it.priority === "essential" && (manual[it.id] ?? 0) < (it.allowsPartial ? Math.min(it.minimum, it.amount) : it.amount),
@@ -215,11 +215,11 @@ export function evaluateManualPlan(
   const lesserPaid = input.items.filter((it) => it.priority !== "essential" && (manual[it.id] ?? 0) > 0);
   if (essentialsUncovered.length && lesserPaid.length)
     warnings.push(
-      `Atenção: você está pagando contas de menor prioridade enquanto ${essentialsUncovered
+      `Heads up: you are paying lower-priority bills while ${essentialsUncovered
         .map((i) => `“${i.name}”`)
-        .join(", ")} (essencial) não está coberta.`,
+        .join(", ")} (essential) is not covered.`,
     );
-  if (allocated > input.cash) warnings.push("A distribuição ultrapassa o dinheiro disponível.");
+  if (allocated > input.cash) warnings.push("This plan uses more money than you have available.");
   const leftover = input.cash - allocated;
   return { allocated, leftover, safeToSpend: Math.max(0, leftover - input.buffer), warnings };
 }

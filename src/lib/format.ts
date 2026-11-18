@@ -5,7 +5,7 @@ const moneyFormatters = new Map<string, Intl.NumberFormat>();
 export function formatMoney(
   cents: Cents | null | undefined,
   currency: Currency,
-  locale: string = "pt-BR",
+  locale: string = "en-US",
   opts: { signed?: boolean; compact?: boolean } = {},
 ): string {
   if (cents === null || cents === undefined || Number.isNaN(cents)) return "—";
@@ -24,17 +24,17 @@ export function formatMoney(
   return text;
 }
 
-export function formatNumber(value: number, locale = "pt-BR", digits = 0): string {
+export function formatNumber(value: number, locale = "en-US", digits = 0): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(value);
 }
 
-export function formatPercent(value: number | null | undefined, locale = "pt-BR", digits = 1): string {
+export function formatPercent(value: number | null | undefined, locale = "en-US", digits = 1): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
   return `${new Intl.NumberFormat(locale, { maximumFractionDigits: digits }).format(value)}%`;
 }
 
 /** Formats an ISO calendar date without any time-zone shift. */
-export function formatDate(iso: ISODate | null | undefined, locale = "pt-BR", style: "short" | "medium" | "long" = "medium"): string {
+export function formatDate(iso: ISODate | null | undefined, locale = "en-US", style: "short" | "medium" | "long" = "medium"): string {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1, d));
@@ -47,7 +47,7 @@ export function formatDate(iso: ISODate | null | undefined, locale = "pt-BR", st
   return new Intl.DateTimeFormat(locale, options).format(date);
 }
 
-export function formatMonth(key: string, locale = "pt-BR", style: "short" | "long" = "short"): string {
+export function formatMonth(key: string, locale = "en-US", style: "short" | "long" = "short"): string {
   const [y, m] = key.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1, 1));
   return new Intl.DateTimeFormat(locale, {
@@ -57,7 +57,7 @@ export function formatMonth(key: string, locale = "pt-BR", style: "short" | "lon
   }).format(date);
 }
 
-export function formatDateTime(iso: string | null | undefined, locale = "pt-BR", timeZone?: string): string {
+export function formatDateTime(iso: string | null | undefined, locale = "en-US", timeZone?: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
@@ -65,22 +65,22 @@ export function formatDateTime(iso: string | null | undefined, locale = "pt-BR",
 }
 
 export function relativeDays(days: number): string {
-  if (days === 0) return "hoje";
-  if (days === 1) return "amanhã";
-  if (days === -1) return "ontem";
-  if (days > 1) return `em ${days} dias`;
-  return `há ${-days} dias`;
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  if (days === -1) return "yesterday";
+  if (days > 1) return `in ${days} days`;
+  return `${-days} days ago`;
 }
 
 export function monthsToText(months: number | null): string {
   if (months === null) return "—";
-  if (months <= 0) return "menos de 1 mês";
+  if (months <= 0) return "less than 1 month";
   const y = Math.floor(months / 12);
   const m = months % 12;
   const parts: string[] = [];
-  if (y) parts.push(`${y} ano${y > 1 ? "s" : ""}`);
-  if (m) parts.push(`${m} ${m > 1 ? "meses" : "mês"}`);
-  return parts.join(" e ");
+  if (y) parts.push(`${y} year${y > 1 ? "s" : ""}`);
+  if (m) parts.push(`${m} month${m > 1 ? "s" : ""}`);
+  return parts.join(" and ");
 }
 
 /** Converts a cents value to an input string in "1234.56" format. */

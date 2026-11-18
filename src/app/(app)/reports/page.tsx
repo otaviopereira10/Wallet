@@ -22,7 +22,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const loc = s.profile.locale;
   return (
     <>
-      <PageHeader eyebrow="Análise" title="Financial Reports" description="Relatórios por período, categoria, dívida e metas — exportáveis em CSV e PDF." />
+      <PageHeader eyebrow="Insights" title="Reports" description="See where your money went in any period — by category, debt and goals. Download as CSV or PDF." />
       <ReportsClient
         period={kind}
         refDate={ref}

@@ -15,7 +15,7 @@ export async function createGoal(raw: unknown) {
         [v.name, v.kind, v.targetAmount, v.currency, v.deadline, v.priority, v.monthlyContribution, v.notes],
       );
       if (v.initialSaved && Number(v.initialSaved) > 0) {
-        await db.query("insert into goal_contributions (goal_id, date, amount, note) values ($1, $2, $3, 'Valor já acumulado')", [
+        await db.query("insert into goal_contributions (goal_id, date, amount, note) values ($1, $2, $3, 'Already saved')", [
           r[0].id,
           await userToday(db),
           v.initialSaved,
@@ -23,7 +23,7 @@ export async function createGoal(raw: unknown) {
       }
       return r[0].id;
     },
-    { message: "Meta criada" },
+    { message: "Goal created" },
   );
 }
 
@@ -37,23 +37,23 @@ export async function updateGoal(raw: unknown) {
          where id = $1 returning id`,
         [v.id, v.name, v.kind, v.targetAmount, v.currency, v.deadline, v.priority, v.monthlyContribution, v.notes],
       );
-      if (!r.length) throw new UserError("Meta não encontrada.");
+      if (!r.length) throw new UserError("Goal not found.");
     },
-    { message: "Meta atualizada" },
+    { message: "Goal updated" },
   );
 }
 
 export async function setGoalArchived(raw: unknown) {
   return run(z.object({ id: uuid, archived: z.boolean() }), raw, async (v, { db }) => {
     await db.query("update goals set archived = $2 where id = $1", [v.id, v.archived]);
-  }, { message: "Meta atualizada" });
+  }, { message: "Goal updated" });
 }
 
 export async function deleteGoal(raw: unknown) {
   return run(idSchema, raw, async (v, { db }) => {
     const r = await db.query("delete from goals where id = $1 returning id", [v.id]);
-    if (!r.length) throw new UserError("Meta não encontrada.");
-  }, { message: "Meta excluída" });
+    if (!r.length) throw new UserError("Goal not found.");
+  }, { message: "Goal deleted" });
 }
 
 export async function addContribution(raw: unknown) {
@@ -63,18 +63,18 @@ export async function addContribution(raw: unknown) {
     async (v, { db }) => {
       if (Number(v.amount) < 0) {
         const saved = await db.query<{ total: string | null }>("select sum(amount)::text as total from goal_contributions where goal_id = $1", [v.goalId]);
-        if (Number(saved[0]?.total ?? 0) + Number(v.amount) < 0) throw new UserError("A retirada é maior que o valor acumulado.");
+        if (Number(saved[0]?.total ?? 0) + Number(v.amount) < 0) throw new UserError("You cannot take out more than what is saved.");
       }
       await db.query("insert into goal_contributions (goal_id, date, amount, note) values ($1, $2, $3, $4)", [v.goalId, v.date, v.amount, v.note]);
     },
-    { message: "Contribuição registrada" },
+    { message: "Contribution recorded" },
   );
 }
 
 export async function deleteContribution(raw: unknown) {
   return run(idSchema, raw, async (v, { db }) => {
     await db.query("delete from goal_contributions where id = $1", [v.id]);
-  }, { message: "Contribuição removida" });
+  }, { message: "Contribution removed" });
 }
 
 export async function upsertBudget(raw: unknown) {
@@ -89,12 +89,12 @@ export async function upsertBudget(raw: unknown) {
         [v.category, v.amount, cur],
       );
     },
-    { message: "Limite salvo" },
+    { message: "Limit saved" },
   );
 }
 
 export async function deleteBudget(raw: unknown) {
   return run(z.object({ category: expenseCategory }), raw, async (v, { db }) => {
     await db.query("delete from budgets where category = $1", [v.category]);
-  }, { message: "Limite removido" });
+  }, { message: "Limit removed" });
 }

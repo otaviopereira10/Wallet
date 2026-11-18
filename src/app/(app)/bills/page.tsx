@@ -94,9 +94,9 @@ export default async function BillsPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
-        eyebrow="Dinheiro"
+        eyebrow="Your money"
         title="Bills & Payments"
-        description="Todas as contas que você precisa pagar, com vencimentos, prioridades e um planejador inteligente. Nada é pago automaticamente."
+        description="Every bill you need to pay, with due dates, priorities and a planner that tells you what to pay first. Nothing is paid automatically."
       />
       <BillsClient
         occurrences={occ}

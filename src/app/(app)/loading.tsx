@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/primitives";
 
 export default function Loading() {
   return (
-    <div aria-busy="true" aria-label="Carregando">
+    <div aria-busy="true" aria-label="Loading">
       <Skeleton className="mb-2 h-4 w-32" />
       <Skeleton className="mb-8 h-9 w-72" />
       <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 xl:grid-cols-4">

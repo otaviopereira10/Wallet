@@ -142,50 +142,50 @@ describe("Smart Payment Planner", () => {
 
   it("never places an optional bill ahead of an essential one", () => {
     const optionalSoon = item({ name: "Show", priority: "optional", dueDate: "2026-11-17" });
-    const rentLater = item({ name: "Aluguel", priority: "essential", dueDate: "2026-11-30" });
+    const rentLater = item({ name: "Rent", priority: "essential", dueDate: "2026-11-30" });
     const r = planPayments({ cash: 10000, buffer: 0, items: [optionalSoon, rentLater], today });
-    expect(r.order[0].item.name).toBe("Aluguel");
+    expect(r.order[0].item.name).toBe("Rent");
     expect(r.order[0].allocated).toBe(10000);
     expect(r.order[1].allocated).toBe(0);
     expect(r.order[1].payWhen).toBe("needs_money");
   });
 
   it("puts overdue first within the same priority and explains ties", () => {
-    const a = item({ name: "Luz", priority: "essential", dueDate: "2026-11-10" });
-    const b = item({ name: "Água", priority: "essential", dueDate: "2026-11-18" });
-    const c = item({ name: "Gás", priority: "essential", dueDate: "2026-11-18", lateFee: 2000 });
+    const a = item({ name: "Electricity", priority: "essential", dueDate: "2026-11-10" });
+    const b = item({ name: "Water", priority: "essential", dueDate: "2026-11-18" });
+    const c = item({ name: "Gas", priority: "essential", dueDate: "2026-11-18", lateFee: 2000 });
     const r = planPayments({ cash: 100000, buffer: 0, items: [b, c, a], today });
-    expect(r.order.map((o) => o.item.name)).toEqual(["Luz", "Gás", "Água"]);
-    expect(r.tieExplanations.join(" ")).toContain("custo do atraso");
+    expect(r.order.map((o) => o.item.name)).toEqual(["Electricity", "Gas", "Water"]);
+    expect(r.tieExplanations.join(" ")).toContain("cost of paying late");
   });
 
   it("covers minimums first, then tops up, protecting the buffer from non-essentials", () => {
-    const card = item({ name: "Cartão", priority: "important", amount: 50000, minimum: 10000, allowsPartial: true });
-    const rent = item({ name: "Aluguel", priority: "essential", amount: 40000, minimum: 40000 });
+    const card = item({ name: "Card", priority: "important", amount: 50000, minimum: 10000, allowsPartial: true });
+    const rent = item({ name: "Rent", priority: "essential", amount: 40000, minimum: 40000 });
     const r = planPayments({ cash: 60000, buffer: 10000, items: [card, rent], today });
     const byName = Object.fromEntries(r.order.map((o) => [o.item.name, o]));
-    expect(byName["Aluguel"].allocated).toBe(40000);
-    expect(byName["Cartão"].allocated).toBe(10000); // 60k − 10k buffer − 40k rent
-    expect(byName["Cartão"].minimumCovered).toBe(true);
+    expect(byName["Rent"].allocated).toBe(40000);
+    expect(byName["Card"].allocated).toBe(10000); // 60k − 10k buffer − 40k rent
+    expect(byName["Card"].minimumCovered).toBe(true);
     expect(r.safeToSpend).toBe(0);
     expect(r.shortfall).toBe(40000);
   });
 
   it("lets essentials use the buffer and warns about it", () => {
-    const rent = item({ name: "Aluguel", priority: "essential", amount: 55000 });
+    const rent = item({ name: "Rent", priority: "essential", amount: 55000 });
     const r = planPayments({ cash: 60000, buffer: 10000, items: [rent], today });
     expect(r.order[0].allocated).toBe(55000);
-    expect(r.warnings.join(" ")).toContain("reserva mínima");
+    expect(r.warnings.join(" ")).toContain("safety cushion");
   });
 
   it("flags the highest risk and validates manual simulations", () => {
-    const rent = item({ id: "rent", name: "Aluguel", priority: "essential", amount: 90000, dueDate: "2026-11-18" });
-    const fun = item({ id: "fun", name: "Show", priority: "optional", amount: 10000 });
+    const rent = item({ id: "rent", name: "Rent", priority: "essential", amount: 90000, dueDate: "2026-11-18" });
+    const fun = item({ id: "fun", name: "Concert", priority: "optional", amount: 10000 });
     const input = { cash: 50000, buffer: 0, items: [rent, fun], today };
-    expect(planPayments(input).highestRisk?.item.name).toBe("Aluguel");
+    expect(planPayments(input).highestRisk?.item.name).toBe("Rent");
     const ev = evaluateManualPlan(input, { fun: 10000, rent: 30000 });
-    expect(ev.warnings.join(" ")).toContain("menor prioridade");
-    expect(ev.warnings.join(" ")).toContain("não aceita pagamento parcial");
+    expect(ev.warnings.join(" ")).toContain("lower-priority");
+    expect(ev.warnings.join(" ")).toContain("does not accept partial payments");
   });
 });
 
@@ -457,7 +457,22 @@ describe("dashboard analysis and assistant", () => {
     expect(a.notifications.length).toBeGreaterThanOrEqual(0);
   });
 
-  it("detects intents and extracts values", () => {
+  it("detects intents and extracts values in English", () => {
+    expect(detectIntent("Can I buy something for $150 this month?")).toBe("can_afford");
+    expect(detectIntent("How much can I spend until my next paycheck?")).toBe("spend_until_income");
+    expect(detectIntent("Which bill should I pay first?")).toBe("which_bill_first");
+    expect(detectIntent("Am I spending too much on food?")).toBe("category_spending");
+    expect(detectIntent("How much should I set aside for college?")).toBe("college_reserve");
+    expect(detectIntent("How much do I need to pay monthly to pay off my loan in 3 years?")).toBe("debt_monthly");
+    expect(detectIntent("How can I save $100 per month?")).toBe("save_amount");
+    expect(detectIntent("What will my finances look like in six months?")).toBe("outlook");
+    expect(extractAmount("Can I buy something for $150 this month?")).toBe(15000);
+    expect(extractAmount("buy a laptop for $1,250.90")).toBe(125090);
+    expect(extractMonths("in six months")).toBe(6);
+    expect(extractMonths("in 2 years")).toBe(24);
+  });
+
+  it("still understands questions in Portuguese", () => {
     expect(detectIntent("Posso comprar algo de $150 este mês?")).toBe("can_afford");
     expect(detectIntent("Quanto posso gastar até meu próximo pagamento?")).toBe("spend_until_income");
     expect(detectIntent("Qual conta devo pagar primeiro?")).toBe("which_bill_first");
@@ -474,15 +489,17 @@ describe("dashboard analysis and assistant", () => {
 
   it("answers with data and never claims a purchase is safe without money", () => {
     const a = analyze(s);
-    const r = answerQuestion("Posso comprar algo de $150 este mês?", s, a);
-    expect(r.summary).not.toMatch(/^Sim/);
-    expect(r.impact).toMatch(/Ponto mais baixo/);
-    const first = answerQuestion("Qual conta devo pagar primeiro?", s, a);
-    expect(first.summary).toContain("Aluguel");
-    const debtQ = answerQuestion("Quanto preciso pagar mensalmente para quitar meu empréstimo em 2 anos?", s, a);
-    expect(debtQ.summary).toMatch(/por mês/);
-    const empty = answerQuestion("Posso comprar algo de $10?", snapshot(), analyze(snapshot()));
-    expect(empty.missing.join(" ")).toContain("contas");
+    const r = answerQuestion("Can I buy something for $150 this month?", s, a);
+    expect(r.summary).not.toMatch(/^Yes/);
+    expect(r.impact).toMatch(/Lowest expected balance/);
+    const first = answerQuestion("Which bill should I pay first?", s, a);
+    expect(first.summary).toContain("Rent");
+    const debtQ = answerQuestion("How much do I need to pay monthly to pay off my loan in 2 years?", s, a);
+    expect(debtQ.summary).toMatch(/per month/);
+    const pt = answerQuestion("Qual conta devo pagar primeiro?", s, a);
+    expect(pt.summary).toContain("Rent");
+    const empty = answerQuestion("Can I buy something for $10?", snapshot(), analyze(snapshot()));
+    expect(empty.missing.join(" ")).toContain("accounts");
   });
 
   it("builds period reports that exclude transfers", () => {

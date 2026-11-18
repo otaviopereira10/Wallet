@@ -239,9 +239,9 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
     out.push({
       id: "fx-missing",
       tone: "warning",
-      title: `Sem cotação para converter ${a.ctx.missingCurrencies.join(", ")}`,
-      detail: "Alguns valores não entraram nos totais. Atualize a cotação ou informe uma taxa manual em Configurações → Câmbio.",
-      href: "/settings#cambio",
+      title: `No exchange rate to convert ${a.ctx.missingCurrencies.join(", ")}`,
+      detail: "Some amounts are not in the totals yet. Refresh the rate or type one in Settings → Exchange rate.",
+      href: "/settings#exchange",
     });
   }
 
@@ -249,8 +249,8 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
     out.push({
       id: "overdue",
       tone: "danger",
-      title: `${a.buckets.overdue.length} conta(s) atrasada(s) somando ${fmt(a.buckets.overdueTotal)}`,
-      detail: "Veja no Smart Payment Planner a ordem recomendada de pagamento.",
+      title: `${a.buckets.overdue.length} overdue bill(s) totaling ${fmt(a.buckets.overdueTotal)}`,
+      detail: "Open the Payment Planner to see which one to pay first.",
       href: "/bills?tab=planner",
     });
   }
@@ -260,8 +260,8 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
     out.push({
       id: "next-bill",
       tone: nextOpen.daysUntilDue <= s.profile.alertDaysAhead ? "warning" : "info",
-      title: `Sua próxima conta vence ${relativeDays(nextOpen.daysUntilDue)}`,
-      detail: `${nextOpen.bill.name} — ${formatMoney(nextOpen.remaining, nextOpen.bill.currency, locale)} em ${formatDate(nextOpen.occurrence.dueDate, locale)}.`,
+      title: `Your next bill is due ${relativeDays(nextOpen.daysUntilDue)}`,
+      detail: `${nextOpen.bill.name} — ${formatMoney(nextOpen.remaining, nextOpen.bill.currency, locale)} on ${formatDate(nextOpen.occurrence.dueDate, locale)}.`,
       href: "/bills",
     });
   }
@@ -272,8 +272,8 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
     out.push({
       id: `cat-up-${up.category}`,
       tone: "warning",
-      title: `Você gastou ${Math.round(up.pct!)}% a mais com ${categoryLabel(up.category)} este mês`,
-      detail: `${fmt(up.current)} até hoje, contra ${fmt(up.previous)} no mesmo período do mês passado.`,
+      title: `You spent ${Math.round(up.pct!)}% more on ${categoryLabel(up.category)} this month`,
+      detail: `${fmt(up.current)} so far, compared with ${fmt(up.previous)} by this day last month.`,
       href: "/expenses",
     });
   }
@@ -282,8 +282,8 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
     out.push({
       id: `cat-down-${down.category}`,
       tone: "positive",
-      title: `Você gastou ${Math.round(Math.abs(down.pct!))}% a menos com ${categoryLabel(down.category)}`,
-      detail: `${fmt(down.current)} até hoje, contra ${fmt(down.previous)} no mesmo período do mês passado.`,
+      title: `You spent ${Math.round(Math.abs(down.pct!))}% less on ${categoryLabel(down.category)}`,
+      detail: `${fmt(down.current)} so far, compared with ${fmt(down.previous)} by this day last month.`,
       href: "/expenses",
     });
   }
@@ -295,13 +295,13 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
     .reduce((sum, l) => sum + (l.projected - l.limit), 0);
   if (cancelSavings + overspendOptional > 0) {
     const parts2: string[] = [];
-    if (cancelSavings) parts2.push(`${fmt(cancelSavings)}/mês cancelando as assinaturas marcadas`);
-    if (overspendOptional) parts2.push(`${fmt(overspendOptional)} mantendo as categorias não essenciais dentro do orçamento`);
+    if (cancelSavings) parts2.push(`${fmt(cancelSavings)}/month by cancelling the subscriptions you flagged`);
+    if (overspendOptional) parts2.push(`${fmt(overspendOptional)} by keeping non-essential categories within budget`);
     out.push({
       id: "savings-potential",
       tone: "positive",
-      title: `Você pode economizar ${fmt(cancelSavings + overspendOptional)} reduzindo despesas não essenciais`,
-      detail: `${parts2.join(" e ")}.`,
+      title: `You could save ${fmt(cancelSavings + overspendOptional)} by cutting non-essential spending`,
+      detail: `${parts2.join(" and ")}.`,
       href: cancelSavings ? "/subscriptions" : "/budget",
     });
   }
@@ -312,32 +312,32 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
       out.push({
         id: `debt-noplan-${d.debt.id}`,
         tone: "info",
-        title: `${d.debt.name}: defina um pagamento mensal planejado`,
-        detail: "Com um valor mensal, a Isabelle projeta a data de quitação considerando os acréscimos semestrais.",
+        title: `${d.debt.name}: set a planned monthly payment`,
+        detail: "With a monthly amount, Isabelle can estimate your payoff date, including the semester charges.",
         href: "/debt",
       });
     } else if (d.insufficient) {
       out.push({
         id: `debt-insufficient-${d.debt.id}`,
         tone: "danger",
-        title: `O pagamento de ${formatMoney(d.debt.plannedMonthlyPayment, d.debt.currency, locale)}/mês não compensa os acréscimos`,
-        detail: `Para a dívida parar de crescer são necessários ao menos ${formatMoney(d.breakEven, d.debt.currency, locale)}/mês.`,
+        title: `Paying ${formatMoney(d.debt.plannedMonthlyPayment, d.debt.currency, locale)}/month does not keep up with the semester charges`,
+        detail: `To stop the debt from growing you need at least ${formatMoney(d.breakEven, d.debt.currency, locale)}/month.`,
         href: "/debt",
       });
     } else if (d.planned?.paidOff && d.planned.payoffDate) {
       out.push({
         id: `debt-payoff-${d.debt.id}`,
         tone: "positive",
-        title: `Mantendo o plano atual, você quita ${d.debt.name} em ${formatDate(d.planned.payoffDate, locale)}`,
-        detail: `Pagando ${formatMoney(d.debt.plannedMonthlyPayment, d.debt.currency, locale)}/mês, incluindo ${d.planned.incrementsCount} novo(s) acréscimo(s) semestral(is). Projeção, não garantia.`,
+        title: `On your current plan, ${d.debt.name} is paid off by ${formatDate(d.planned.payoffDate, locale)}`,
+        detail: `Paying ${formatMoney(d.debt.plannedMonthlyPayment, d.debt.currency, locale)}/month, including ${d.planned.incrementsCount} more semester charge(s). This is an estimate, not a guarantee.`,
         href: "/debt",
       });
     } else if (d.planned && !d.planned.paidOff && d.planned.incrementsOngoing) {
       out.push({
         id: `debt-ongoing-${d.debt.id}`,
         tone: "info",
-        title: `${d.debt.name}: informe quando os acréscimos semestrais terminam`,
-        detail: "Sem data de término dos acréscimos, não é possível projetar uma quitação definitiva.",
+        title: `${d.debt.name}: add when the semester charges end`,
+        detail: "Without an end date for the charges, a final payoff date cannot be estimated.",
         href: "/debt",
       });
     }
@@ -347,8 +347,8 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
     out.push({
       id: `budget-over-${l.category}`,
       tone: "danger",
-      title: `Orçamento de ${categoryLabel(l.category)} ultrapassado`,
-      detail: `${fmt(l.spent)} de ${fmt(l.limit)} (${l.percent}%).`,
+      title: `${categoryLabel(l.category)} is over budget`,
+      detail: `${fmt(l.spent)} of ${fmt(l.limit)} (${l.percent}%).`,
       href: "/budget",
     });
   }
@@ -359,9 +359,9 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
       tone: a.safeMonth.amount > 0 ? "info" : "warning",
       title:
         a.safeMonth.amount > 0
-          ? `Você ainda pode gastar ${fmt(a.safeMonth.amount)} este mês sem comprometer as contas`
-          : "Seu saldo disponível já está comprometido com as obrigações do mês",
-      detail: `Saldo disponível ${fmt(a.safeMonth.spendable)} − obrigações até ${formatDate(a.safeMonth.until, locale)} ${fmt(a.safeMonth.obligations)} − reserva mínima ${fmt(a.safeMonth.buffer)}. Receitas futuras não entram nesse cálculo.`,
+          ? `You can still spend ${fmt(a.safeMonth.amount)} this month without risking your bills`
+          : "Your available money is already needed for this month's bills",
+      detail: `Available ${fmt(a.safeMonth.spendable)} − bills and payments due by ${formatDate(a.safeMonth.until, locale)} ${fmt(a.safeMonth.obligations)} − safety cushion ${fmt(a.safeMonth.buffer)}. Money you have not received yet is not counted.`,
       href: "/cash-flow",
     });
   }
@@ -370,8 +370,8 @@ function buildInsights(s: Snapshot, a: Analysis): Insight[] {
     out.push({
       id: "unconfirmed-income",
       tone: "info",
-      title: `${a.unconfirmed.length} recebimento(s) aguardando confirmação`,
-      detail: "Confirme as receitas que já caíram na conta para que entrem no saldo real.",
+      title: `${a.unconfirmed.length} payment(s) waiting for you to confirm`,
+      detail: "Confirm the income that already arrived so it counts in your balance.",
       href: "/income",
     });
   }
@@ -386,8 +386,8 @@ function buildNotifications(s: Snapshot, a: Analysis): AppNotification[] {
     out.push({
       id: `n-overdue-${v.occurrence.id}`,
       tone: "danger",
-      title: `${v.bill.name} está atrasada`,
-      detail: `Venceu em ${formatDate(v.occurrence.dueDate, locale)} — faltam ${formatMoney(v.remaining, v.bill.currency, locale)}.`,
+      title: `${v.bill.name} is overdue`,
+      detail: `Was due on ${formatDate(v.occurrence.dueDate, locale)} — ${formatMoney(v.remaining, v.bill.currency, locale)} left to pay.`,
       href: "/bills",
     });
   }
@@ -396,8 +396,8 @@ function buildNotifications(s: Snapshot, a: Analysis): AppNotification[] {
     out.push({
       id: `n-due-${v.occurrence.id}`,
       tone: "warning",
-      title: `${v.bill.name} vence ${relativeDays(v.daysUntilDue)}`,
-      detail: `${formatMoney(v.remaining, v.bill.currency, locale)} em ${formatDate(v.occurrence.dueDate, locale)}.`,
+      title: `${v.bill.name} is due ${relativeDays(v.daysUntilDue)}`,
+      detail: `${formatMoney(v.remaining, v.bill.currency, locale)} on ${formatDate(v.occurrence.dueDate, locale)}.`,
       href: "/bills",
     });
   }
@@ -407,9 +407,9 @@ function buildNotifications(s: Snapshot, a: Analysis): AppNotification[] {
         id: `n-sub-${sv.sub.id}-${sv.sub.nextChargeDate}`,
         tone: sv.sub.status === "cancel_planned" ? "warning" : "info",
         title: sv.chargeOverdue
-          ? `Cobrança de ${sv.sub.name} aguardando registro`
-          : `${sv.sub.name} será cobrada ${relativeDays(sv.daysUntilCharge)}`,
-        detail: `${formatMoney(sv.sub.amount, sv.sub.currency, locale)}${sv.sub.status === "cancel_planned" ? " — você marcou para cancelar" : ""}.`,
+          ? `${sv.sub.name} charge not recorded yet`
+          : `${sv.sub.name} renews ${relativeDays(sv.daysUntilCharge)}`,
+        detail: `${formatMoney(sv.sub.amount, sv.sub.currency, locale)}${sv.sub.status === "cancel_planned" ? " — you flagged it to cancel" : ""}.`,
         href: "/subscriptions",
       });
     }
@@ -419,8 +419,8 @@ function buildNotifications(s: Snapshot, a: Analysis): AppNotification[] {
       out.push({
         id: `n-debt-inc-${d.debt.id}-${d.nextIncrement}`,
         tone: "info",
-        title: `Acréscimo semestral ${relativeDays(d.daysToIncrement)}`,
-        detail: `${d.debt.name}: +${formatMoney(d.debt.incrementAmount, d.debt.currency, locale)} em ${formatDate(d.nextIncrement, locale)}.`,
+        title: `Semester charge ${relativeDays(d.daysToIncrement)}`,
+        detail: `${d.debt.name}: +${formatMoney(d.debt.incrementAmount, d.debt.currency, locale)} on ${formatDate(d.nextIncrement, locale)}.`,
         href: "/debt",
       });
     }
@@ -429,8 +429,8 @@ function buildNotifications(s: Snapshot, a: Analysis): AppNotification[] {
     out.push({
       id: `n-inc-${u.income.id}-${u.date}`,
       tone: "info",
-      title: `Confirme o recebimento: ${u.income.name}`,
-      detail: `Previsto para ${formatDate(u.date, locale)} — ${formatMoney(u.income.amount, u.income.currency, locale)}.`,
+      title: `Confirm you received: ${u.income.name}`,
+      detail: `Expected on ${formatDate(u.date, locale)} — ${formatMoney(u.income.amount, u.income.currency, locale)}.`,
       href: "/income",
     });
   }

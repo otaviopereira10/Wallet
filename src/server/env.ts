@@ -60,6 +60,13 @@ export const env = {
   get aiBaseUrl() {
     return pick("AI_BASE_URL");
   },
+  /** Public address of the app (e.g. https://isabelle-wallet.vercel.app), used in email links. Optional. */
+  get siteUrl() {
+    const v = pick("SITE_URL", "NEXT_PUBLIC_SITE_URL");
+    if (v) return v.replace(/\/+$/, "");
+    const prod = pick("VERCEL_PROJECT_PRODUCTION_URL");
+    return prod && process.env.VERCEL_ENV === "production" ? `https://${prod}` : undefined;
+  },
   get isProduction() {
     return process.env.NODE_ENV === "production";
   },

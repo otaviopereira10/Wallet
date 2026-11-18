@@ -13,7 +13,7 @@ export const MoneyInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttr
       <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-medium text-muted">
         {currency === "BRL" ? "R$" : "US$"}
       </span>
-      <Input ref={ref} inputMode="decimal" autoComplete="off" placeholder="0,00" className={cn("tabular pl-11", className)} {...props} />
+      <Input ref={ref} inputMode="decimal" autoComplete="off" placeholder="0.00" className={cn("tabular pl-11", className)} {...props} />
     </div>
   ),
 );
@@ -22,8 +22,8 @@ MoneyInput.displayName = "MoneyInput";
 export function CurrencySelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <Select {...props}>
-      <option value="USD">USD — Dólar</option>
-      <option value="BRL">BRL — Real</option>
+      <option value="USD">USD — US dollar</option>
+      <option value="BRL">BRL — Brazilian real</option>
     </Select>
   );
 }
@@ -63,7 +63,7 @@ CategorySelect.displayName = "CategorySelect";
 
 export const PaymentMethodSelect = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>((props, ref) => (
   <Select ref={ref} {...props}>
-    <option value="">Não informado</option>
+    <option value="">Not specified</option>
     {PAYMENT_METHODS.map((m) => (
       <option key={m} value={m}>
         {PAYMENT_METHOD_LABELS[m]}
@@ -97,17 +97,17 @@ export function FxField({
   const value = Number(String(amount ?? "").replace(",", "."));
   return (
     <Field
-      label={`Taxa de câmbio: 1 ${from} = ? ${acc.currency}`}
+      label={`Exchange rate: 1 ${from} = ? ${acc.currency}`}
       error={error}
       hint={
         latest
-          ? `Em branco = última cotação (${latest.toLocaleString(locale, { maximumFractionDigits: 4 })}${usdBrl?.isManual ? ", manual" : ""}). ${
-              value > 0 ? `≈ ${(value * latest).toLocaleString(locale, { style: "currency", currency: acc.currency })} na conta.` : ""
+          ? `Leave empty to use the latest rate (${latest.toLocaleString(locale, { maximumFractionDigits: 4 })}${usdBrl?.isManual ? ", manual" : ""}). ${
+              value > 0 ? `≈ ${(value * latest).toLocaleString(locale, { style: "currency", currency: acc.currency })} in the account.` : ""
             }`
-          : "Sem cotação salva: informe a taxa para converter."
+          : "No saved rate yet: type the rate to convert."
       }
     >
-      <Input inputMode="decimal" placeholder={latest ? latest.toFixed(4) : "ex.: 5,4321"} {...register} />
+      <Input inputMode="decimal" placeholder={latest ? latest.toFixed(4) : "e.g. 5.4321"} {...register} />
     </Field>
   );
 }

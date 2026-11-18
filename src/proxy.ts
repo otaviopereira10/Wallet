@@ -3,7 +3,7 @@ import { jwtVerify } from "jose";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
-import { resolveBackend, supabaseKey, supabaseUrl } from "@/lib/supabase-env";
+import { configProblems, resolveBackend, supabaseKey, supabaseUrl } from "@/lib/supabase-env";
 
 /**
  * Route protection (optimistic check before rendering) + Supabase session
@@ -40,6 +40,24 @@ async function validLocalSession(token: string | undefined): Promise<boolean> {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Missing configuration (e.g. a Vercel deploy without the Supabase variables):
+  // show a setup page instead of failing on every request.
+  if (configProblems().length) {
+    if (pathname.startsWith("/api/")) return NextResponse.json({ error: "The app is not configured yet." }, { status: 503 });
+    if (pathname === "/setup-required") return NextResponse.next();
+    const url = request.nextUrl.clone();
+    url.pathname = "/setup-required";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+  if (pathname === "/setup-required") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   let response = NextResponse.next({ request });
   let authenticated = false;
@@ -71,7 +89,7 @@ export async function proxy(request: NextRequest) {
 
   if (!authenticated && !isPublic) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+      return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
     const url = request.nextUrl.clone();
     url.pathname = "/login";

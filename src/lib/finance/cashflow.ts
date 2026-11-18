@@ -239,7 +239,7 @@ export function collectFlowEvents(s: Snapshot, ctx: MoneyContext, opts: CollectO
         date: at(due),
         originalDate: due < today ? due : undefined,
         type: "debt",
-        label: `Pagamento planejado — ${debt.name}`,
+        label: `Planned payment — ${debt.name}`,
         amount: -ctx.toBase(amount, debt.currency),
         refId: debt.id,
       });
@@ -265,7 +265,7 @@ export function collectFlowEvents(s: Snapshot, ctx: MoneyContext, opts: CollectO
           id: `goal:${g.id}:${date}`,
           date,
           type: "goal",
-          label: `Reserva para meta — ${g.name}`,
+          label: `Set aside for goal — ${g.name}`,
           amount: -ctx.toBase(amount, g.currency),
           refId: g.id,
         });

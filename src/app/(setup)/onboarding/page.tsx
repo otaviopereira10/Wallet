@@ -5,7 +5,7 @@ import { buildClientContext } from "@/server/view";
 import { centsToInput } from "@/lib/format";
 import { OnboardingWizard } from "./wizard";
 
-export const metadata: Metadata = { title: "Configuração inicial" };
+export const metadata: Metadata = { title: "Getting started" };
 
 export default async function OnboardingPage() {
   const data = await getAppData();

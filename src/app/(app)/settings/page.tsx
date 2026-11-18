@@ -7,7 +7,7 @@ import { env } from "@/server/env";
 import { aiAvailable } from "@/server/services/ai";
 import { SettingsClient } from "./settings-client";
 
-export const metadata: Metadata = { title: "Configurações" };
+export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const { snapshot: s, user } = await getAppData();
@@ -25,7 +25,7 @@ export default async function SettingsPage() {
     .map((r) => ({ date: r.rateDate, rate: r.rate, base: r.base, quote: r.quote, fetchedAt: r.fetchedAt }));
   return (
     <>
-      <PageHeader eyebrow="Sistema" title="Configurações" description="Perfil, preferências, câmbio, segurança e dados." />
+      <PageHeader eyebrow="App" title="Settings" description="Your profile, preferences, exchange rate, security and data." />
       <SettingsClient
         profile={{
           displayName: s.profile.displayName ?? "",

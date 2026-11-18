@@ -66,13 +66,13 @@ export function summarizeBackup(data: Record<string, unknown>): Record<string, n
 }
 
 export function validateBackupShape(data: unknown): asserts data is Record<string, unknown> {
-  if (!data || typeof data !== "object") throw new Error("Arquivo de backup inválido.");
+  if (!data || typeof data !== "object") throw new Error("Invalid backup file.");
   const d = data as Record<string, unknown>;
-  if (d.app !== "isabelle-wallet") throw new Error("Este arquivo não é um backup da Isabelle Wallet.");
-  if (d.version !== BACKUP_VERSION) throw new Error("Versão de backup não suportada.");
+  if (d.app !== "isabelle-wallet") throw new Error("This file is not an Isabelle Wallet backup.");
+  if (d.version !== BACKUP_VERSION) throw new Error("Unsupported backup version.");
   for (const { table } of BACKUP_TABLES) {
-    if (d[table] !== undefined && !Array.isArray(d[table])) throw new Error(`Seção “${table}” inválida no backup.`);
-    if (Array.isArray(d[table]) && (d[table] as unknown[]).length > 100_000) throw new Error("Backup grande demais.");
+    if (d[table] !== undefined && !Array.isArray(d[table])) throw new Error(`Invalid “${table}” section in the backup.`);
+    if (Array.isArray(d[table]) && (d[table] as unknown[]).length > 100_000) throw new Error("The backup is too large.");
   }
 }
 
@@ -83,7 +83,7 @@ export async function restoreBackup(db: Db, data: Record<string, unknown>): Prom
   for (const { table, columns } of BACKUP_TABLES) {
     const rows = (data[table] as Array<Record<string, unknown>> | undefined) ?? [];
     for (const raw of rows) {
-      if (!raw || typeof raw !== "object") throw new Error(`Linha inválida em ${table}.`);
+      if (!raw || typeof raw !== "object") throw new Error(`Invalid row in ${table}.`);
       const row = { ...raw };
       if (table === "transactions" && row.refund_of) {
         deferredRefunds.push({ id: String(row.id), refund_of: String(row.refund_of) });

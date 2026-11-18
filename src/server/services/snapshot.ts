@@ -40,7 +40,7 @@ export async function syncScheduled(db: Db, today: string): Promise<void> {
         await db.query(
           `insert into debt_events (debt_id, date, type, amount, automatic, note)
            values ($1, $2, $3, $4, true, $5) on conflict do nothing`,
-          [debt.id, e.date, e.type, centsToDecimalString(e.amount), e.type === "increment" ? "Acréscimo semestral automático" : "Juros do mês"],
+          [debt.id, e.date, e.type, centsToDecimalString(e.amount), e.type === "increment" ? "Automatic semester charge" : "Monthly interest"],
         );
       }
     }

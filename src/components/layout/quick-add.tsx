@@ -23,12 +23,12 @@ export interface QuickBill {
 type Kind = "expense" | "income" | "transfer" | "bill" | "debt" | "refund";
 
 const KINDS: Array<{ key: Kind; label: string; icon: React.ReactNode }> = [
-  { key: "expense", label: "Despesa", icon: <Minus /> },
-  { key: "income", label: "Receita", icon: <Plus /> },
-  { key: "bill", label: "Pagar conta", icon: <CalendarCheck2 /> },
-  { key: "transfer", label: "Transferência", icon: <ArrowLeftRight /> },
-  { key: "debt", label: "Pagar dívida", icon: <GraduationCap /> },
-  { key: "refund", label: "Reembolso", icon: <RotateCcw /> },
+  { key: "expense", label: "Expense", icon: <Minus /> },
+  { key: "income", label: "Income", icon: <Plus /> },
+  { key: "bill", label: "Pay a bill", icon: <CalendarCheck2 /> },
+  { key: "transfer", label: "Transfer", icon: <ArrowLeftRight /> },
+  { key: "debt", label: "Pay debt", icon: <GraduationCap /> },
+  { key: "refund", label: "Refund", icon: <RotateCcw /> },
 ];
 
 export function QuickAdd({
@@ -53,7 +53,7 @@ export function QuickAdd({
   const close = () => onOpenChange(false);
   const bill = openBills.find((b) => b.occurrenceId === billId) ?? openBills[0];
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title="Nova movimentação" description="Registre rapidamente o que aconteceu com seu dinheiro." size="lg">
+    <Modal open={open} onOpenChange={onOpenChange} title="Add money in or out" description="Quickly record what happened with your money." size="lg">
       <div className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-6">
         {KINDS.map((k) => (
           <button
@@ -80,7 +80,7 @@ export function QuickAdd({
         (openBills.length ? (
           <div className="space-y-4">
             <label className="block text-[13px] font-medium text-ink" htmlFor="qa-bill">
-              Qual conta?
+              Which bill?
             </label>
             <select
               id="qa-bill"
@@ -107,7 +107,7 @@ export function QuickAdd({
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted">Nenhuma conta em aberto. Cadastre contas em Bills & Payments.</p>
+          <p className="text-sm text-muted">No open bills. Add your bills on the Bills page.</p>
         ))}
     </Modal>
   );

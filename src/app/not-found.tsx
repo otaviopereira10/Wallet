@@ -9,10 +9,10 @@ export default function NotFound() {
           <Wordmark />
         </div>
         <p className="font-display text-6xl text-pink-500">404</p>
-        <h1 className="mt-2 text-lg font-semibold">Página não encontrada</h1>
-        <p className="mt-1 text-sm text-muted">O endereço não existe ou foi movido.</p>
+        <h1 className="mt-2 text-lg font-semibold">Page not found</h1>
+        <p className="mt-1 text-sm text-muted">This address does not exist or was moved.</p>
         <Link href="/dashboard" className="mt-6 inline-block rounded-full bg-pink-500 px-5 py-2.5 text-sm font-semibold text-on-primary">
-          Voltar ao dashboard
+          Back to the dashboard
         </Link>
       </div>
     </div>

@@ -97,9 +97,9 @@ export function ExpensesClient({
       <Tabs
         defaultValue="history"
         tabs={[
-          { value: "history", label: "Histórico", count: rows.length },
-          { value: "analysis", label: "Análises" },
-          { value: "recurring", label: "Recorrentes", count: series.length },
+          { value: "history", label: "History", count: rows.length },
+          { value: "analysis", label: "Insights" },
+          { value: "recurring", label: "Repeating", count: series.length },
         ]}
       >
         <TabPanel value="history">
@@ -108,43 +108,43 @@ export function ExpensesClient({
               <div className="flex flex-col gap-3 sm:flex-row">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
-                  <Input className="pl-10" placeholder="Pesquisar despesas…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Pesquisar despesas" />
+                  <Input className="pl-10" placeholder="Search expenses…" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search expenses" />
                 </div>
                 <Button variant="outline" onClick={() => setShowFilters((s) => !s)} aria-expanded={showFilters}>
-                  <SlidersHorizontal /> Filtros {activeFilters > 0 && <Badge tone="pink">{activeFilters}</Badge>}
+                  <SlidersHorizontal /> Filters {activeFilters > 0 && <Badge tone="pink">{activeFilters}</Badge>}
                 </Button>
               </div>
               {showFilters && (
                 <div className="fade-in mt-4 grid grid-cols-2 gap-3 lg:grid-cols-6">
-                  <Field label="De" htmlFor="f-from">
+                  <Field label="From" htmlFor="f-from">
                     <Input id="f-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
                   </Field>
-                  <Field label="Até" htmlFor="f-to">
+                  <Field label="To" htmlFor="f-to">
                     <Input id="f-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
                   </Field>
-                  <Field label="Categoria" htmlFor="f-cat">
+                  <Field label="Category" htmlFor="f-cat">
                     <Select id="f-cat" value={category} onChange={(e) => setCategory(e.target.value)}>
-                      <option value="">Todas</option>
+                      <option value="">All</option>
                       {EXPENSE_CATEGORIES.map((c) => (
                         <option key={c} value={c}>
                           {categoryLabel(c)}
                         </option>
                       ))}
-                      <option value="debt">Dívida universitária</option>
+                      <option value="debt">University debt</option>
                     </Select>
                   </Field>
                   <Field label="Status" htmlFor="f-status">
                     <Select id="f-status" value={status} onChange={(e) => setStatus(e.target.value)}>
-                      <option value="">Todos</option>
-                      <option value="paid">Pago</option>
-                      <option value="pending">Pendente</option>
-                      <option value="overdue">Atrasado</option>
+                      <option value="">All</option>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pending</option>
+                      <option value="overdue">Overdue</option>
                     </Select>
                   </Field>
-                  <Field label={`Valor mín. (${f.base})`} htmlFor="f-min">
+                  <Field label={`Min amount (${f.base})`} htmlFor="f-min">
                     <Input id="f-min" inputMode="decimal" value={min} onChange={(e) => setMin(e.target.value)} />
                   </Field>
-                  <Field label={`Valor máx. (${f.base})`} htmlFor="f-max">
+                  <Field label={`Max amount (${f.base})`} htmlFor="f-max">
                     <Input id="f-max" inputMode="decimal" value={max} onChange={(e) => setMax(e.target.value)} />
                   </Field>
                   {activeFilters > 0 && (
@@ -160,13 +160,13 @@ export function ExpensesClient({
                         setMax("");
                       }}
                     >
-                      Limpar filtros
+                      Clear filters
                     </Button>
                   )}
                 </div>
               )}
               <p className="mt-4 text-xs text-muted">
-                {filtered.length} resultado(s) · total líquido {f.money(total)}
+                {filtered.length} result(s) · net total {f.money(total)}
               </p>
             </CardContent>
           </Card>
@@ -175,8 +175,8 @@ export function ExpensesClient({
             <EmptyState
               className="mt-4"
               icon={<Receipt />}
-              title="Nenhuma despesa registrada"
-              description="Use “Nova despesa” para registrar compras, contas e gastos do dia a dia."
+              title="No expenses yet"
+              description="Use “New expense” to record purchases, bills and everyday spending."
             />
           ) : (
             <Card className="mt-4 overflow-hidden">
@@ -187,7 +187,7 @@ export function ExpensesClient({
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-2 truncate text-sm font-semibold text-ink">
                         {r.description}
-                        {r.recurrence !== "none" && <Repeat className="size-3.5 shrink-0 text-pink-500" aria-label="Recorrente" />}
+                        {r.recurrence !== "none" && <Repeat className="size-3.5 shrink-0 text-pink-500" aria-label="Repeats" />}
                       </p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                         <span className="sm:hidden">{f.date(r.date, "short")} ·</span>
@@ -195,9 +195,9 @@ export function ExpensesClient({
                         {r.accountName && <span>· {r.accountName}</span>}
                         {r.paymentMethod && <span>· {PAYMENT_METHOD_LABELS[r.paymentMethod]}</span>}
                         {r.kind !== "expense" && <Badge tone={r.kind === "refund" ? "success" : "plum"}>{TX_KIND_LABELS[r.kind]}</Badge>}
-                        {r.source === "bill" && <Badge tone="info">Conta paga</Badge>}
-                        {r.source === "subscription" && <Badge tone="info">Assinatura</Badge>}
-                        {r.overdue ? <Badge tone="danger">Atrasado</Badge> : r.status === "pending" && <Badge tone="warning">Pendente</Badge>}
+                        {r.source === "bill" && <Badge tone="info">Bill payment</Badge>}
+                        {r.source === "subscription" && <Badge tone="info">Subscription</Badge>}
+                        {r.overdue ? <Badge tone="danger">Overdue</Badge> : r.status === "pending" && <Badge tone="warning">Pending</Badge>}
                       </p>
                     </div>
                     <div className="text-right">
@@ -209,10 +209,10 @@ export function ExpensesClient({
                     </div>
                     <ActionMenu
                       items={[
-                        r.status === "pending" && { label: "Marcar como pago", icon: <CheckCircle2 />, onSelect: () => setPaying(r) },
+                        r.status === "pending" && { label: "Mark as paid", icon: <CheckCircle2 />, onSelect: () => setPaying(r) },
                         r.kind === "expense" &&
                           r.source === "manual" && {
-                            label: "Editar",
+                            label: "Edit",
                             icon: <Pencil />,
                             onSelect: () =>
                               setEditing({
@@ -230,14 +230,14 @@ export function ExpensesClient({
                               }),
                           },
                         r.kind === "expense" && r.recurrence !== "none" && {
-                          label: "Criar próxima ocorrência",
+                          label: "Add the next one",
                           icon: <CalendarPlus />,
                           onSelect: () => run(() => addNextOccurrence({ id: r.id })),
                         },
                         r.kind === "expense" &&
-                          r.status === "paid" && { label: "Registrar reembolso", icon: <RotateCcw />, onSelect: () => setRefunding(r) },
+                          r.status === "paid" && { label: "Add a refund", icon: <RotateCcw />, onSelect: () => setRefunding(r) },
                         r.kind === "expense" && {
-                          label: "Duplicar",
+                          label: "Duplicate",
                           icon: <Copy />,
                           onSelect: () =>
                             setEditing({
@@ -253,7 +253,7 @@ export function ExpensesClient({
                               notes: r.notes,
                             }),
                         },
-                        { label: "Excluir", icon: <Trash2 />, danger: true, onSelect: () => setDeleting(r) },
+                        { label: "Delete", icon: <Trash2 />, danger: true, onSelect: () => setDeleting(r) },
                       ]}
                     />
                   </li>
@@ -262,7 +262,7 @@ export function ExpensesClient({
               {filtered.length > limit && (
                 <div className="border-t border-border p-3 text-center">
                   <Button variant="ghost" onClick={() => setLimit((l) => l + 100)}>
-                    Mostrar mais ({filtered.length - limit} restantes)
+                    Show more ({filtered.length - limit} left)
                   </Button>
                 </div>
               )}
@@ -276,15 +276,15 @@ export function ExpensesClient({
               <CardHeader>
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="size-4 text-warning" /> Aumentos incomuns
+                    <TrendingUp className="size-4 text-warning" /> Unusual increases
                   </CardTitle>
-                  <CardDescription>Categorias acima de 150% da média dos últimos {monthsWithData} mês(es) completos.</CardDescription>
+                  <CardDescription>Categories above 150% of their average over the last {monthsWithData} full month(s).</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
                 {unusual.map((u) => (
                   <p key={u.category} className="text-sm">
-                    <strong>{categoryLabel(u.category)}</strong>: {f.money(u.current)} este mês, média {f.money(u.average)} (
+                    <strong>{categoryLabel(u.category)}</strong>: {f.money(u.current)} this month, average {f.money(u.average)} (
                     {Math.round((u.current / u.average) * 100)}%)
                   </p>
                 ))}
@@ -295,14 +295,14 @@ export function ExpensesClient({
             <Card>
               <CardHeader>
                 <div>
-                  <CardTitle>Distribuição do mês</CardTitle>
-                  <CardDescription>Categorias com maiores gastos (pagos e pendentes).</CardDescription>
+                  <CardTitle>Where it went this month</CardTitle>
+                  <CardDescription>Biggest categories (paid and pending).</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
                 {donut.length ? (
                   <>
-                    <DonutChart data={donut.map(([k, v]) => ({ name: categoryLabel(k), value: v / 100 }))} centerLabel="No mês" centerValue={f.money(monthTotal)} />
+                    <DonutChart data={donut.map(([k, v]) => ({ name: categoryLabel(k), value: v / 100 }))} centerLabel="This month" centerValue={f.money(monthTotal)} />
                     <ul className="mt-4 space-y-1.5">
                       {donut.slice(0, 6).map(([k, v], i) => (
                         <li key={k} className="flex items-center justify-between text-sm">
@@ -316,15 +316,15 @@ export function ExpensesClient({
                     </ul>
                   </>
                 ) : (
-                  <p className="py-10 text-center text-sm text-muted">Sem despesas neste mês.</p>
+                  <p className="py-10 text-center text-sm text-muted">No expenses this month.</p>
                 )}
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
                 <div>
-                  <CardTitle>Evolução mensal</CardTitle>
-                  <CardDescription>Despesas (líquidas de reembolsos) e pagamentos da dívida.</CardDescription>
+                  <CardTitle>Month by month</CardTitle>
+                  <CardDescription>Expenses (minus refunds) and debt payments.</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
@@ -335,8 +335,8 @@ export function ExpensesClient({
           <Card className="mt-4">
             <CardHeader>
               <div>
-                <CardTitle>Comparação entre meses</CardTitle>
-                <CardDescription>Este mês (até hoje) × mês passado completo, e × mesmo período do mês passado.</CardDescription>
+                <CardTitle>Compare months</CardTitle>
+                <CardDescription>This month so far vs. all of last month, and vs. last month up to the same day.</CardDescription>
               </div>
             </CardHeader>
             <CardContent className="overflow-x-auto">
@@ -344,11 +344,11 @@ export function ExpensesClient({
                 <table className="w-full min-w-[520px] text-sm">
                   <thead>
                     <tr className="text-left text-xs text-muted">
-                      <th className="pb-2 font-medium">Categoria</th>
-                      <th className="pb-2 text-right font-medium">Este mês</th>
-                      <th className="pb-2 text-right font-medium">Mês passado</th>
-                      <th className="pb-2 text-right font-medium">Mesmo período</th>
-                      <th className="pb-2 text-right font-medium">Variação</th>
+                      <th className="pb-2 font-medium">Category</th>
+                      <th className="pb-2 text-right font-medium">This month</th>
+                      <th className="pb-2 text-right font-medium">Last month</th>
+                      <th className="pb-2 text-right font-medium">Same days last month</th>
+                      <th className="pb-2 text-right font-medium">Change</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -376,7 +376,7 @@ export function ExpensesClient({
                   </tbody>
                 </table>
               ) : (
-                <p className="text-sm text-muted">Ainda não há dados de dois meses para comparar.</p>
+                <p className="text-sm text-muted">There is not enough data from two months to compare yet.</p>
               )}
             </CardContent>
           </Card>
@@ -387,9 +387,9 @@ export function ExpensesClient({
             <Card>
               <CardHeader>
                 <div>
-                  <CardTitle>Gastos recorrentes identificados</CardTitle>
+                  <CardTitle>Repeating expenses</CardTitle>
                   <CardDescription>
-                    Total mensal estimado: {f.money(series.reduce((s, x) => s + x.monthly, 0))}. A próxima ocorrência entra nas projeções do fluxo de caixa.
+                    Estimated monthly total: {f.money(series.reduce((s, x) => s + x.monthly, 0))}. The next one is included in your Cash Flow forecast.
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -400,15 +400,15 @@ export function ExpensesClient({
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-ink">{x.description}</p>
                         <p className="text-xs text-muted">
-                          {FREQUENCY_LABELS[x.recurrence]} · {categoryLabel(x.category)} · última em {f.date(x.lastDate)} · próxima {f.date(x.nextDate)}
+                          {FREQUENCY_LABELS[x.recurrence]} · {categoryLabel(x.category)} · last on {f.date(x.lastDate)} · next {f.date(x.nextDate)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="tabular font-semibold">{f.money(x.amount, x.currency)}</p>
-                        <p className="tabular text-xs text-muted">≈ {f.money(x.monthly)}/mês</p>
+                        <p className="tabular text-xs text-muted">≈ {f.money(x.monthly)}/month</p>
                       </div>
                       <Button size="sm" variant="secondary" loading={pending} onClick={() => run(() => addNextOccurrence({ id: x.id }))}>
-                        <CalendarPlus /> Lançar próxima
+                        <CalendarPlus /> Add the next one
                       </Button>
                     </li>
                   ))}
@@ -418,26 +418,26 @@ export function ExpensesClient({
           ) : (
             <EmptyState
               icon={<Repeat />}
-              title="Nenhum gasto recorrente"
-              description="Marque a recorrência ao registrar uma despesa (ex.: aluguel mensal) para que ela entre nas projeções. Assinaturas ficam na seção Assinaturas."
+              title="No repeating expenses"
+              description="Choose how often an expense repeats when you add it (e.g. monthly rent) and it will be included in your forecasts. Subscriptions have their own page."
             />
           )}
         </TabPanel>
       </Tabs>
 
-      <Modal open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title={editing?.id ? "Editar despesa" : "Nova despesa"}>
+      <Modal open={!!editing} onOpenChange={(o) => !o && setEditing(null)} title={editing?.id ? "Edit expense" : "New expense"}>
         {editing && <ExpenseForm initial={editing} onDone={() => setEditing(null)} />}
       </Modal>
-      <Modal open={!!refunding} onOpenChange={(o) => !o && setRefunding(null)} title="Registrar reembolso" description={refunding ? `Referente a “${refunding.description}”` : undefined}>
+      <Modal open={!!refunding} onOpenChange={(o) => !o && setRefunding(null)} title="Add a refund" description={refunding ? `For “${refunding.description}”` : undefined}>
         {refunding && <RefundForm refundOf={refunding.id} initialCategory={refunding.category ?? undefined} onDone={() => setRefunding(null)} />}
       </Modal>
-      <Modal open={!!paying} onOpenChange={(o) => !o && setPaying(null)} title="Marcar como pago" description={paying?.description}>
+      <Modal open={!!paying} onOpenChange={(o) => !o && setPaying(null)} title="Mark as paid" description={paying?.description}>
         {paying && (
           <div className="space-y-4">
-            <Field label="Conta utilizada" htmlFor="pay-acc">
+            <Field label="Paid from" htmlFor="pay-acc">
               <AccountSelect id="pay-acc" value={payAccount} onChange={(e) => setPayAccount(e.target.value)} />
             </Field>
-            <Field label="Data do pagamento" htmlFor="pay-date">
+            <Field label="Payment date" htmlFor="pay-date">
               <Input id="pay-date" type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} />
             </Field>
             <div className="flex justify-end">
@@ -445,7 +445,7 @@ export function ExpensesClient({
                 loading={pending}
                 onClick={() => run(() => markExpensePaid({ id: paying.id, accountId: payAccount, date: payDate }), { onSuccess: () => setPaying(null) })}
               >
-                Confirmar pagamento
+                Confirm payment
               </Button>
             </div>
           </div>
@@ -454,13 +454,13 @@ export function ExpensesClient({
       <ConfirmDialog
         open={!!deleting}
         onOpenChange={(o) => !o && setDeleting(null)}
-        title="Excluir movimentação?"
+        title="Delete this entry?"
         description={
           deleting?.source === "bill"
-            ? "Este é o pagamento de uma conta: a conta voltará a aparecer como pendente."
+            ? "This is a bill payment: the bill will show as unpaid again."
             : deleting?.source === "debt"
-              ? "Este pagamento também será removido do histórico da dívida."
-              : "Esta ação não pode ser desfeita."
+              ? "This payment will also be removed from the debt history."
+              : "This cannot be undone."
         }
         onConfirm={() => (deleting ? run(() => deleteTransaction({ id: deleting.id })) : undefined)}
       />

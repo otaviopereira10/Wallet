@@ -40,3 +40,25 @@ export function resolveBackend(): "supabase" | "local" {
   if (explicit === "local" || explicit === "supabase") return explicit;
   return supabaseUrl() && supabaseKey() && databaseUrl() ? "supabase" : "local";
 }
+
+/** True when running on Vercel (build or runtime), where the local embedded database cannot persist. */
+export function onVercel(): boolean {
+  return !!process.env.VERCEL;
+}
+
+/**
+ * Names (never values) of the settings that are missing for the app to run.
+ * Empty when the configuration is complete.
+ */
+export function configProblems(): string[] {
+  const explicit = pick("DATA_BACKEND");
+  const wantsSupabase = explicit === "supabase" || onVercel() || !!(supabaseUrl() || supabaseKey());
+  if (explicit === "local" && !onVercel()) return [];
+  if (!wantsSupabase) return [];
+  const missing: string[] = [];
+  if (!supabaseUrl()) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  if (!supabaseKey()) missing.push("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  if (!databaseUrl()) missing.push("DATABASE_URL");
+  if (onVercel() && explicit === "local") missing.push("DATA_BACKEND must be \"supabase\" on Vercel");
+  return missing;
+}

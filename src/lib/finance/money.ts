@@ -14,7 +14,7 @@ export { D as Dec };
 export function toCents(value: string | number | null | undefined): Cents {
   if (value === null || value === undefined || value === "") return 0;
   const d = new D(typeof value === "number" ? value.toString() : value.trim());
-  if (!d.isFinite()) throw new Error("Valor monetário inválido");
+  if (!d.isFinite()) throw new Error("Invalid money amount");
   return d.mul(100).toDecimalPlaces(0, Decimal.ROUND_HALF_UP).toNumber();
 }
 
@@ -36,7 +36,7 @@ export function centsToNumber(cents: Cents): number {
 }
 
 export function assertCents(cents: number): void {
-  if (!Number.isSafeInteger(cents)) throw new Error(`Valor em centavos inválido: ${cents}`);
+  if (!Number.isSafeInteger(cents)) throw new Error(`Invalid amount in cents: ${cents}`);
 }
 
 /** cents × factor, rounded half away from zero to whole cents. */
@@ -47,7 +47,7 @@ export function mulCents(cents: Cents, factor: Decimal.Value): Cents {
 /** cents ÷ divisor, rounded half away from zero. */
 export function divCents(cents: Cents, divisor: Decimal.Value): Cents {
   const d = new D(divisor);
-  if (d.isZero()) throw new Error("Divisão por zero");
+  if (d.isZero()) throw new Error("Division by zero");
   return new D(cents).div(d).toDecimalPlaces(0, Decimal.ROUND_HALF_UP).toNumber();
 }
 

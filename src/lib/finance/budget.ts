@@ -108,17 +108,17 @@ export function budgetSummary(s: Snapshot, ctx: MoneyContext, refDate: ISODate, 
   for (const l of lines) {
     if (l.state === "over") {
       recommendations.push(
-        `${labelFor(l.category)}: limite ultrapassado em ${fmt(l.spent - l.limit)}. Evite novos gastos nesta categoria até o fim do mês${
-          l.topExpenses[0] ? `; o maior gasto foi “${l.topExpenses[0].description}” (${fmt(l.topExpenses[0].amount)})` : ""
+        `${labelFor(l.category)}: over the limit by ${fmt(l.spent - l.limit)}. Try to avoid new spending here until the end of the month${
+          l.topExpenses[0] ? `; the biggest expense was “${l.topExpenses[0].description}” (${fmt(l.topExpenses[0].amount)})` : ""
         }.`,
       );
     } else if (isCurrent && l.projectedState === "over") {
       recommendations.push(
-        `${labelFor(l.category)}: no ritmo atual, você deve gastar ${fmt(l.projected)} (limite ${fmt(l.limit)}). Para ficar dentro, limite-se a ${fmt(l.dailyAllowance)} por dia nos ${remainingDays} dia(s) restantes.`,
+        `${labelFor(l.category)}: at this pace you will spend about ${fmt(l.projected)} (limit ${fmt(l.limit)}). To stay within it, keep to ${fmt(l.dailyAllowance)} per day for the ${remainingDays} day(s) left.`,
       );
     } else if (l.state === "warning") {
       recommendations.push(
-        `${labelFor(l.category)}: ${l.percent}% do limite usado. Restam ${fmt(Math.max(0, l.remaining))} para o mês.`,
+        `${labelFor(l.category)}: ${l.percent}% of the limit used. ${fmt(Math.max(0, l.remaining))} left for the month.`,
       );
     }
   }

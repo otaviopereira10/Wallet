@@ -21,7 +21,7 @@ export function profile(over: Partial<Profile> = {}): Profile {
     userId: "user-1",
     displayName: "Isabelle",
     baseCurrency: "USD",
-    locale: "pt-BR",
+    locale: "en-US",
     timezone: "America/New_York",
     theme: "light",
     emergencyBuffer: 0,
@@ -97,7 +97,7 @@ export function income(over: Partial<Income> = {}): Income {
 export function bill(over: Partial<Bill> = {}): Bill {
   return {
     id: id("bill"),
-    name: "Aluguel",
+    name: "Rent",
     amount: 100000,
     minimumAmount: null,
     currency: "USD",

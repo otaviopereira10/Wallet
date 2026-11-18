@@ -22,9 +22,9 @@ export const sanitize = (v: string) => v.replace(CONTROL, "").replace(/\s+/g, " 
 
 export const text = (max: number, label = "Campo") =>
   z
-    .string({ message: `${label} é obrigatório` })
+    .string({ message: `${label} is required` })
     .transform(sanitize)
-    .pipe(z.string().min(1, `${label} é obrigatório`).max(max, `${label}: máximo de ${max} caracteres`));
+    .pipe(z.string().min(1, `${label} is required`).max(max, `${label}: up to ${max} characters`));
 
 export const optionalText = (max: number) =>
   z
@@ -32,7 +32,7 @@ export const optionalText = (max: number) =>
     .optional()
     .nullable()
     .transform((v) => (v ? v.replace(CONTROL, "").trim() : ""))
-    .pipe(z.string().max(max, `Máximo de ${max} caracteres`))
+    .pipe(z.string().max(max, `Up to ${max} characters`))
     .transform((v) => (v === "" ? null : v));
 
 const MONEY_RE = /^-?\d{1,12}(\.\d{1,2})?$/;
@@ -46,39 +46,39 @@ const normalizeMoney = (v: string | number) => {
 
 /** Positive money amount as a "1234.56" string. */
 export const money = z
-  .union([z.string(), z.number()], { message: "Informe um valor" })
+  .union([z.string(), z.number()], { message: "Enter an amount" })
   .transform(normalizeMoney)
-  .refine((v) => v !== "", "Informe um valor")
-  .refine((v) => MONEY_RE.test(v), "Valor inválido (use até 2 casas decimais)")
-  .refine((v) => Number(v) > 0, "O valor deve ser maior que zero");
+  .refine((v) => v !== "", "Enter an amount")
+  .refine((v) => MONEY_RE.test(v), "Invalid amount (use up to 2 decimal places)")
+  .refine((v) => Number(v) > 0, "The amount must be greater than zero");
 
 /** Money that may be zero (fees, buffers). */
 export const moneyZero = z
   .union([z.string(), z.number()])
   .transform(normalizeMoney)
   .transform((v) => (v === "" ? "0" : v))
-  .refine((v) => MONEY_RE.test(v), "Valor inválido (use até 2 casas decimais)")
-  .refine((v) => Number(v) >= 0, "O valor não pode ser negativo");
+  .refine((v) => MONEY_RE.test(v), "Invalid amount (use up to 2 decimal places)")
+  .refine((v) => Number(v) >= 0, "The amount cannot be negative");
 
 /** Signed money (balances, adjustments). */
 export const moneySigned = z
   .union([z.string(), z.number()])
   .transform(normalizeMoney)
   .transform((v) => (v === "" ? "0" : v))
-  .refine((v) => MONEY_RE.test(v), "Valor inválido (use até 2 casas decimais)");
+  .refine((v) => MONEY_RE.test(v), "Invalid amount (use up to 2 decimal places)");
 
 export const optionalMoney = z
   .union([z.string(), z.number()])
   .optional()
   .nullable()
   .transform((v) => (v === null || v === undefined || String(v).trim() === "" ? null : normalizeMoney(v)))
-  .refine((v) => v === null || MONEY_RE.test(v), "Valor inválido")
-  .refine((v) => v === null || Number(v) >= 0, "O valor não pode ser negativo");
+  .refine((v) => v === null || MONEY_RE.test(v), "Invalid amount")
+  .refine((v) => v === null || Number(v) >= 0, "The amount cannot be negative");
 
 export const rate = z
   .union([z.string(), z.number()])
   .transform((v) => String(v).trim().replace(",", "."))
-  .refine((v) => /^\d{1,8}(\.\d{1,8})?$/.test(v) && Number(v) > 0, "Taxa inválida");
+  .refine((v) => /^\d{1,8}(\.\d{1,8})?$/.test(v) && Number(v) > 0, "Invalid rate");
 
 const emptyToNull = (v: unknown) => (v === "" || v === undefined ? null : v);
 /** Optional exchange rate: empty → null (use the latest stored rate). */
@@ -89,36 +89,36 @@ export const percent = z
   .union([z.string(), z.number()])
   .optional()
   .transform((v) => (v === undefined || String(v).trim() === "" ? "0" : String(v).trim().replace(",", ".")))
-  .refine((v) => /^\d{1,3}(\.\d{1,4})?$/.test(v), "Percentual inválido");
+  .refine((v) => /^\d{1,3}(\.\d{1,4})?$/.test(v), "Invalid percentage");
 
 export const isoDate = z
-  .string({ message: "Informe a data" })
+  .string({ message: "Enter a date" })
   .trim()
-  .refine((v) => isISODate(v), "Data inválida");
+  .refine((v) => isISODate(v), "Invalid date");
 
 export const optionalDate = z
   .string()
   .optional()
   .nullable()
   .transform((v) => (v && v.trim() ? v.trim() : null))
-  .refine((v) => v === null || isISODate(v), "Data inválida");
+  .refine((v) => v === null || isISODate(v), "Invalid date");
 
-export const uuid = z.string().uuid("Identificador inválido");
+export const uuid = z.string().uuid("Invalid identifier");
 export const optionalUuid = z
   .string()
   .optional()
   .nullable()
   .transform((v) => (v && v.trim() ? v.trim() : null))
-  .refine((v) => v === null || z.string().uuid().safeParse(v).success, "Identificador inválido");
+  .refine((v) => v === null || z.string().uuid().safeParse(v).success, "Invalid identifier");
 
-export const currency = z.enum(CURRENCIES, { message: "Moeda inválida" });
-export const expenseCategory = z.enum(EXPENSE_CATEGORIES, { message: "Categoria inválida" });
-export const incomeCategory = z.enum(INCOME_CATEGORIES, { message: "Categoria inválida" });
+export const currency = z.enum(CURRENCIES, { message: "Invalid currency" });
+export const expenseCategory = z.enum(EXPENSE_CATEGORIES, { message: "Invalid category" });
+export const incomeCategory = z.enum(INCOME_CATEGORIES, { message: "Invalid category" });
 const bool = z.union([z.boolean(), z.literal("on"), z.literal("true"), z.literal("false")]).transform((v) => v === true || v === "on" || v === "true");
 
 // ---------------------------------------------------------------------------
 export const accountSchema = z.object({
-  name: text(80, "Nome"),
+  name: text(80, "Name"),
   type: z.enum(ACCOUNT_TYPES),
   currency,
   openingBalance: moneySigned,
@@ -128,13 +128,13 @@ export const accountSchema = z.object({
 
 export const incomeSchema = z
   .object({
-    name: text(120, "Nome"),
+    name: text(120, "Name"),
     amount: money,
     currency,
     category: incomeCategory,
     startDate: isoDate,
     frequency: z.enum(INCOME_FREQUENCIES),
-    customInterval: z.preprocess(emptyToNull, z.coerce.number().int().min(1, "Mínimo 1").max(365).nullable()),
+    customInterval: z.preprocess(emptyToNull, z.coerce.number().int().min(1, "Minimum 1").max(365).nullable()),
     customUnit: optionalEnum(["day", "week", "month"] as const),
     endDate: optionalDate,
     accountId: optionalUuid,
@@ -142,10 +142,10 @@ export const incomeSchema = z
     receivedNow: bool.default(false),
   })
   .refine((v) => v.frequency !== "custom" || (v.customInterval && v.customUnit), {
-    message: "Defina o intervalo da recorrência personalizada",
+    message: "Set the custom repeat interval",
     path: ["customInterval"],
   })
-  .refine((v) => !v.endDate || v.endDate >= v.startDate, { message: "A data final deve ser depois do início", path: ["endDate"] });
+  .refine((v) => !v.endDate || v.endDate >= v.startDate, { message: "The end date must be after the start date", path: ["endDate"] });
 
 export const receiveIncomeSchema = z.object({
   incomeId: uuid,
@@ -160,7 +160,7 @@ export const skipIncomeSchema = z.object({ incomeId: uuid, occurrence: isoDate }
 
 export const expenseSchema = z
   .object({
-    description: text(200, "Nome da compra"),
+    description: text(200, "Name"),
     amount: money,
     currency,
     category: expenseCategory,
@@ -172,10 +172,10 @@ export const expenseSchema = z
     notes: optionalText(1000),
     fxRate: optionalRate,
   })
-  .refine((v) => v.status === "pending" || v.accountId, { message: "Escolha a conta utilizada", path: ["accountId"] });
+  .refine((v) => v.status === "pending" || v.accountId, { message: "Choose the account you paid from", path: ["accountId"] });
 
 export const incomeTxSchema = z.object({
-  description: text(200, "Descrição"),
+  description: text(200, "Description"),
   amount: money,
   currency,
   category: incomeCategory,
@@ -194,11 +194,11 @@ export const transferSchema = z
     date: isoDate,
     description: optionalText(200),
   })
-  .refine((v) => v.fromAccountId !== v.toAccountId, { message: "Escolha contas diferentes", path: ["toAccountId"] });
+  .refine((v) => v.fromAccountId !== v.toAccountId, { message: "Choose two different accounts", path: ["toAccountId"] });
 
 export const refundSchema = z.object({
   refundOf: optionalUuid,
-  description: text(200, "Descrição"),
+  description: text(200, "Description"),
   amount: money,
   currency,
   category: expenseCategory,
@@ -209,7 +209,7 @@ export const refundSchema = z.object({
 
 export const billSchema = z
   .object({
-    name: text(120, "Nome da conta"),
+    name: text(120, "Bill name"),
     amount: money,
     minimumAmount: optionalMoney,
     currency,
@@ -225,7 +225,7 @@ export const billSchema = z
     notes: optionalText(1000),
   })
   .refine((v) => v.minimumAmount === null || Number(v.minimumAmount) <= Number(v.amount), {
-    message: "O mínimo não pode ser maior que o valor total",
+    message: "The minimum cannot be higher than the total amount",
     path: ["minimumAmount"],
   });
 
@@ -248,7 +248,7 @@ export const occurrenceUpdateSchema = z.object({
 });
 
 export const subscriptionSchema = z.object({
-  name: text(120, "Nome"),
+  name: text(120, "Name"),
   amount: money,
   currency,
   billingCycle: z.enum(SUBSCRIPTION_CYCLES),
@@ -270,7 +270,7 @@ export const subscriptionChargeSchema = z.object({
 });
 
 export const debtSchema = z.object({
-  name: text(120, "Nome"),
+  name: text(120, "Name"),
   currency,
   initialBalance: moneyZero,
   startDate: isoDate,
@@ -299,13 +299,13 @@ export const debtPaymentSchema = z.object({
 export const debtEventSchema = z.object({
   debtId: uuid,
   type: z.enum(["increment", "adjustment"]),
-  amount: moneySigned.refine((v) => Number(v) !== 0, "O valor não pode ser zero"),
+  amount: moneySigned.refine((v) => Number(v) !== 0, "The amount cannot be zero"),
   date: isoDate,
   note: optionalText(300),
 });
 
 export const goalSchema = z.object({
-  name: text(120, "Nome"),
+  name: text(120, "Name"),
   kind: z.enum(GOAL_KINDS),
   targetAmount: money,
   currency,
@@ -318,7 +318,7 @@ export const goalSchema = z.object({
 
 export const contributionSchema = z.object({
   goalId: uuid,
-  amount: moneySigned.refine((v) => Number(v) !== 0, "O valor não pode ser zero"),
+  amount: moneySigned.refine((v) => Number(v) !== 0, "The amount cannot be zero"),
   date: isoDate,
   note: optionalText(300),
 });
@@ -331,7 +331,7 @@ export const budgetSchema = z.object({
 export const profileSchema = z.object({
   displayName: optionalText(80),
   baseCurrency: currency,
-  locale: z.enum(["pt-BR", "en-US"]),
+  locale: z.enum(["en-US", "pt-BR"]),
   timezone: z.string().trim().min(1).max(64),
   theme: z.enum(["light", "dark", "system"]),
   emergencyBuffer: moneyZero,
@@ -347,17 +347,17 @@ export const manualRateSchema = z.object({
 });
 
 export const credentialsSchema = z.object({
-  email: z.string().trim().toLowerCase().email("E-mail inválido").max(254),
-  password: z.string().min(8, "A senha precisa de pelo menos 8 caracteres").max(200),
+  email: z.string().trim().toLowerCase().email("Invalid email").max(254),
+  password: z.string().min(8, "The password needs at least 8 characters").max(200),
 });
 
 export const passwordChangeSchema = z
   .object({
-    current: z.string().min(1, "Informe a senha atual"),
-    next: z.string().min(8, "A nova senha precisa de pelo menos 8 caracteres").max(200),
+    current: z.string().min(1, "Enter your current password"),
+    next: z.string().min(8, "The new password needs at least 8 characters").max(200),
     confirm: z.string(),
   })
-  .refine((v) => v.next === v.confirm, { message: "As senhas não conferem", path: ["confirm"] });
+  .refine((v) => v.next === v.confirm, { message: "The passwords do not match", path: ["confirm"] });
 
 export type AccountInput = z.input<typeof accountSchema>;
 export type ExpenseInput = z.input<typeof expenseSchema>;

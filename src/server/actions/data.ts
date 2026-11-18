@@ -15,7 +15,7 @@ import { toActionError, type ActionResult } from "./helpers";
 
 const importRow = z.object({
   date: isoDate,
-  description: z.string().transform(sanitize).pipe(z.string().min(1, "Descrição vazia").max(200)),
+  description: z.string().transform(sanitize).pipe(z.string().min(1, "Empty description").max(200)),
   amount: money,
   kind: z.enum(["income", "expense"]),
   category: z.string(),
@@ -25,8 +25,8 @@ const importRow = z.object({
 });
 
 const importPayload = z.object({
-  accountId: z.string().uuid("Escolha a conta"),
-  rows: z.array(z.unknown()).min(1, "Nenhuma linha para importar").max(5000, "Máximo de 5.000 linhas por importação"),
+  accountId: z.string().uuid("Choose the account"),
+  rows: z.array(z.unknown()).min(1, "No rows to import").max(5000, "Up to 5,000 rows per import"),
 });
 
 export interface ImportRowResult {
@@ -44,7 +44,7 @@ interface Checked {
 
 async function check(db: Db, accountId: string, rows: unknown[]): Promise<Checked> {
   const acc = await db.query<{ currency: Currency }>("select currency from accounts where id = $1", [accountId]);
-  if (!acc[0]) throw new Error("Conta não encontrada.");
+  if (!acc[0]) throw new Error("Account not found.");
   const existing = await db.query<{ import_hash: string | null; date: string; amount: string; description: string; account_id: string | null }>(
     "select import_hash, date::text, amount::text, description, account_id from transactions",
   );
@@ -62,17 +62,17 @@ async function check(db: Db, accountId: string, rows: unknown[]): Promise<Checke
     const r = p.data;
     const catOk = r.kind === "income" ? incomeCategory.safeParse(r.category).success : expenseCategory.safeParse(r.category).success;
     if (!catOk) {
-      results.push({ index, status: "invalid", errors: [`categoria: “${r.category}” não é válida para ${r.kind === "income" ? "receitas" : "despesas"}`] });
+      results.push({ index, status: "invalid", errors: [`category: “${r.category}” is not valid for ${r.kind === "income" ? "income" : "expenses"}`] });
       return;
     }
     if (r.kind === "income" && r.status === "pending") {
-      results.push({ index, status: "invalid", errors: ["receitas não podem ser pendentes"] });
+      results.push({ index, status: "invalid", errors: ["income cannot be pending"] });
       return;
     }
     const hash = dedupeHash([r.date, toCents(r.amount), r.description, accountId, r.kind]);
     const nat = dedupeHash([r.date, toCents(r.amount), r.description, accountId]);
     if (hashes.has(hash) || natural.has(nat) || seen.has(hash)) {
-      results.push({ index, status: "duplicate", errors: ["já existe uma movimentação igual (data, valor, descrição e conta)"], hash });
+      results.push({ index, status: "duplicate", errors: ["an identical entry already exists (date, amount, description and account)"], hash });
       return;
     }
     seen.add(hash);
@@ -91,7 +91,7 @@ export async function previewImport(raw: unknown): Promise<ActionResult<ImportRo
     const checked = await withUser(user.id, (db) => check(db, p.data.accountId, p.data.rows));
     return { ok: true, data: checked.results };
   } catch (err) {
-    if (err instanceof Error && err.message === "Conta não encontrada.") return { ok: false, error: err.message };
+    if (err instanceof Error && err.message === "Account not found.") return { ok: false, error: err.message };
     return toActionError(err);
   }
 }
@@ -130,11 +130,11 @@ export async function commitImport(raw: unknown): Promise<ActionResult<{ importe
       return { imported, skipped: checked.results.length - imported };
     });
     refresh();
-    return { ok: true, data: result, message: `${result.imported} movimentação(ões) importada(s)` };
+    return { ok: true, data: result, message: `${result.imported} entr${result.imported === 1 ? "y" : "ies"} imported` };
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("FX:"))
-      return { ok: false, error: `Sem cotação para ${err.message.slice(3)}. Atualize a cotação ou informe uma taxa manual antes de importar.` };
-    if (err instanceof Error && err.message === "Conta não encontrada.") return { ok: false, error: err.message };
+      return { ok: false, error: `No exchange rate for ${err.message.slice(3)}. Refresh the rate or type one in Settings before importing.` };
+    if (err instanceof Error && err.message === "Account not found.") return { ok: false, error: err.message };
     return toActionError(err);
   }
 }
@@ -143,19 +143,19 @@ export async function restoreBackupAction(raw: unknown): Promise<ActionResult<Re
   try {
     const user = await requireUserForAction();
     const p = z.object({ json: z.string().min(2).max(9_000_000), confirm: z.literal(true) }).safeParse(raw);
-    if (!p.success) return { ok: false, error: "Confirme a restauração e escolha um arquivo válido." };
+    if (!p.success) return { ok: false, error: "Confirm the restore and choose a valid file." };
     let data: unknown;
     try {
       data = JSON.parse(p.data.json);
       validateBackupShape(data);
     } catch (e) {
-      return { ok: false, error: e instanceof Error && !(e instanceof SyntaxError) ? e.message : "O arquivo não é um JSON válido." };
+      return { ok: false, error: e instanceof Error && !(e instanceof SyntaxError) ? e.message : "The file is not valid JSON." };
     }
     const counts = await withUser(user.id, (db) => restore(db, data as Record<string, unknown>));
     refresh();
-    return { ok: true, data: counts, message: "Backup restaurado com sucesso" };
+    return { ok: true, data: counts, message: "Backup restored" };
   } catch (err) {
     const e = toActionError(err);
-    return { ok: false, error: e.error === "Não foi possível concluir a operação. Tente novamente." ? "O backup contém dados inválidos; nada foi alterado." : e.error };
+    return { ok: false, error: e.error === "Something went wrong. Please try again." ? "The backup contains invalid data; nothing was changed." : e.error };
   }
 }

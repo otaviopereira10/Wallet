@@ -4,6 +4,7 @@ import {
   CalendarDays,
   FileBarChart2,
   GraduationCap,
+  HelpCircle,
   Landmark,
   LayoutDashboard,
   LineChart,
@@ -20,27 +21,30 @@ import {
 export interface NavItem {
   href: string;
   label: string;
+  /** One-line plain-English explanation shown in search and on the Help page. */
+  hint: string;
   icon: LucideIcon;
-  group: "Visão geral" | "Dinheiro" | "Planejamento" | "Análise" | "Sistema";
+  group: "Overview" | "Your money" | "Planning" | "Insights" | "App";
   keywords?: string;
 }
 
 export const NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, group: "Visão geral", keywords: "inicio resumo" },
-  { href: "/intelligence", label: "Isabelle Intelligence", icon: Sparkles, group: "Visão geral", keywords: "assistente ia perguntas" },
-  { href: "/accounts", label: "Contas & saldos", icon: Landmark, group: "Dinheiro", keywords: "banco saldo transferencia" },
-  { href: "/income", label: "Receitas", icon: ArrowDownLeft, group: "Dinheiro", keywords: "renda bolsa salario" },
-  { href: "/expenses", label: "Despesas", icon: Receipt, group: "Dinheiro", keywords: "gastos compras" },
-  { href: "/bills", label: "Bills & Payments", icon: CalendarClock, group: "Dinheiro", keywords: "contas pagar vencimento planner" },
-  { href: "/subscriptions", label: "Assinaturas", icon: Repeat, group: "Dinheiro", keywords: "netflix spotify recorrentes" },
-  { href: "/debt", label: "University Debt", icon: GraduationCap, group: "Planejamento", keywords: "divida faculdade emprestimo" },
-  { href: "/budget", label: "Monthly Budget", icon: PieChart, group: "Planejamento", keywords: "orcamento limites" },
-  { href: "/cash-flow", label: "Cash Flow Forecast", icon: LineChart, group: "Planejamento", keywords: "fluxo de caixa projecao" },
-  { href: "/goals", label: "Savings Goals", icon: PiggyBank, group: "Planejamento", keywords: "metas reserva emergencia" },
-  { href: "/calendar", label: "Calendário", icon: CalendarDays, group: "Análise", keywords: "datas eventos" },
-  { href: "/reports", label: "Financial Reports", icon: FileBarChart2, group: "Análise", keywords: "relatorios pdf csv" },
-  { href: "/data", label: "Importar & backup", icon: UploadCloud, group: "Sistema", keywords: "csv importacao exportacao restaurar" },
-  { href: "/settings", label: "Configurações", icon: Settings, group: "Sistema", keywords: "perfil preferencias cambio senha" },
+  { href: "/dashboard", label: "Dashboard", hint: "Everything at a glance", icon: LayoutDashboard, group: "Overview", keywords: "home summary" },
+  { href: "/intelligence", label: "Ask Isabelle", hint: "Ask questions about your money", icon: Sparkles, group: "Overview", keywords: "assistant ai questions intelligence" },
+  { href: "/accounts", label: "Accounts", hint: "Where your money is", icon: Landmark, group: "Your money", keywords: "bank balance transfer" },
+  { href: "/income", label: "Income", hint: "Money coming in", icon: ArrowDownLeft, group: "Your money", keywords: "salary scholarship paycheck" },
+  { href: "/expenses", label: "Expenses", hint: "Money going out", icon: Receipt, group: "Your money", keywords: "spending purchases" },
+  { href: "/bills", label: "Bills & Payments", hint: "What you need to pay and when", icon: CalendarClock, group: "Your money", keywords: "bills due planner" },
+  { href: "/subscriptions", label: "Subscriptions", hint: "Netflix, Spotify, gym…", icon: Repeat, group: "Your money", keywords: "netflix spotify recurring" },
+  { href: "/debt", label: "University Debt", hint: "Your student loan and payoff plan", icon: GraduationCap, group: "Planning", keywords: "loan college tuition student" },
+  { href: "/budget", label: "Monthly Budget", hint: "Spending limits per category", icon: PieChart, group: "Planning", keywords: "budget limits" },
+  { href: "/cash-flow", label: "Cash Flow", hint: "Your balance in the coming weeks", icon: LineChart, group: "Planning", keywords: "forecast projection future" },
+  { href: "/goals", label: "Savings Goals", hint: "Emergency fund, trips, purchases", icon: PiggyBank, group: "Planning", keywords: "goals savings emergency" },
+  { href: "/calendar", label: "Calendar", hint: "Money events by day", icon: CalendarDays, group: "Insights", keywords: "dates events" },
+  { href: "/reports", label: "Reports", hint: "Monthly and yearly reports, CSV and PDF", icon: FileBarChart2, group: "Insights", keywords: "reports pdf csv" },
+  { href: "/data", label: "Import & Backup", hint: "CSV import, export and backups", icon: UploadCloud, group: "App", keywords: "csv import export restore backup" },
+  { href: "/settings", label: "Settings", hint: "Profile, currency, exchange rate, password", icon: Settings, group: "App", keywords: "profile preferences exchange password" },
+  { href: "/help", label: "Help", hint: "How Isabelle Wallet works", icon: HelpCircle, group: "App", keywords: "help guide how it works glossary" },
 ];
 
 export const MOBILE_PRIMARY = ["/dashboard", "/expenses", "/bills"];

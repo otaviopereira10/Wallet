@@ -1,113 +1,113 @@
-# Regras financeiras da Isabelle Wallet
+# Isabelle Wallet financial rules
 
-Este documento descreve **como cada número é calculado**. Todas as regras vivem no
-motor financeiro puro em `src/lib/finance/` (sem acesso a banco ou rede) e são
-cobertas por testes em `tests/`.
+This document explains **how every number is calculated**. All rules live in the pure
+financial engine in `src/lib/finance/` (no database or network access) and are covered by
+tests in `tests/`.
 
-## 1. Representação de valores
+## 1. How values are stored
 
-| Item | Regra |
+| Item | Rule |
 |---|---|
-| Dinheiro no banco | `numeric(14,2)` — decimal exato |
-| Dinheiro no código | inteiros em **centavos** (`Cents`), somas e subtrações exatas |
-| Taxas (juros, câmbio) | `decimal.js`, arredondamento **meio para longe do zero**, uma única vez, para centavos |
-| Datas | `date` sem hora (`"AAAA-MM-DD"`), aritmética em UTC; "hoje" é resolvido no **fuso horário da usuária** |
-| Moedas | USD e BRL. Valores de moedas diferentes **nunca** são somados sem conversão explícita |
+| Money in the database | `numeric(14,2)` — exact decimal |
+| Money in the code | integers in **cents** (`Cents`), so sums and differences are exact |
+| Rates (interest, exchange) | `decimal.js`, rounding **half away from zero**, once, to cents |
+| Dates | `date` without time (`"YYYY-MM-DD"`), arithmetic in UTC; "today" is resolved in the **user's time zone** |
+| Currencies | USD and BRL. Amounts in different currencies are **never** added without an explicit conversion |
 
-## 2. Saldo real × saldo projetado
+## 2. Real balance vs. projected balance
 
-- **Saldo real** de uma conta = saldo inicial + movimentações **pagas/recebidas** a partir da data do saldo inicial.
-- Movimentações com data **anterior** ao saldo inicial são histórico (já estão no saldo inicial) e não alteram o saldo de novo.
-- **Despesa pendente não é pagamento**: não reduz o saldo real até ser marcada como paga.
-- **Receita futura não é dinheiro disponível**: só entra no saldo quando o recebimento é confirmado.
-- **Saldo projetado** (Cash Flow) parte do saldo real de hoje e soma/subtrai eventos previstos, sempre rotulados como previsão.
+- **Real balance** of an account = starting balance + **paid/received** transactions from the starting-balance date on.
+- Transactions dated **before** the starting balance are history (already included in it) and do not change the balance again.
+- **A pending expense is not a payment**: it does not lower the real balance until it is marked as paid.
+- **Future income is not available money**: it only counts once the receipt is confirmed.
+- **Projected balance** (Cash Flow) starts from today's real balance and adds/subtracts expected events, always labelled as a forecast.
 
-## 3. Tipos de movimentação
+## 3. Transaction types
 
-| Tipo | Efeito na conta | Conta como receita? | Conta como despesa? |
+| Type | Effect on the account | Counts as income? | Counts as spending? |
 |---|---|---|---|
-| `income` | + | sim | — |
-| `expense` (paga) | − | — | sim |
-| `expense` (pendente) | nenhum | — | compromisso (orçamento) |
-| `refund` | + | — | reduz a despesa da categoria |
-| `transfer` | − origem, + destino | **não** | **não** |
-| `debt_payment` | − | — | saída de dinheiro (separada de "despesas"), **e** reduz a dívida |
+| `income` | + | yes | — |
+| `expense` (paid) | − | — | yes |
+| `expense` (pending) | none | — | commitment (budget) |
+| `refund` | + | — | reduces spending in its category |
+| `transfer` | − from, + to | **no** | **no** |
+| `debt_payment` | − | — | money out (separate from "expenses") **and** reduces the debt |
 
-- Um pagamento de dívida gera **uma** transação (saída) e **um** evento de dívida vinculado — cada livro conta a operação uma única vez. Apagar a transação apaga o evento.
-- Pagamento de conta (Bills) gera uma despesa paga vinculada ao vencimento.
-- Transferências entre moedas guardam o valor que saiu (moeda de origem) e o que entrou (moeda de destino).
-- Prevenção de duplicidade: um recebimento por ocorrência de receita (`unique`), hash de importação único, ocorrências de conta únicas por data, acréscimos automáticos únicos por data.
+- A debt payment creates **one** transaction (money out) and **one** linked debt event — each ledger counts the operation exactly once. Deleting the transaction deletes the event.
+- Paying a bill creates a paid expense linked to that due date.
+- Transfers between currencies store the amount that left (source currency) and the amount that arrived (destination currency).
+- Duplicate prevention: one receipt per income occurrence (`unique`), unique import hash, unique bill occurrences per date, unique automatic semester charges per date.
 
-## 4. Câmbio
+## 4. Exchange rate
 
-- Cotações vêm do provedor configurado (padrão: Frankfurter/BCE) e são salvas com data, horário e fonte.
-- Taxa em uso = a mais recentemente atualizada (automática ou manual).
-- Movimentações históricas usam a taxa da data (ou a mais próxima); saldos atuais usam a última taxa.
-- Se não houver cotação, o valor fica **fora** dos totais e o app avisa — nunca usa taxa inventada.
-- Ao registrar em uma conta de outra moeda, o valor convertido e a taxa usada ficam gravados.
+- Rates come from the configured provider (default: Frankfurter / European Central Bank) and are saved with date, time and source.
+- Rate in use = the most recently updated one (automatic or manual).
+- Historical transactions use the rate for their date (or the closest one); current balances use the latest rate.
+- Without a rate, the amount is left **out** of totals and the app says so — it never uses an invented rate.
+- When recording into an account in the other currency, the converted amount and the rate used are saved.
 
-## 5. Recorrências
+## 5. Recurrence
 
-- Frequências: única, semanal, quinzenal, mensal, trimestral, semestral, anual e personalizada (a cada N dias/semanas/meses).
-- Passos mensais são calculados a partir da data original (31/jan → 28/fev → 31/mar), sem "escorregar".
-- Equivalente mensal: semanal × 52/12, quinzenal × 26/12, semestral ÷ 6, anual ÷ 12.
+- Frequencies: one-time, weekly, every 2 weeks, monthly, quarterly, every semester, yearly and custom (every N days/weeks/months).
+- Monthly steps are calculated from the original date (Jan 31 → Feb 28 → Mar 31), so dates never "drift".
+- Monthly equivalent: weekly × 52/12, every 2 weeks × 26/12, semester ÷ 6, yearly ÷ 12.
 
 ## 6. Bills & Payments
 
-- Cada conta recorrente gera vencimentos ("ocorrências") até 62 dias à frente; cada ocorrência tem status próprio.
-- Status: **paga** (pagamentos ≥ valor), **parcial**, **pendente**, **atrasada** (vencida sem quitação), **dispensada**.
-- Pagamento parcial só é aceito se a conta permitir; nunca acima do restante.
-- Custo estimado do atraso = multa fixa + valor × juros anuais × dias/365.
+- Each repeating bill creates due dates ("occurrences") up to 62 days ahead; each occurrence has its own status.
+- Status: **paid** (payments ≥ amount), **partly paid**, **not paid**, **overdue** (past due and not fully paid), **skipped**.
+- A partial payment is only accepted if the bill allows it, and never above what is left.
+- Estimated cost of paying late = fixed late fee + amount × yearly interest × days / 365.
 
-### Smart Payment Planner
+### Payment Planner
 
-Ordem: (1) prioridade essencial → importante → opcional; (2) atrasadas primeiro;
-(3) vencimento mais próximo; (4) maior custo de atraso; (5) menor valor.
-Alocação: primeiro os mínimos (ou o valor integral quando parcial não é permitido),
-depois os complementos. Contas essenciais podem usar a reserva mínima (com aviso);
-importantes e opcionais não. Uma opcional **nunca** passa à frente de uma essencial.
-Empates na mesma prioridade são explicados na tela. Nada é pago de verdade.
+Order: (1) priority essential → important → optional; (2) overdue first; (3) closest due date;
+(4) highest cost of paying late; (5) smallest amount.
+Allocation: minimums first (or the full amount when partial payments are not allowed), then the
+rest. Essential bills may use the safety cushion (with a warning); important and optional bills
+may not. An optional bill **never** goes before an essential one. Ties within the same priority
+are explained on screen. Nothing is actually paid.
 
-## 7. University Debt Manager
+## 7. University Debt
 
 ```
-saldo = saldo inicial + acréscimos semestrais + juros (se houver) ± ajustes − pagamentos
+balance = starting balance + semester charges + interest (if any) ± adjustments − payments
 ```
 
-- O acréscimo (padrão 5.500, configurável) é **um novo valor somado à dívida**, separado de juros.
-- Acréscimos são lançados automaticamente nas datas: âncora + k × intervalo (meses), apenas depois da data inicial e até a data de término (se informada). Cada um aparece no histórico com data e valor; anular um lançamento automático não o recria.
-- Juros (opcional): lançados no último dia de cada mês sobre o saldo daquele dia (primeiro mês proporcional aos dias).
-- **Simulador**: mês a mês, respeitando a data real de cada acréscimo e de cada pagamento (dia configurado, a partir da próxima data após hoje). Nunca usa "saldo ÷ pagamento".
-- **Quitação** só é declarada quando o saldo chega a zero **e** não há acréscimos futuros.
-- **Mínimo para não crescer** = acréscimo ÷ meses do intervalo + 1 mês de juros sobre o saldo atual. O app alerta quando o pagamento planejado é menor.
-- **Estratégias**: Conservative / Balanced / Aggressive = 25% / 50% / 80% da sobra mensal estimada (arredondado para baixo a 10). Recomendação: reserva < 1 mês de despesas essenciais → Conservative; 1–3 meses → Balanced; ≥ 3 → Aggressive; se a recomendada não cobrir os acréscimos, sobe para a primeira que cobre.
+- The semester charge (default 5,500, configurable) is **a new amount added to the debt**, separate from interest.
+- Charges are added automatically on: anchor date + k × interval (months), only after the start date and until the end date (if set). Each one appears in the history with date and amount; voiding an automatic entry does not recreate it.
+- Interest (optional): added on the last day of each month on that day's balance (first month prorated by days).
+- **Simulator**: month by month, respecting the real date of each charge and each payment (on the configured day, starting from the next date after today). It never uses "balance ÷ payment".
+- **Paid off** is only declared when the balance reaches zero **and** there are no future charges.
+- **Minimum to stop it growing** = charge ÷ months in the interval + 1 month of interest on the current balance. The app warns when the planned payment is lower.
+- **Strategies**: Conservative / Balanced / Aggressive = 25% / 50% / 80% of the estimated monthly surplus (rounded down to 10). Recommendation: emergency fund < 1 month of essential expenses → Conservative; 1–3 months → Balanced; ≥ 3 → Aggressive; if the recommended one does not cover the charges, it moves up to the first one that does.
 
-## 8. Sobra mensal (capacidade)
+## 8. Monthly surplus (capacity)
 
-- Renda mensal = equivalente mensal das receitas recorrentes ativas.
-- Obrigações recorrentes = contas recorrentes + assinaturas + despesas recorrentes (equivalente mensal).
-- Gastos variáveis = média dos últimos 3 meses completos (exclui contas, assinaturas e recorrentes); sem histórico, usa o total do orçamento, e o app avisa.
-- Sobra = renda − obrigações − variáveis. Sempre exibida com premissas e dados faltando.
+- Monthly income = monthly equivalent of active repeating income.
+- Repeating obligations = repeating bills + subscriptions + repeating expenses (monthly equivalent).
+- Everyday spending = average of the last 3 complete months (excluding bills, subscriptions and repeating items); with no history, the budget total is used and the app says so.
+- Surplus = income − obligations − everyday spending. Always shown with its assumptions and missing data.
 
-## 9. Quanto posso gastar
+## 9. How much can I spend
 
-- **No mês**: saldo disponível − obrigações até o fim do mês (contas, pendentes, recorrentes, assinaturas, pagamento planejado da dívida, reservas planejadas para metas) − reserva mínima. Receitas futuras não entram.
-- **Até o próximo recebimento**: mesma conta, até a véspera da próxima receita prevista.
-- **Folga com receitas previstas**: menor saldo projetado nos próximos dias − reserva mínima.
+- **This month** ("Safe to spend"): available balance − obligations until the end of the month (bills, pending expenses, repeating items, subscriptions, planned debt payment, planned goal contributions) − safety cushion. Future income is not counted.
+- **Until the next paycheck**: the same calculation, up to the day before the next expected income.
+- **Room including expected income**: lowest projected balance in the coming days − safety cushion.
 
-## 10. Orçamento
+## 10. Budget
 
-- Gasto da categoria = despesas pagas + pendentes − reembolsos no mês.
-- Estado: < 80% dentro; 80–100% próximo do limite; > 100% ultrapassado.
-- Projeção do mês = gasto até agora + ritmo diário dos gastos **variáveis** × dias restantes.
+- Category spending = paid + pending expenses − refunds in the month.
+- State: < 80% on track; 80–100% close to the limit; > 100% over.
+- Month projection = spending so far + daily pace of **everyday** spending × days left.
 
-## 11. Metas
+## 11. Goals
 
-- Acumulado = soma das contribuições (retiradas são negativas).
-- Estimativa = meses necessários na contribuição planejada; necessário por mês = falta ÷ meses até a data limite.
-- Recomendação de quanto guardar = sobra mensal − pagamento planejado da dívida, dividida por prioridade (3:2:1) respeitando o que cada meta precisa.
+- Saved = sum of contributions (withdrawals are negative).
+- Estimate = months needed at the planned monthly amount; needed per month = remaining ÷ months until the target date.
+- Suggested amount per goal = monthly surplus − planned debt payment, split by priority (3:2:1) without giving a goal more than it still needs.
 
-## 12. Assinaturas
+## 12. Subscriptions
 
-- Valor mensal/anual estimado por ciclo; alerta de cobrança próxima conforme preferência.
-- "Pouco uso" só aparece quando há **data de último uso** informada (> 30 dias). Sem dados, mostra "sem dados de uso".
+- Monthly/yearly cost estimated from the billing cycle; reminder before the next charge based on your preference.
+- "Rarely used" only appears when a **last used date** was entered (> 30 days ago). Without it, the app shows "No usage info".

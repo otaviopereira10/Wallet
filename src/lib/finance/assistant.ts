@@ -5,7 +5,6 @@ import { buildTimeline, collectFlowEvents, lowestPoint, maxSpendKeepingFloor } f
 import { parseMoney } from "./csv";
 import { addDays, addMonths, diffDays, endOfMonth, startOfMonth } from "./dates";
 import { balanceAfterMonths, requiredPaymentForTarget, simulateDebt } from "./debt";
-import { goalProgress } from "./goals";
 import { spendingByCategory } from "./ledger";
 import { planPayments } from "./planner";
 import { plannerItemsFrom } from "./planner-input";
@@ -16,6 +15,7 @@ import type { Cents, Snapshot } from "./types";
  * user's data through the financial engine. When data is missing the answer
  * says what is missing instead of guessing. An optional LLM (server-side) may
  * rephrase these facts but never replaces them.
+ * Questions are understood in English and Portuguese; answers are in English.
  */
 export type Intent =
   | "can_afford"
@@ -43,55 +43,64 @@ export interface AssistantAnswer {
 }
 
 const NUMBER_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
   um: 1, uma: 1, dois: 2, duas: 2, "três": 3, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10, onze: 11, doze: 12,
-  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12,
 };
 
 const CATEGORY_KEYWORDS: Array<[RegExp, string]> = [
-  [/aliment|comida|restaurante|lanche|delivery|ifood|food|eating/, "food"],
-  [/mercado|supermercado|grocer/, "groceries"],
-  [/transporte|uber|gasolina|ônibus|onibus|metr[oô]|transport|gas\b/, "transport"],
-  [/moradia|aluguel|rent|housing|casa\b/, "housing"],
-  [/educa[cç][aã]o|curso|livro|education/, "education"],
-  [/sa[uú]de|m[eé]dico|farm[aá]cia|health/, "health"],
-  [/academia|gym|fitness/, "fitness"],
-  [/entretenimento|lazer|cinema|festa|entertainment/, "entertainment"],
-  [/compras|roupa|shopping|pessoais/, "personal"],
-  [/assinatura|streaming|subscription/, "subscriptions"],
-  [/viage|travel|trip/, "travel"],
+  [/food|eating|dining|restaurant|takeout|delivery|aliment|comida|restaurante|lanche|ifood/, "food"],
+  [/grocer|supermarket|mercado|supermercado/, "groceries"],
+  [/transport|uber|lyft|gas\b|fuel|bus|subway|transporte|gasolina|ônibus|onibus|metr[oô]/, "transport"],
+  [/housing|rent|home\b|moradia|aluguel|casa\b/, "housing"],
+  [/education|course|book|educa[cç][aã]o|curso|livro/, "education"],
+  [/health|doctor|pharmacy|sa[uú]de|m[eé]dico|farm[aá]cia/, "health"],
+  [/gym|fitness|academia/, "fitness"],
+  [/entertainment|fun|movies?|party|entretenimento|lazer|cinema|festa/, "entertainment"],
+  [/shopping|clothes|personal|compras|roupa|pessoais/, "personal"],
+  [/subscription|streaming|assinatura/, "subscriptions"],
+  [/travel|trip|vacation|viage/, "travel"],
 ];
 
 export function detectIntent(question: string): Intent {
   const q = question.toLowerCase();
-  if (/(at[eé]|until).*(pr[oó]xim[oa]|next).*(pagamento|sal[aá]rio|recebimento|bolsa|paycheck|income)|gastar at[eé]/.test(q))
+  if (
+    /(until|till|before).*(next).*(pay|payday|paycheck|income|scholarship|salary|deposit)|spend (until|till|before)/.test(q) ||
+    /(at[eé]).*(pr[oó]xim[oa]).*(pagamento|sal[aá]rio|recebimento|bolsa)|gastar at[eé]/.test(q)
+  )
     return "spend_until_income";
-  if (/(posso|consigo|can i|da pra|dá pra).*(comprar|gastar|buy|afford|pagar algo)/.test(q)) return "can_afford";
-  if (/(qual|which).*(conta|bill).*(primeiro|first|prioridade)|pagar primeiro/.test(q)) return "which_bill_first";
-  if (/(quitar|pagar|payoff|pay off).*(empr[eé]stimo|d[ií]vida|loan|debt)|(empr[eé]stimo|d[ií]vida).*(por m[eê]s|mensal)/.test(q))
+  if (/(can i|could i|am i able to|should i).*(buy|afford|spend|purchase|get)|(posso|consigo|da pra|dá pra).*(comprar|gastar|pagar algo)/.test(q))
+    return "can_afford";
+  if (/(which|what).*(bill|payment).*(first|priority)|pay first|(qual).*(conta).*(primeiro|prioridade)|pagar primeiro/.test(q)) return "which_bill_first";
+  if (
+    /(pay off|payoff|pay|clear).*(loan|debt)|(loan|debt).*(per month|a month|monthly)/.test(q) ||
+    /(quitar|pagar).*(empr[eé]stimo|d[ií]vida)|(empr[eé]stimo|d[ií]vida).*(por m[eê]s|mensal)/.test(q)
+  )
     return "debt_monthly";
-  if (/(reserv|guardar).*(faculdade|college|universidade|semestre)/.test(q)) return "college_reserve";
-  if (/(economizar|poupar|save|cortar).*(por m[eê]s|mensal|month|\d)/.test(q) || /como (posso )?economizar/.test(q)) return "save_amount";
-  if (/(daqui a|em \d+|pr[oó]ximos?|situa[cç][aã]o|future|outlook).*(m[eê]s|meses|ano|anos|months|year)/.test(q)) return "outlook";
-  if (/(gastando|gasto|gastei|spending).*(demais|muito|too much|com|on)/.test(q)) return "category_spending";
-  if (/saldo|balance|quanto (eu )?tenho/.test(q)) return "balance";
+  if (/(save|set aside|reserve|put aside).*(college|university|semester|tuition)|(reserv|guardar).*(faculdade|universidade|semestre)/.test(q))
+    return "college_reserve";
+  if (/(save|cut|economizar|poupar|cortar).*(per month|a month|monthly|por m[eê]s|mensal|\d)/.test(q) || /how (can|do) i save|como (posso )?economizar/.test(q))
+    return "save_amount";
+  if (/(in (\d+|a|one|two|three|four|five|six|nine|twelve) |next|future|outlook|situation|finances|where will|look like|daqui a|em \d+|pr[oó]ximos?|situa[cç][aã]o).*(months?|years?|m[eê]s|meses|anos?)/.test(q)) return "outlook";
+  if (/(spending|spend|spent|gastando|gasto|gastei).*(too much|a lot|on|demais|muito|com)/.test(q)) return "category_spending";
+  if (/balance|how much (money )?(do )?i have|saldo|quanto (eu )?tenho/.test(q)) return "balance";
   return "help";
 }
 
 export function extractAmount(question: string): Cents | null {
-  const m = /(?:us\$|r\$|\$)\s?([\d.,]+)|([\d][\d.,]*)\s?(?:d[oó]lares|reais|dollars|usd|brl)?/i.exec(question);
+  const m = /(?:us\$|r\$|\$)\s?([\d.,]+)|([\d][\d.,]*)\s?(?:dollars|bucks|usd|brl|reais|d[oó]lares)?/i.exec(question);
   if (!m) return null;
-  const raw = m[1] ?? m[2];
+  const raw = (m[1] ?? m[2]).replace(/[.,]$/, "");
   const v = parseMoney(raw);
   return v !== null && v > 0 ? v : null;
 }
 
 export function extractMonths(question: string): number | null {
   const q = question.toLowerCase();
-  const m = /(\d+|[a-zçêé]+)\s+(m[eê]s|meses|months?|anos?|years?)/.exec(q);
+  const m = /(\d+|[a-zçêé]+)\s+(months?|years?|m[eê]s|meses|anos?)/.exec(q);
   if (!m) return null;
   const n = /^\d+$/.test(m[1]) ? Number(m[1]) : NUMBER_WORDS[m[1]];
   if (!n) return null;
-  return /ano|year/.test(m[2]) ? n * 12 : n;
+  return /year|ano/.test(m[2]) ? n * 12 : n;
 }
 
 export function extractCategory(question: string): string | null {
@@ -107,13 +116,13 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
   const fmt = (c: Cents) => formatMoney(c, base, locale);
   const missing: string[] = [];
   const noAccounts = a.accountRows.length === 0;
-  if (noAccounts && intent !== "help") missing.push("contas com saldo inicial (Configurações → Contas)");
+  if (noAccounts && intent !== "help") missing.push("your accounts with their current balance (Accounts page)");
 
   switch (intent) {
     case "can_afford": {
       const amount = extractAmount(question);
       if (amount === null) {
-        return simple(intent, "Qual é o valor da compra?", "Diga o valor, por exemplo: “Posso comprar algo de $150 este mês?”", missing);
+        return simple(intent, "How much is the purchase?", "Include the amount, for example: “Can I buy something for $150 this month?”", missing);
       }
       const monthEnd = endOfMonth(s.today);
       const safe = a.safeMonth.amount;
@@ -125,88 +134,85 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
       const maybe = !yes && amount <= floorSpend;
       const futureWarning =
         yes && low && lowAfter !== null && lowAfter < s.profile.emergencyBuffer
-          ? ` Atenção: considerando as contas dos próximos 60 dias${a.nextIncome ? "" : " e sem receitas futuras cadastradas"}, o saldo projetado chega a ${fmt(lowAfter)} em ${formatDate(low.date, locale)}.`
+          ? ` Heads up: counting the bills of the next 60 days${a.nextIncome ? "" : " and with no future income added"}, your balance is expected to reach ${fmt(lowAfter)} on ${formatDate(low.date, locale)}.`
           : "";
       return {
         intent,
-        title: `Compra de ${fmt(amount)}`,
+        title: `Buying something for ${fmt(amount)}`,
         summary: yes
-          ? `Sim para este mês: depois da compra ainda sobrariam ${fmt(safe - amount)} livres até ${formatDate(monthEnd, locale)}, sem contar receitas futuras.${futureWarning}`
+          ? `Yes, for this month: after the purchase you would still have ${fmt(safe - amount)} free until ${formatDate(monthEnd, locale)}, without counting money you have not received yet.${futureWarning}`
           : maybe
-            ? `Só se as receitas previstas caírem na data. Sem elas, o valor livre hoje é ${fmt(safe)}.`
-            : `Não é recomendável agora: o valor livre este mês é ${fmt(safe)} e, mesmo contando as receitas previstas, a folga mínima nos próximos 60 dias é ${fmt(floorSpend)}.`,
-        problem: `Você quer gastar ${fmt(amount)} e tem ${fmt(a.spendableBalance)} disponíveis, com ${fmt(a.safeMonth.obligations)} em obrigações até o fim do mês.`,
+            ? `Only if your expected income arrives on time. Without it, what is free today is ${fmt(safe)}.`
+            : `Not right now: you have ${fmt(safe)} free this month, and even counting expected income, the lowest point in the next 60 days leaves ${fmt(floorSpend)} of room.`,
+        problem: `You want to spend ${fmt(amount)}. You have ${fmt(a.spendableBalance)} available and ${fmt(a.safeMonth.obligations)} in bills and payments due by the end of the month.`,
         action: yes
-          ? "Pode seguir com a compra; registre-a como despesa para manter o saldo real atualizado."
+          ? "Go ahead, and record it as an expense so your balance stays accurate."
           : maybe
-            ? "Espere a próxima receita confirmar antes de comprar, ou divida o valor."
-            : `Adie a compra ou reduza o valor para até ${fmt(Math.max(safe, 0))}.`,
-        impact: `Saldo livre do mês após a compra: ${fmt(safe - amount)}.${
-          low && lowAfter !== null ? ` Ponto mais baixo projetado nos próximos 60 dias, já com a compra: ${fmt(lowAfter)} em ${formatDate(low.date, locale)}.` : ""
+            ? "Wait until your next income arrives before buying, or split the cost."
+            : `Postpone the purchase or lower it to at most ${fmt(Math.max(safe, 0))}.`,
+        impact: `Free money left this month after the purchase: ${fmt(safe - amount)}.${
+          low && lowAfter !== null ? ` Lowest expected balance in the next 60 days, including the purchase: ${fmt(lowAfter)} on ${formatDate(low.date, locale)}.` : ""
         }`,
-        risks: "Projeção baseada nas contas, assinaturas e receitas cadastradas; gastos variáveis do dia a dia que não estão registrados não entram.",
-        assumptions: [
-          `Reserva mínima mantida: ${fmt(s.profile.emergencyBuffer)}.`,
-          "Valor livre do mês não conta receitas futuras.",
-        ],
+        risks: "Based on the bills, subscriptions and income you entered; everyday spending you have not recorded is not included.",
+        assumptions: [`Safety cushion kept: ${fmt(s.profile.emergencyBuffer)}.`, "“Free this month” does not count money you have not received yet."],
         missing,
-        facts: { valor: fmt(amount), livre_mes: fmt(safe), folga_60_dias: fmt(floorSpend) },
+        facts: { amount: fmt(amount), free_this_month: fmt(safe), room_next_60_days: fmt(floorSpend) },
       };
     }
 
     case "spend_until_income": {
       const next = a.nextIncome;
-      if (!next) missing.push("receitas futuras cadastradas (para saber a data do próximo pagamento)");
+      if (!next) missing.push("your upcoming income (so the app knows when the next payment arrives)");
       const r = a.safeUntilIncome;
       return {
         intent,
-        title: "Até o próximo pagamento",
+        title: "Until your next payment",
         summary: next
-          ? `Você pode gastar até ${fmt(r.amount)} até ${formatDate(next.date, locale)} (${next.label}).`
-          : `Sem próxima receita cadastrada, considerei o fim do mês: ${fmt(r.amount)}.`,
-        problem: `Saldo disponível ${fmt(r.spendable)}; obrigações até ${formatDate(r.until, locale)}: ${fmt(r.obligations)}.`,
-        action: `Mantenha os gastos variáveis abaixo de ${fmt(r.amount)}${next ? `, cerca de ${fmt(Math.floor(r.amount / Math.max(1, diffDays(s.today, next.date))))} por dia` : ""}.`,
-        impact: "Ficando nesse limite, todas as contas cadastradas até a próxima receita continuam cobertas e a reserva mínima fica intacta.",
-        risks: "Contas não cadastradas ou atrasos na receita reduzem essa margem.",
-        assumptions: [`Reserva mínima: ${fmt(r.buffer)}.`],
+          ? `You can spend up to ${fmt(r.amount)} until ${formatDate(next.date, locale)} (${next.label}).`
+          : `With no upcoming income added, I used the end of the month: ${fmt(r.amount)}.`,
+        problem: `Available ${fmt(r.spendable)}; bills and payments due by ${formatDate(r.until, locale)}: ${fmt(r.obligations)}.`,
+        action: `Keep everyday spending under ${fmt(r.amount)}${next ? `, about ${fmt(Math.floor(r.amount / Math.max(1, diffDays(s.today, next.date))))} per day` : ""}.`,
+        impact: "Staying under this amount keeps every bill until your next income covered and your safety cushion untouched.",
+        risks: "Bills you have not added, or income arriving late, would reduce this amount.",
+        assumptions: [`Safety cushion: ${fmt(r.buffer)}.`],
         missing,
-        facts: { pode_gastar: fmt(r.amount), ate: r.until },
+        facts: { can_spend: fmt(r.amount), until: r.until },
       };
     }
 
     case "which_bill_first": {
       const items = plannerItemsFrom(s, a, 30);
       if (!items.length) {
-        return simple(intent, "Nenhuma conta em aberto", "Não há contas ou despesas pendentes nos próximos 30 dias.", [
+        return simple(intent, "No open bills", "There are no bills or pending expenses in the next 30 days.", [
           ...missing,
-          ...(s.bills.length ? [] : ["contas cadastradas em Bills & Payments"]),
+          ...(s.bills.length ? [] : ["your bills (Bills page)"]),
         ]);
       }
       const plan = planPayments({ cash: a.spendableBalance, buffer: s.profile.emergencyBuffer, items, today: s.today });
       const first = plan.order[0];
       return {
         intent,
-        title: "Ordem de pagamento",
-        summary: `Pague primeiro “${first.item.name}” (${PRIORITY_LABELS[first.item.priority]}, vence em ${formatDate(first.item.dueDate, locale)}, ${fmt(first.item.amount)}).`,
-        problem: `${items.length} obrigação(ões) somando ${fmt(plan.totalRequired)}; disponível ${fmt(plan.cash)}.`,
+        title: "Which bill to pay first",
+        summary: `Pay “${first.item.name}” first (${PRIORITY_LABELS[first.item.priority]}, due ${formatDate(first.item.dueDate, locale)}, ${fmt(first.item.amount)}).`,
+        problem: `${items.length} bill(s) and payment(s) totaling ${fmt(plan.totalRequired)}; you have ${fmt(plan.cash)} available.`,
         action: plan.order
           .slice(0, 4)
-          .map((o) => `${o.rank}. ${o.item.name} — reservar ${fmt(o.allocated)}`)
+          .map((o) => `${o.rank}. ${o.item.name} — set aside ${fmt(o.allocated)}`)
           .join("; "),
         impact:
           plan.shortfall > 0
-            ? `Faltam ${fmt(plan.shortfall)} para cobrir tudo. Maior risco: “${plan.highestRisk?.item.name}”.`
-            : `Tudo coberto; sobram ${fmt(plan.safeToSpend)} livres após a reserva mínima.`,
-        risks: plan.tieExplanations[0] ?? "Critérios: prioridade, atraso, vencimento, custo do atraso e valor.",
-        assumptions: ["Considera contas e despesas pendentes que vencem em até 30 dias."],
+            ? `You are ${fmt(plan.shortfall)} short of covering everything. Highest risk: “${plan.highestRisk?.item.name}”.`
+            : `Everything is covered; ${fmt(plan.safeToSpend)} stays free after your safety cushion.`,
+        risks: plan.tieExplanations[0] ?? "Order: priority, overdue first, due date, cost of paying late, then amount.",
+        assumptions: ["Looks at bills and pending expenses due in the next 30 days."],
         missing,
-        facts: { primeira: first.item.name, falta: fmt(plan.shortfall) },
+        facts: { first: first.item.name, short_by: fmt(plan.shortfall) },
       };
     }
 
     case "category_spending": {
       const cat = extractCategory(question);
-      if (!cat) return simple(intent, "Qual categoria?", "Diga a categoria, por exemplo: “Estou gastando demais com alimentação?”", missing);
+      if (!cat) return simple(intent, "Which category?", "Name the category, for example: “Am I spending too much on food?”", missing);
       const mStart = startOfMonth(s.today);
       const now = spendingByCategory(s.transactions, s.accounts, a.ctx, mStart, s.today, { includePending: true })[cat] ?? 0;
       const prevMonths: Cents[] = [];
@@ -217,27 +223,27 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
       }
       const avg = prevMonths.length ? Math.round(prevMonths.reduce((x, y) => x + y, 0) / prevMonths.length) : null;
       const line = a.budget.lines.find((l) => l.category === cat);
-      if (!line) missing.push(`limite de orçamento para ${categoryLabel(cat)}`);
-      if (avg === null) missing.push("histórico de meses anteriores");
+      if (!line) missing.push(`a monthly budget limit for ${categoryLabel(cat)}`);
+      if (avg === null) missing.push("history from previous months");
       const over = line ? line.projected > line.limit : avg !== null ? now > avg : null;
       return {
         intent,
         title: categoryLabel(cat),
         summary:
           over === null
-            ? `Você gastou ${fmt(now)} com ${categoryLabel(cat)} este mês. Ainda não há base de comparação.`
+            ? `You spent ${fmt(now)} on ${categoryLabel(cat)} this month. There is nothing to compare it with yet.`
             : over
-              ? `Sim, está acima do planejado: ${fmt(now)} até agora${line ? `, projeção de ${fmt(line.projected)} para limite de ${fmt(line.limit)}` : `, acima da média de ${fmt(avg!)}`}.`
-              : `Não, está dentro do esperado: ${fmt(now)} até agora${line ? ` (limite ${fmt(line.limit)})` : ` (média ${fmt(avg!)})`}.`,
-        problem: `Gasto do mês: ${fmt(now)}${avg !== null ? `; média dos últimos ${prevMonths.length} mês(es): ${fmt(avg)}` : ""}.`,
+              ? `Yes, it is above plan: ${fmt(now)} so far${line ? `, heading to ${fmt(line.projected)} against a limit of ${fmt(line.limit)}` : `, above your average of ${fmt(avg!)}`}.`
+              : `No, it is on track: ${fmt(now)} so far${line ? ` (limit ${fmt(line.limit)})` : ` (average ${fmt(avg!)})`}.`,
+        problem: `Spent this month: ${fmt(now)}${avg !== null ? `; average of the last ${prevMonths.length} month(s): ${fmt(avg)}` : ""}.`,
         action: line
-          ? `Para fechar dentro do limite, gaste no máximo ${fmt(line.dailyAllowance)} por dia até o fim do mês.`
-          : `Defina um limite mensal para ${categoryLabel(cat)} em Monthly Budget para acompanhar automaticamente.`,
-        impact: line ? `Margem restante: ${fmt(line.remaining)}.` : "Com um limite, você recebe alertas ao chegar a 80%.",
-        risks: "Projeção linear do ritmo de gastos variáveis do mês; compras pontuais podem distorcer.",
-        assumptions: ["Inclui despesas pagas e pendentes, descontando reembolsos."],
+          ? `To finish the month within the limit, spend at most ${fmt(line.dailyAllowance)} per day.`
+          : `Set a monthly limit for ${categoryLabel(cat)} on the Budget page to track it automatically.`,
+        impact: line ? `Room left: ${fmt(line.remaining)}.` : "With a limit, you get a warning when you reach 80%.",
+        risks: "The projection follows this month's everyday spending pace; one-off purchases can skew it.",
+        assumptions: ["Includes paid and pending expenses, minus refunds."],
         missing,
-        facts: { gasto_mes: fmt(now), media: avg !== null ? fmt(avg) : "sem dados" },
+        facts: { spent_this_month: fmt(now), average: avg !== null ? fmt(avg) : "no data" },
       };
     }
 
@@ -245,9 +251,9 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
       const d = a.debts[0];
       const collegeGoals = a.goals.filter((g) => g.goal.kind === "college");
       if (!d && !collegeGoals.length)
-        return simple(intent, "Sem dados da faculdade", "Cadastre a dívida universitária ou uma meta de reserva para a faculdade.", [
+        return simple(intent, "No college information yet", "Add your university debt or a “College fund” goal.", [
           ...missing,
-          "dívida universitária ou meta ‘Reserva para a faculdade’",
+          "university debt or a “College fund” goal",
         ]);
       const lines: string[] = [];
       let monthly = 0;
@@ -256,57 +262,54 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
         const per = Math.ceil(d.debt.incrementAmount / months);
         monthly += a.ctx.toBase(per, d.debt.currency);
         lines.push(
-          `Próximo acréscimo de ${formatMoney(d.debt.incrementAmount, d.debt.currency, locale)} em ${formatDate(d.nextIncrement, locale)}: para cobri-lo integralmente, reserve ${formatMoney(per, d.debt.currency, locale)}/mês por ${months} mês(es).`,
+          `Next semester charge of ${formatMoney(d.debt.incrementAmount, d.debt.currency, locale)} on ${formatDate(d.nextIncrement, locale)}: to cover it in full, set aside ${formatMoney(per, d.debt.currency, locale)}/month for ${months} month(s).`,
         );
       }
       for (const g of collegeGoals) {
         if (g.requiredMonthly !== null) {
           monthly += a.ctx.toBase(g.requiredMonthly, g.goal.currency);
-          lines.push(`Meta “${g.goal.name}”: ${formatMoney(g.requiredMonthly, g.goal.currency, locale)}/mês até ${formatDate(g.goal.deadline, locale)}.`);
+          lines.push(`Goal “${g.goal.name}”: ${formatMoney(g.requiredMonthly, g.goal.currency, locale)}/month until ${formatDate(g.goal.deadline, locale)}.`);
         }
       }
       return {
         intent,
-        title: "Reserva para a faculdade",
-        summary: monthly > 0 ? `Reserve cerca de ${fmt(monthly)} por mês.` : "Não há valor mensal calculável com os dados atuais.",
-        problem: lines.join(" ") || "Sem acréscimos futuros ou metas com prazo.",
-        action: "Crie (ou atualize) a meta ‘Reserva para a faculdade’ com essa contribuição mensal.",
-        impact: d ? `Pagando ao menos ${formatMoney(d.breakEven, d.debt.currency, locale)}/mês, a dívida para de crescer.` : "Mantém a meta no prazo.",
-        risks: "Considera o valor de acréscimo configurado; se a faculdade mudar o valor, atualize em University Debt Manager.",
-        assumptions: ["Meses calculados com média de 30,44 dias."],
+        title: "Saving for college",
+        summary: monthly > 0 ? `Set aside about ${fmt(monthly)} per month.` : "There is no monthly amount to calculate with the current information.",
+        problem: lines.join(" ") || "No upcoming charges or goals with a deadline.",
+        action: "Create (or update) a “College fund” goal with this monthly contribution.",
+        impact: d ? `Paying at least ${formatMoney(d.breakEven, d.debt.currency, locale)}/month stops the debt from growing.` : "Keeps the goal on schedule.",
+        risks: "Uses the semester charge you set up; if the school changes the amount, update it on the University Debt page.",
+        assumptions: ["Months calculated as 30.44 days on average."],
         missing,
-        facts: { reserva_mensal: fmt(monthly) },
+        facts: { monthly_set_aside: fmt(monthly) },
       };
     }
 
     case "debt_monthly": {
       const d = a.debts[0];
-      if (!d) return simple(intent, "Sem dívida cadastrada", "Cadastre seu empréstimo em University Debt Manager.", [...missing, "dívida universitária"]);
+      if (!d) return simple(intent, "No debt added yet", "Add your loan on the University Debt page.", [...missing, "university debt"]);
       const months = extractMonths(question);
       const target = months ? addMonths(s.today, months) : d.debt.targetPayoffDate;
       const dfmt = (c: Cents) => formatMoney(c, d.debt.currency, locale);
       const options = [24, 36, 60].map((m) => ({ m, pay: requiredPaymentForTarget(d.baseParams, addMonths(s.today, m)) }));
       const required = target ? requiredPaymentForTarget(d.baseParams, target) : null;
-      if (d.planned?.incrementsOngoing && !d.debt.incrementsEndDate)
-        missing.push("data em que os acréscimos semestrais terminam (ex.: formatura)");
+      if (d.planned?.incrementsOngoing && !d.debt.incrementsEndDate) missing.push("the date the semester charges end (e.g. graduation)");
       return {
         intent,
-        title: "Pagamento mensal para quitar",
+        title: "Monthly payment to pay it off",
         summary:
           required !== null
-            ? `Para quitar até ${formatDate(target!, locale)}, pague cerca de ${dfmt(required)} por mês.`
+            ? `To pay it off by ${formatDate(target!, locale)}, pay about ${dfmt(required)} per month.`
             : target
-              ? `Não é possível quitar até ${formatDate(target, locale)} com os acréscimos configurados.`
-              : `Para a dívida parar de crescer, pague ao menos ${dfmt(d.breakEven)} por mês.`,
-        problem: `Saldo atual ${dfmt(d.balance)}; acréscimo de ${dfmt(d.debt.incrementAmount)} a cada ${d.debt.incrementIntervalMonths} meses${d.nextIncrement ? ` (próximo em ${formatDate(d.nextIncrement, locale)})` : ""}.`,
-        action: options
-          .map((o) => `${monthsToText(o.m)}: ${o.pay !== null ? `${dfmt(o.pay)}/mês` : "inviável"}`)
-          .join("; "),
-        impact: `Mínimo para compensar os acréscimos: ${dfmt(d.breakEven)}/mês.`,
-        risks: "Simulação considera as datas reais de cada acréscimo e os juros configurados; mudanças nas regras da faculdade alteram o resultado.",
-        assumptions: [`Pagamentos no dia ${d.debt.paymentDay} de cada mês.`, `Juros: ${d.debt.interestRate}% a.a.`],
+              ? `It cannot be paid off by ${formatDate(target, locale)} with the semester charges you set up.`
+              : `To stop the debt from growing, pay at least ${dfmt(d.breakEven)} per month.`,
+        problem: `Current balance ${dfmt(d.balance)}; ${dfmt(d.debt.incrementAmount)} added every ${d.debt.incrementIntervalMonths} months${d.nextIncrement ? ` (next on ${formatDate(d.nextIncrement, locale)})` : ""}.`,
+        action: options.map((o) => `${monthsToText(o.m)}: ${o.pay !== null ? `${dfmt(o.pay)}/month` : "not possible"}`).join("; "),
+        impact: `Minimum to keep up with the semester charges: ${dfmt(d.breakEven)}/month.`,
+        risks: "The simulation uses the real date of every semester charge and any interest you set up; changes in the school's rules change the result.",
+        assumptions: [`Payments on day ${d.debt.paymentDay} of each month.`, `Interest: ${d.debt.interestRate}% per year.`],
         missing,
-        facts: { saldo: dfmt(d.balance), minimo: dfmt(d.breakEven) },
+        facts: { balance: dfmt(d.balance), minimum: dfmt(d.breakEven) },
       };
     }
 
@@ -316,9 +319,8 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
       for (const sv of a.subscriptions) {
         if (sv.sub.status === "cancelled") continue;
         if (sv.sub.status === "cancel_planned")
-          ideas.push({ text: `Cancelar ${sv.sub.name} (marcada para cancelar)`, value: a.ctx.toBase(sv.monthly, sv.sub.currency) });
-        else if (sv.usage === "low")
-          ideas.push({ text: `Rever ${sv.sub.name} (sem uso há ${sv.daysSinceUse} dias)`, value: a.ctx.toBase(sv.monthly, sv.sub.currency) });
+          ideas.push({ text: `Cancel ${sv.sub.name} (flagged to cancel)`, value: a.ctx.toBase(sv.monthly, sv.sub.currency) });
+        else if (sv.usage === "low") ideas.push({ text: `Review ${sv.sub.name} (not used for ${sv.daysSinceUse} days)`, value: a.ctx.toBase(sv.monthly, sv.sub.currency) });
       }
       const mStart = startOfMonth(s.today);
       const prev: Record<string, Cents> = {};
@@ -334,9 +336,9 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
         for (const cat of NON_ESSENTIAL_CATEGORIES) {
           if (cat === "subscriptions") continue;
           const avg = Math.round((prev[cat] ?? 0) / count);
-          if (avg >= 1000) ideas.push({ text: `Reduzir ${categoryLabel(cat)} em 25% (média ${fmt(avg)}/mês)`, value: Math.round(avg * 0.25) });
+          if (avg >= 1000) ideas.push({ text: `Cut ${categoryLabel(cat)} by 25% (average ${fmt(avg)}/month)`, value: Math.round(avg * 0.25) });
         }
-      } else missing.push("histórico de despesas de meses anteriores");
+      } else missing.push("expenses from previous months");
       ideas.sort((x, y) => y.value - x.value);
       let acc = 0;
       const chosen: typeof ideas = [];
@@ -347,17 +349,17 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
       }
       return {
         intent,
-        title: target ? `Economizar ${fmt(target)} por mês` : "Como economizar",
+        title: target ? `Saving ${fmt(target)} per month` : "How to save",
         summary: chosen.length
-          ? `Com base nos seus dados, estas ações somam ${fmt(acc)}/mês${target ? (acc >= target ? " — suficiente para a meta" : `, ${fmt(target - acc)} abaixo da meta`) : ""}.`
-          : "Ainda não há dados suficientes para sugerir cortes específicos.",
-        problem: "Gastos não essenciais e assinaturas são os pontos mais fáceis de ajustar sem afetar necessidades básicas.",
-        action: chosen.map((c) => `${c.text}: ${fmt(c.value)}/mês`).join("; ") || "Registre suas despesas por algumas semanas.",
-        impact: `Economia anual estimada: ${fmt(acc * 12)}.`,
-        risks: "A redução de 25% é uma sugestão de partida; assinaturas só são sinalizadas como pouco usadas quando você informou a data de último uso.",
-        assumptions: count ? [`Médias dos últimos ${count} mês(es) completos.`] : [],
+          ? `Based on your data, these changes add up to ${fmt(acc)}/month${target ? (acc >= target ? " — enough for your target" : `, ${fmt(target - acc)} short of your target`) : ""}.`
+          : "There is not enough data yet to suggest specific cuts.",
+        problem: "Non-essential spending and subscriptions are the easiest places to adjust without touching basic needs.",
+        action: chosen.map((c) => `${c.text}: ${fmt(c.value)}/month`).join("; ") || "Record your expenses for a few weeks first.",
+        impact: `Estimated yearly savings: ${fmt(acc * 12)}.`,
+        risks: "The 25% cut is a starting point; subscriptions are only flagged as unused when you told the app when you last used them.",
+        assumptions: count ? [`Averages of the last ${count} full month(s).`] : [],
         missing,
-        facts: { economia_mensal: fmt(acc) },
+        facts: { monthly_savings: fmt(acc) },
       };
     }
 
@@ -367,7 +369,7 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
       const events = collectFlowEvents(s, a.ctx, { to: until, includeGoals: false });
       const scheduled = events.reduce((sum, e) => sum + e.amount, 0);
       const variable = a.capacity.variableSpending;
-      if (variable === null) missing.push("histórico de gastos variáveis (ou orçamento mensal)");
+      if (variable === null) missing.push("your everyday spending history (or a monthly budget)");
       const projected = a.spendableBalance + scheduled - (variable ?? 0) * months;
       const debtLines = a.debts.map((d) => {
         const sim = simulateDebt({ ...d.baseParams, monthlyPayment: d.debt.plannedMonthlyPayment });
@@ -379,47 +381,49 @@ export function answerQuestion(question: string, s: Snapshot, a: Analysis): Assi
           const future = Math.min(g.goal.targetAmount, g.saved + g.goal.monthlyContribution * months);
           return `${g.goal.name}: ${formatMoney(future, g.goal.currency, locale)}`;
         });
-      void goalProgress;
       return {
         intent,
-        title: `Daqui a ${monthsToText(months)}`,
-        summary: `Saldo disponível projetado em ${formatDate(until, locale)}: ${fmt(projected)}${projected < 0 ? " (negativo — atenção)" : ""}.`,
-        problem: `Hoje: ${fmt(a.spendableBalance)} disponíveis. Entradas e saídas programadas no período: ${fmt(scheduled)}; gastos variáveis estimados: ${fmt((variable ?? 0) * months)}.`,
-        action: projected < 0 ? "Reduza gastos variáveis ou ajuste pagamentos planejados para evitar saldo negativo." : "Mantenha o plano; considere direcionar a sobra para metas ou para a dívida.",
-        impact: [debtLines.length ? `Dívida: ${debtLines.join("; ")}` : "", goalLines.length ? `Metas: ${goalLines.join("; ")}` : ""]
-          .filter(Boolean)
-          .join(" · ") || "Sem dívidas ou metas com contribuição mensal.",
-        risks: "Projeção, não garantia: depende de as receitas caírem nas datas previstas e de os gastos seguirem a média.",
+        title: `In ${monthsToText(months)}`,
+        summary: `Expected available balance on ${formatDate(until, locale)}: ${fmt(projected)}${projected < 0 ? " (below zero — take care)" : ""}.`,
+        problem: `Today: ${fmt(a.spendableBalance)} available. Scheduled money in and out in this period: ${fmt(scheduled)}; estimated everyday spending: ${fmt((variable ?? 0) * months)}.`,
+        action:
+          projected < 0
+            ? "Reduce everyday spending or adjust planned payments to avoid going below zero."
+            : "Keep the plan; consider sending what is left to your goals or to the debt.",
+        impact:
+          [debtLines.length ? `Debt: ${debtLines.join("; ")}` : "", goalLines.length ? `Goals: ${goalLines.join("; ")}` : ""].filter(Boolean).join(" · ") ||
+          "No debts or goals with a monthly contribution.",
+        risks: "An estimate, not a guarantee: it depends on income arriving on time and spending staying close to your average.",
         assumptions: [
-          "Inclui receitas recorrentes, contas, assinaturas, despesas recorrentes e pagamentos planejados da dívida.",
-          `Gastos variáveis: ${variable !== null ? `${fmt(variable)}/mês` : "não estimados"}.`,
+          "Includes recurring income, bills, subscriptions, recurring expenses and planned debt payments.",
+          `Everyday spending: ${variable !== null ? `${fmt(variable)}/month` : "not estimated"}.`,
           ...a.capacity.assumptions,
         ],
         missing,
-        facts: { saldo_projetado: fmt(projected), meses: String(months) },
+        facts: { expected_balance: fmt(projected), months: String(months) },
       };
     }
 
     case "balance":
       return {
         intent,
-        title: "Seu saldo",
-        summary: `Saldo total: ${fmt(a.totalBalance)}; disponível para uso: ${fmt(a.spendableBalance)}.`,
-        problem: a.accountRows.map((r) => `${r.account.name}: ${formatMoney(r.balance, r.account.currency, locale)}`).join("; ") || "Nenhuma conta cadastrada.",
-        action: "Confira se os recebimentos e pagamentos recentes estão registrados.",
-        impact: `Livre para gastar este mês: ${fmt(a.safeMonth.amount)}.`,
-        risks: "O saldo real só inclui movimentações marcadas como pagas/recebidas.",
+        title: "Your balance",
+        summary: `Total balance: ${fmt(a.totalBalance)}; available to use: ${fmt(a.spendableBalance)}.`,
+        problem: a.accountRows.map((r) => `${r.account.name}: ${formatMoney(r.balance, r.account.currency, locale)}`).join("; ") || "No accounts added yet.",
+        action: "Check that your recent income and payments are recorded.",
+        impact: `Free to spend this month: ${fmt(a.safeMonth.amount)}.`,
+        risks: "Your real balance only includes money marked as paid or received.",
         assumptions: [],
         missing,
-        facts: { saldo_total: fmt(a.totalBalance) },
+        facts: { total_balance: fmt(a.totalBalance) },
       };
 
     case "help":
     default:
       return simple(
         "help",
-        "Como posso ajudar",
-        "Posso responder, com base nos seus dados: se você pode fazer uma compra, quanto pode gastar até o próximo pagamento, qual conta pagar primeiro, se está gastando demais em uma categoria, quanto reservar para a faculdade, quanto pagar por mês para quitar o empréstimo, como economizar um valor por mês e como estará sua situação daqui a alguns meses.",
+        "What I can help with",
+        "Using your own data, I can tell you whether you can afford a purchase, how much you can spend until your next payment, which bill to pay first, whether you are overspending in a category, how much to set aside for college, how much to pay each month to clear your loan, how to save a certain amount per month, and where your money will be in a few months.",
         missing,
       );
   }

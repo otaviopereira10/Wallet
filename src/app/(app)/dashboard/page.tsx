@@ -2,9 +2,10 @@ import { ArrowDownLeft, CalendarClock, CircleCheck, GraduationCap, PiggyBank, Re
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CATEGORY_COLORS, DonutChart, IncomeExpenseChart, NetWorthChart } from "@/components/charts/charts";
+import { GettingStarted } from "@/components/getting-started";
 import { InsightList } from "@/components/insights";
 import { InfoTip } from "@/components/ui/overlays";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, PageHeader, StatCard } from "@/components/ui/primitives";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, PageHeader, StatCard } from "@/components/ui/primitives";
 import { categoryLabel } from "@/lib/constants";
 import { isOpen } from "@/lib/finance/bills";
 import { endOfMonth, startOfMonth } from "@/lib/finance/dates";
@@ -55,7 +56,7 @@ export default async function DashboardPage() {
       accountId: v.bill.accountId,
     }));
   const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: s.profile.timezone }).format(new Date()));
-  const greet = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+  const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const debtMain = a.debts[0];
 
   return (
@@ -63,87 +64,84 @@ export default async function DashboardPage() {
       <PageHeader
         eyebrow={formatDate(s.today, loc, "long")}
         title={`${greet}${s.profile.displayName ? `, ${s.profile.displayName}` : ""}`}
-        description="Sua situação financeira de hoje, calculada a partir dos seus dados."
+        description="Where your money stands today, calculated from what you entered."
         actions={<QuickAddButton />}
       />
 
-      {!s.accounts.length && (
-        <EmptyState
-          className="mb-6"
-          icon={<Wallet />}
-          title="Comece cadastrando uma conta com o saldo atual"
-          description="O saldo disponível e todas as projeções partem do dinheiro que você tem hoje."
-          action={
-            <Link href="/accounts" className="font-semibold text-pink-600 hover:underline">
-              Cadastrar conta →
-            </Link>
-          }
-        />
-      )}
+      <GettingStarted
+        progress={{
+          accounts: s.accounts.length > 0,
+          income: s.incomes.length > 0 || s.transactions.some((t) => t.kind === "income"),
+          bills: s.bills.length > 0,
+          expense: s.transactions.some((t) => t.kind === "expense"),
+          debt: s.debts.length > 0,
+          goal: s.goals.length > 0,
+        }}
+      />
 
       <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         <StatCard
-          label="Saldo disponível"
+          label="Available now"
           value={fmt(a.spendableBalance)}
           icon={<Wallet />}
           tone="pink"
-          sub={a.totalBalance !== a.spendableBalance ? `Total em contas: ${fmt(a.totalBalance)}` : "Saldo real das contas do dia a dia"}
-          info={<InfoTip>Soma dos saldos reais das contas marcadas como “dinheiro disponível”. Só inclui movimentações pagas/recebidas.</InfoTip>}
+          sub={a.totalBalance !== a.spendableBalance ? `All accounts: ${fmt(a.totalBalance)}` : "Real money in your everyday accounts"}
+          info={<InfoTip>The real balance of your everyday accounts. Only money already paid or received is counted.</InfoTip>}
         />
         <StatCard
-          label="Ainda posso gastar no mês"
+          label="Safe to spend this month"
           value={fmt(a.safeMonth.amount)}
           icon={<ShieldCheck />}
           tone={a.safeMonth.amount > 0 ? "success" : "danger"}
-          sub={`Após ${fmt(a.safeMonth.obligations)} em obrigações e ${fmt(a.safeMonth.buffer)} de reserva`}
+          sub={`After ${fmt(a.safeMonth.obligations)} of bills and ${fmt(a.safeMonth.buffer)} safety cushion`}
           info={
             <InfoTip>
-              Saldo disponível − contas, despesas pendentes, assinaturas e pagamentos planejados até o fim do mês − reserva mínima. Receitas futuras não entram.
+              Available now − bills, pending expenses, subscriptions and planned payments until the end of the month − your safety cushion. Money you have not received yet is not counted.
             </InfoTip>
           }
         />
-        <StatCard label="Recebido no mês" value={fmt(a.month.income)} icon={<ArrowDownLeft />} tone="success" sub={`Mês anterior: ${fmt(a.prevMonth.income)}`} />
+        <StatCard label="Received this month" value={fmt(a.month.income)} icon={<ArrowDownLeft />} tone="success" sub={`Last month: ${fmt(a.prevMonth.income)}`} />
         <StatCard
-          label="Despesas do mês"
+          label="Spent this month"
           value={fmt(a.month.netExpenses)}
           icon={<Receipt />}
           tone="warning"
-          sub={`${a.month.debtPayments ? `+ ${fmt(a.month.debtPayments)} pagos na dívida · ` : ""}Mês anterior: ${fmt(a.prevMonth.netExpenses)}`}
+          sub={`${a.month.debtPayments ? `+ ${fmt(a.month.debtPayments)} paid on debt · ` : ""}Last month: ${fmt(a.prevMonth.netExpenses)}`}
         />
         <StatCard
-          label="Contas pendentes"
+          label="Bills left this month"
           value={fmt(a.buckets.monthTotal)}
           icon={<CalendarClock />}
           tone={a.buckets.overdue.length ? "danger" : "neutral"}
-          sub={a.buckets.overdue.length ? `${a.buckets.overdue.length} atrasada(s): ${fmt(a.buckets.overdueTotal)}` : "Total para quitar as contas do mês"}
+          sub={a.buckets.overdue.length ? `${a.buckets.overdue.length} overdue: ${fmt(a.buckets.overdueTotal)}` : "Total still to pay this month"}
         />
-        <StatCard label="Já pago em contas" value={fmt(a.buckets.paidThisMonth)} icon={<CircleCheck />} tone="success" sub="Pagamentos de contas neste mês" />
+        <StatCard label="Bills paid" value={fmt(a.buckets.paidThisMonth)} icon={<CircleCheck />} tone="success" sub="Bill payments this month" />
         <StatCard
-          label="Dívida universitária"
+          label="University debt"
           value={debtMain ? fmt(a.debtTotal) : "—"}
           icon={<GraduationCap />}
           tone="plum"
           sub={
             debtMain?.nextIncrement ? (
-              `Próximo acréscimo em ${formatDate(debtMain.nextIncrement, loc)}`
+              `Next semester charge on ${formatDate(debtMain.nextIncrement, loc)}`
             ) : debtMain ? (
-              "Sem acréscimos futuros"
+              "No more semester charges"
             ) : (
               <Link href="/debt" className="text-pink-600 hover:underline">
-                Configurar dívida
+                Set up your debt
               </Link>
             )
           }
         />
-        <StatCard label="Economia acumulada" value={fmt(a.savingsTotal)} icon={<PiggyBank />} tone="pink" sub={`${a.goals.length} meta(s) ativa(s)`} />
+        <StatCard label="Total saved" value={fmt(a.savingsTotal)} icon={<PiggyBank />} tone="pink" sub={`${a.goals.length} active goal(s)`} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.25fr_1fr]">
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Seu resumo financeiro</CardTitle>
-              <CardDescription>Observações calculadas a partir dos seus registros.</CardDescription>
+              <CardTitle>Your money summary</CardTitle>
+              <CardDescription>Things worth knowing, calculated from your records.</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
@@ -153,11 +151,11 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Próximas contas a vencer</CardTitle>
-              <CardDescription>Atrasadas aparecem primeiro.</CardDescription>
+              <CardTitle>Upcoming bills</CardTitle>
+              <CardDescription>Overdue bills come first.</CardDescription>
             </div>
             <Link href="/bills" className="text-xs font-semibold text-pink-600 hover:underline">
-              Ver todas
+              See all
             </Link>
           </CardHeader>
           <CardContent className="pt-2">
@@ -170,8 +168,8 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Receitas × despesas</CardTitle>
-              <CardDescription>Últimos 6 meses (transferências não entram).</CardDescription>
+              <CardTitle>Income vs. expenses</CardTitle>
+              <CardDescription>Last 6 months (transfers between your accounts are not counted).</CardDescription>
             </div>
           </CardHeader>
           <CardContent>{s.transactions.length ? <IncomeExpenseChart data={months6} /> : <EmptyChart />}</CardContent>
@@ -179,8 +177,8 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Evolução do patrimônio e das dívidas</CardTitle>
-              <CardDescription>Saldo das contas − dívidas, no fim de cada mês.</CardDescription>
+              <CardTitle>Net worth and debt over time</CardTitle>
+              <CardDescription>Money in accounts minus debts, at the end of each month.</CardDescription>
             </div>
           </CardHeader>
           <CardContent>{s.accounts.length || s.debts.length ? <NetWorthChart data={nw} /> : <EmptyChart />}</CardContent>
@@ -190,8 +188,8 @@ export default async function DashboardPage() {
       <Card className="mt-4">
         <CardHeader>
           <div>
-            <CardTitle>Gastos do mês por categoria</CardTitle>
-            <CardDescription>Inclui despesas pendentes; reembolsos são descontados.</CardDescription>
+            <CardTitle>This month by category</CardTitle>
+            <CardDescription>Includes pending expenses; refunds are subtracted.</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -213,7 +211,7 @@ export default async function DashboardPage() {
               </ul>
             </div>
           ) : (
-            <EmptyChart text="Nenhuma despesa registrada neste mês." />
+            <EmptyChart text="No expenses recorded this month." />
           )}
         </CardContent>
       </Card>
@@ -221,6 +219,6 @@ export default async function DashboardPage() {
   );
 }
 
-function EmptyChart({ text = "Os gráficos aparecem assim que houver movimentações registradas." }: { text?: string }) {
+function EmptyChart({ text = "Charts appear as soon as you record some money in or out." }: { text?: string }) {
   return <div className="grid h-48 place-items-center rounded-2xl bg-surface-2/50 px-4 text-center text-sm text-muted">{text}</div>;
 }

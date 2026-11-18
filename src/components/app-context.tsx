@@ -37,7 +37,7 @@ export function AppProvider({ value, children }: { value: ClientContext; childre
 
 export function useApp(): ClientContext {
   const v = React.useContext(Ctx);
-  if (!v) throw new Error("useApp fora do AppProvider");
+  if (!v) throw new Error("useApp must be used inside AppProvider");
   return v;
 }
 
@@ -71,7 +71,7 @@ export function useServerAction() {
           try {
             const r = await fn();
             if (r.ok) {
-              if (!opts.silent) toast.success(opts.success ?? r.message ?? "Salvo com sucesso");
+              if (!opts.silent) toast.success(opts.success ?? r.message ?? "Saved");
               opts.onSuccess?.(r.data);
               router.refresh();
               resolve(true);
@@ -81,7 +81,7 @@ export function useServerAction() {
               resolve(false);
             }
           } catch {
-            toast.error("Falha de conexão. Verifique sua internet e tente novamente.");
+            toast.error("Connection problem. Check your internet and try again.");
             resolve(false);
           }
         });

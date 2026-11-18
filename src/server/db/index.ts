@@ -58,7 +58,7 @@ async function createLocalDriver(): Promise<Driver> {
 
 async function createPostgresDriver(): Promise<Driver> {
   const { default: postgres } = await import("postgres");
-  if (!env.databaseUrl) throw new Error("DATABASE_URL não configurada.");
+  if (!env.databaseUrl) throw new Error("DATABASE_URL is not configured.");
   const passthrough = { serialize: (x: unknown) => String(x), parse: (x: string) => x };
   const sql = postgres(env.databaseUrl, {
     prepare: false, // required by Supabase's transaction pooler
@@ -99,7 +99,7 @@ function driver(): Promise<Driver> {
 
 /** Runs `fn` as the given user, with RLS enforced, inside one transaction. */
 export async function withUser<T>(userId: string, fn: (db: Db) => Promise<T>): Promise<T> {
-  if (!UUID_RE.test(userId)) throw new Error("Usuário inválido");
+  if (!UUID_RE.test(userId)) throw new Error("Invalid user");
   return (await driver()).userTx(userId, fn);
 }
 

@@ -137,7 +137,7 @@ export function debtHistory(debt: Debt, events: DebtEvent[]): DebtHistoryRow[] {
       balanceAfter: debt.initialBalance,
       automatic: false,
       voided: false,
-      note: "Saldo inicial",
+      note: "Starting balance",
       transactionId: null,
     },
   ];
@@ -389,7 +389,7 @@ export function buildStrategies(input: StrategyInput): StrategyRecommendation {
     return {
       strategies: [],
       recommended: null,
-      reasons: ["Cadastre suas receitas e despesas recorrentes para calcular quanto sobra por mês."],
+      reasons: ["Add your recurring income and expenses so the app can work out how much is left each month."],
     };
   }
   if (input.monthlyCapacity <= 0) {
@@ -397,7 +397,7 @@ export function buildStrategies(input: StrategyInput): StrategyRecommendation {
       strategies: [],
       recommended: null,
       reasons: [
-        "Pelos dados cadastrados, suas obrigações mensais já consomem toda a renda prevista. Antes de acelerar a dívida, é preciso aumentar a renda ou reduzir despesas.",
+        "Based on what you entered, your monthly obligations already use all of your expected income. Before paying the debt faster, income needs to go up or expenses need to come down.",
       ],
     };
   }
@@ -415,21 +415,21 @@ export function buildStrategies(input: StrategyInput): StrategyRecommendation {
   let recommended: StrategyKey;
   if (input.emergencyMonths === null) {
     recommended = "conservative";
-    reasons.push("Não há dados suficientes sobre sua reserva de emergência; por segurança, a estratégia Conservative é a indicada.");
+    reasons.push("There is not enough information about your emergency fund, so the safest choice is Conservative.");
   } else if (input.emergencyMonths < 1) {
     recommended = "conservative";
     reasons.push(
-      `Sua reserva cobre ${input.emergencyMonths.toFixed(1)} mês(es) de despesas essenciais (menos de 1). Proteja a reserva antes de acelerar a dívida.`,
+      `Your emergency fund covers ${input.emergencyMonths.toFixed(1)} month(s) of essential expenses (less than 1). Build it up before paying the debt faster.`,
     );
   } else if (input.emergencyMonths < 3) {
     recommended = "balanced";
     reasons.push(
-      `Sua reserva cobre ${input.emergencyMonths.toFixed(1)} meses de despesas essenciais: há alguma proteção, mas ainda abaixo de 3 meses.`,
+      `Your emergency fund covers ${input.emergencyMonths.toFixed(1)} months of essential expenses: some protection, but still under 3 months.`,
     );
   } else {
     recommended = "aggressive";
     reasons.push(
-      `Sua reserva cobre ${input.emergencyMonths.toFixed(1)} meses de despesas essenciais (3 ou mais), o que permite priorizar a quitação.`,
+      `Your emergency fund covers ${input.emergencyMonths.toFixed(1)} months of essential expenses (3 or more), so you can focus on paying off the debt.`,
     );
   }
   const rec = strategies.find((s) => s.key === recommended)!;
@@ -437,13 +437,13 @@ export function buildStrategies(input: StrategyInput): StrategyRecommendation {
     const better = strategies.find((s) => s.result.coversIncrements);
     if (better && better.key !== recommended) {
       reasons.push(
-        `A estratégia ${STRATEGY_LABELS[recommended]} não cobre os novos acréscimos; ${better.label} é o mínimo que impede a dívida de crescer.`,
+        `${STRATEGY_LABELS[recommended]} does not cover the new semester charges; ${better.label} is the lowest option that stops the debt from growing.`,
       );
       recommended = better.key;
     } else if (!better) {
-      reasons.push("Nenhuma estratégia dentro da sua sobra mensal atual cobre os acréscimos semestrais: a dívida continuará crescendo.");
+      reasons.push("No option within what you have left each month covers the semester charges: the debt will keep growing.");
     }
   }
-  reasons.push("As estratégias usam 25%, 50% e 80% da sobra mensal estimada, mantendo o restante como margem para imprevistos.");
+  reasons.push("The options use 25%, 50% and 80% of what you have left each month, keeping the rest as a margin for surprises.");
   return { strategies, recommended, reasons };
 }

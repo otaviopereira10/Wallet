@@ -50,9 +50,9 @@ export function estimateCapacity(s: Snapshot, ctx: MoneyContext): CapacityEstima
         ),
       0,
     );
-    assumptions.push("Renda mensal = média mensal das receitas recorrentes ativas (receitas únicas não entram).");
+    assumptions.push("Monthly income = monthly average of your active recurring income (one-time income is not included).");
   } else {
-    missing.push("receitas recorrentes");
+    missing.push("recurring income");
   }
 
   // Recurring obligations.
@@ -107,14 +107,14 @@ export function estimateCapacity(s: Snapshot, ctx: MoneyContext): CapacityEstima
     }
     variableSpending = Math.round(total / months.length);
     essentialVariable = Math.round(essential / months.length);
-    assumptions.push(`Gastos variáveis = média dos últimos ${months.length} mês(es) completo(s) registrados.`);
+    assumptions.push(`Everyday spending = average of the last ${months.length} full month(s) on record.`);
   } else {
     const budgetTotal = s.budgets.reduce((sum, b) => sum + ctx.toBase(b.amount, b.currency), 0);
     if (budgetTotal > 0) {
       variableSpending = budgetTotal;
-      assumptions.push("Sem histórico de meses completos: gastos variáveis estimados pelo total do orçamento mensal.");
+      assumptions.push("No full months of history yet: everyday spending estimated from your monthly budget total.");
     } else {
-      missing.push("histórico de despesas de pelo menos 1 mês completo (ou um orçamento mensal)");
+      missing.push("at least 1 full month of expenses (or a monthly budget)");
     }
   }
 
@@ -143,7 +143,7 @@ export function estimateCapacity(s: Snapshot, ctx: MoneyContext): CapacityEstima
     );
   const emergencyMonths =
     essentialMonthly && essentialMonthly > 0 ? Math.round((emergencyFund / essentialMonthly) * 10) / 10 : null;
-  if (!s.goals.some((g) => g.kind === "emergency")) missing.push("meta de reserva de emergência");
+  if (!s.goals.some((g) => g.kind === "emergency")) missing.push("an emergency fund goal");
 
   return {
     monthlyIncome,

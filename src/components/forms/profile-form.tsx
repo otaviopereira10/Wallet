@@ -39,7 +39,7 @@ const COMMON_TZ = [
 export function ProfileForm({
   initial,
   onDone,
-  submitLabel = "Salvar preferências",
+  submitLabel = "Save preferences",
   compact,
   detectTimezone,
 }: {
@@ -70,24 +70,24 @@ export function ProfileForm({
   return (
     <form noValidate className="space-y-4" onSubmit={handleSubmit((v) => run(() => updateProfile(v), { onSuccess: () => onDone?.() }))}>
       <FormGrid>
-        <Field label="Como você quer ser chamada?" htmlFor="pf-name">
+        <Field label="What should we call you?" htmlFor="pf-name">
           <Input id="pf-name" placeholder="Isabelle" {...register("displayName")} />
         </Field>
         <Field
           label={
             <>
-              Moeda principal
-              <InfoTip>Todos os totais são convertidos para esta moeda usando a cotação registrada. Você pode mudar quando quiser.</InfoTip>
+              Main currency
+              <InfoTip>All totals are converted to this currency using the saved exchange rate. You can change it anytime.</InfoTip>
             </>
           }
           htmlFor="pf-cur"
         >
           <Select id="pf-cur" {...register("baseCurrency")}>
-            <option value="USD">USD — Dólar americano</option>
-            <option value="BRL">BRL — Real brasileiro</option>
+            <option value="USD">USD — US dollar</option>
+            <option value="BRL">BRL — Brazilian real</option>
           </Select>
         </Field>
-        <Field label="Fuso horário" htmlFor="pf-tz" hint="Define o que é “hoje” para vencimentos.">
+        <Field label="Time zone" htmlFor="pf-tz" hint="Decides what “today” means for due dates.">
           <Select id="pf-tz" {...register("timezone")}>
             {zones.map((z) => (
               <option key={z} value={z}>
@@ -99,8 +99,8 @@ export function ProfileForm({
         <Field
           label={
             <>
-              Reserva mínima na conta
-              <InfoTip>Valor que você quer manter sempre disponível para imprevistos. É descontado do “quanto posso gastar”.</InfoTip>
+              Safety cushion
+              <InfoTip>Money you always want to keep untouched for surprises. It is subtracted from “safe to spend”.</InfoTip>
             </>
           }
           error={err(e, "emergencyBuffer")}
@@ -110,20 +110,20 @@ export function ProfileForm({
         </Field>
         {!compact && (
           <>
-            <Field label="Formato de números" htmlFor="pf-locale">
+            <Field label="Number format" htmlFor="pf-locale">
               <Select id="pf-locale" {...register("locale")}>
-                <option value="pt-BR">Português (1.234,56)</option>
                 <option value="en-US">English (1,234.56)</option>
+                <option value="pt-BR">Portuguese (1.234,56)</option>
               </Select>
             </Field>
-            <Field label="Avisar contas com antecedência de (dias)" error={err(e, "alertDaysAhead")} htmlFor="pf-alert">
+            <Field label="Remind me about bills (days before)" error={err(e, "alertDaysAhead")} htmlFor="pf-alert">
               <Input id="pf-alert" type="number" min={0} max={30} {...register("alertDaysAhead")} />
             </Field>
-            <Field label="Tema" htmlFor="pf-theme">
+            <Field label="Theme" htmlFor="pf-theme">
               <Select id="pf-theme" {...register("theme")}>
-                <option value="light">Claro</option>
-                <option value="dark">Escuro</option>
-                <option value="system">Seguir o sistema</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="system">Match my device</option>
               </Select>
             </Field>
           </>
@@ -131,11 +131,11 @@ export function ProfileForm({
       </FormGrid>
       {!compact && (
         <CheckboxRow
-          label="Usar IA nas respostas da Isabelle Intelligence"
+          label="Use AI in Ask Isabelle answers"
           description={
             app.aiAvailable
-              ? "Envia um resumo dos seus números ao provedor de IA configurado no servidor somente quando você pergunta. Os cálculos continuam sendo feitos pelo app."
-              : "Indisponível: nenhuma chave de IA configurada no servidor. Os cálculos locais funcionam normalmente."
+              ? "Sends a short summary of your numbers to the AI provider set up on the server, only when you ask a question. All calculations are still done by the app."
+              : "Not available: no AI key is set up on the server. Everything else works normally."
           }
           disabled={!app.aiAvailable}
           {...register("aiEnabled")}

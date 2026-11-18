@@ -12,7 +12,7 @@ import { txRows } from "@/server/view";
 import { QuickAddButton } from "../dashboard/dashboard-client";
 import { ExpensesClient } from "./expenses-client";
 
-export const metadata: Metadata = { title: "Despesas" };
+export const metadata: Metadata = { title: "Expenses" };
 
 export default async function ExpensesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
@@ -63,10 +63,10 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <PageHeader
-        eyebrow="Dinheiro"
-        title="Despesas"
-        description="Tudo o que você gastou ou precisa pagar. Pendentes não reduzem o saldo real até serem pagas."
-        actions={<QuickAddButton label="Nova despesa" />}
+        eyebrow="Your money"
+        title="Expenses"
+        description="Everything you spent or still need to pay. Pending expenses do not lower your balance until you mark them as paid."
+        actions={<QuickAddButton label="New expense" />}
       />
       <ExpensesClient
         rows={rows}

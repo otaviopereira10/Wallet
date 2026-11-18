@@ -37,7 +37,7 @@ export async function createBill(raw: unknown) {
       await syncBill(db, rows[0].id);
       return rows[0].id;
     },
-    { message: "Conta cadastrada" },
+    { message: "Bill added" },
   );
 }
 
@@ -53,7 +53,7 @@ export async function updateBill(raw: unknown) {
         [v.id, v.name, v.amount, v.minimumAmount, v.currency, v.category, v.priority, v.recurrence, v.firstDueDate, v.endDate, v.lateFee,
           v.interestRate, v.allowsPartial, v.accountId, v.notes],
       );
-      if (!r.length) throw new UserError("Conta não encontrada.");
+      if (!r.length) throw new UserError("Bill not found.");
       // Future occurrences without payments follow the new rule/amount.
       const today = await userToday(db);
       await db.query(
@@ -63,7 +63,7 @@ export async function updateBill(raw: unknown) {
       );
       await syncBill(db, v.id);
     },
-    { message: "Conta atualizada" },
+    { message: "Bill updated" },
   );
 }
 
@@ -80,9 +80,9 @@ export async function deleteBill(raw: unknown) {
     raw,
     async (v, { db }) => {
       const r = await db.query("delete from bills where id = $1 returning id", [v.id]);
-      if (!r.length) throw new UserError("Conta não encontrada.");
+      if (!r.length) throw new UserError("Bill not found.");
     },
-    { message: "Conta excluída (pagamentos já registrados continuam no histórico de despesas)" },
+    { message: "Bill deleted (payments already recorded stay in your expenses)" },
   );
 }
 
@@ -99,23 +99,23 @@ async function payOccurrence(
     [v.occurrenceId],
   );
   const o = rows[0];
-  if (!o) throw new UserError("Vencimento não encontrado.");
-  if (o.waived) throw new UserError("Este vencimento foi dispensado.");
+  if (!o) throw new UserError("Due date not found.");
+  if (o.waived) throw new UserError("This due date was skipped.");
   const remaining = toCents(o.amount_due) - toCents(o.paid ?? "0");
   const amount = toCents(v.amount);
-  if (remaining <= 0) throw new UserError("Este vencimento já está pago.");
-  if (amount > remaining) throw new UserError(`O valor excede o restante (${dec(remaining)}).`);
+  if (remaining <= 0) throw new UserError("This one is already paid.");
+  if (amount > remaining) throw new UserError(`The amount is more than what is left (${dec(remaining)}).`);
   if (amount < remaining && !o.allows_partial)
-    throw new UserError("Esta conta não aceita pagamento parcial. Habilite a opção na edição da conta, se for o caso.");
+    throw new UserError("This bill does not accept partial payments. Turn that option on when editing the bill, if needed.");
   let transactionId: string | null = null;
   if (v.recordOutflow) {
-    if (!v.accountId) throw new UserError("Escolha a conta usada no pagamento.");
+    if (!v.accountId) throw new UserError("Choose the account you paid from.");
     const acc = await getAccount(db, v.accountId);
     const { accountAmount, fxRate } = await amountInAccount(db, acc.currency, amount, o.currency, v.fxRate);
     const tx = await db.query<{ id: string }>(
       `insert into transactions (kind, status, date, amount, currency, account_id, account_amount, fx_rate, category, description, payment_method)
        values ('expense', 'paid', $1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
-      [v.date, dec(amount), o.currency, v.accountId, dec(accountAmount), fxRate, o.category, `Pagamento: ${o.name}`, v.paymentMethod ?? null],
+      [v.date, dec(amount), o.currency, v.accountId, dec(accountAmount), fxRate, o.category, `Payment: ${o.name}`, v.paymentMethod ?? null],
     );
     transactionId = tx[0].id;
   }
@@ -129,7 +129,7 @@ async function payOccurrence(
 
 export async function payBill(raw: unknown) {
   return run(billPaymentSchema, raw, async (v, { db }) => payOccurrence(db, v), {
-    message: "Pagamento registrado. Lembrete: a Isabelle Wallet só registra — nenhum pagamento real é feito.",
+    message: "Payment recorded. Reminder: Isabelle Wallet only keeps records — no real money is moved.",
   });
 }
 
@@ -141,7 +141,7 @@ export async function recordPlannedPayments(raw: unknown) {
       accountId: uuid,
       items: z
         .array(z.object({ id: z.string().min(1).max(80), amount: z.string().regex(/^\d{1,12}(\.\d{1,2})?$/) }))
-        .min(1, "Nenhum pagamento selecionado")
+        .min(1, "No payments selected")
         .max(100),
     }),
     raw,
@@ -155,7 +155,7 @@ export async function recordPlannedPayments(raw: unknown) {
             [id],
           );
           if (!t[0] || t[0].status !== "pending") continue;
-          if (toCents(it.amount) !== toCents(t[0].amount)) throw new UserError("Despesas pendentes precisam ser pagas integralmente.");
+          if (toCents(it.amount) !== toCents(t[0].amount)) throw new UserError("Pending expenses must be paid in full.");
           const acc = await getAccount(db, v.accountId);
           const { accountAmount, fxRate } = await amountInAccount(db, acc.currency, toCents(t[0].amount), t[0].currency);
           await db.query(
@@ -163,12 +163,12 @@ export async function recordPlannedPayments(raw: unknown) {
             [id, v.accountId, dec(accountAmount), fxRate, v.date],
           );
         } else {
-          if (!z.string().uuid().safeParse(it.id).success) throw new UserError("Item inválido.");
+          if (!z.string().uuid().safeParse(it.id).success) throw new UserError("Invalid item.");
           await payOccurrence(db, { occurrenceId: it.id, amount: it.amount, date: v.date, accountId: v.accountId, recordOutflow: true });
         }
       }
     },
-    { message: "Pagamentos do plano registrados" },
+    { message: "Planned payments recorded" },
   );
 }
 
@@ -181,9 +181,9 @@ export async function updateOccurrence(raw: unknown) {
         "update bill_occurrences set amount_due = $2, minimum_due = $3, waived = $4, notes = $5 where id = $1 returning id",
         [v.occurrenceId, v.amountDue, v.minimumDue, v.waived, v.notes],
       );
-      if (!r.length) throw new UserError("Vencimento não encontrado.");
+      if (!r.length) throw new UserError("Due date not found.");
     },
-    { message: "Vencimento atualizado" },
+    { message: "Due date updated" },
   );
 }
 
@@ -193,10 +193,10 @@ export async function deleteBillPayment(raw: unknown) {
     raw,
     async (v, { db }) => {
       const p = await db.query<{ transaction_id: string | null }>("select transaction_id from bill_payments where id = $1", [v.id]);
-      if (!p[0]) throw new UserError("Pagamento não encontrado.");
+      if (!p[0]) throw new UserError("Payment not found.");
       if (p[0].transaction_id) await db.query("delete from transactions where id = $1", [p[0].transaction_id]);
       await db.query("delete from bill_payments where id = $1", [v.id]);
     },
-    { message: "Pagamento removido" },
+    { message: "Payment removed" },
   );
 }

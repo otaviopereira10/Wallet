@@ -58,35 +58,35 @@ export function ExpenseForm({ initial, onDone }: { initial?: ExpenseInitial; onD
   });
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <Field label="Nome da compra" error={err(e, "description")} htmlFor="exp-desc">
-        <Input id="exp-desc" placeholder="Ex.: Mercado da semana" autoFocus {...register("description")} />
+      <Field label="What did you buy?" error={err(e, "description")} htmlFor="exp-desc">
+        <Input id="exp-desc" placeholder="e.g. Weekly groceries" autoFocus {...register("description")} />
       </Field>
       <FormGrid>
-        <Field label="Valor" error={err(e, "amount")} htmlFor="exp-amount">
+        <Field label="Amount" error={err(e, "amount")} htmlFor="exp-amount">
           <MoneyInput id="exp-amount" currency={watch("currency") as Currency} {...register("amount")} />
         </Field>
-        <Field label="Moeda" htmlFor="exp-cur">
+        <Field label="Currency" htmlFor="exp-cur">
           <CurrencySelect id="exp-cur" {...register("currency")} />
         </Field>
-        <Field label="Categoria" error={err(e, "category")} htmlFor="exp-cat">
+        <Field label="Category" error={err(e, "category")} htmlFor="exp-cat">
           <CategorySelect id="exp-cat" kind="expense" {...register("category")} />
         </Field>
-        <Field label="Data" error={err(e, "date")} htmlFor="exp-date">
+        <Field label="Date" error={err(e, "date")} htmlFor="exp-date">
           <Input id="exp-date" type="date" {...register("date")} />
         </Field>
-        <Field label="Status" htmlFor="exp-status" hint={status === "pending" ? "Pendente não reduz o saldo real até ser pago." : undefined}>
+        <Field label="Status" htmlFor="exp-status" hint={status === "pending" ? "Pending does not lower your balance until you mark it as paid." : undefined}>
           <Select id="exp-status" {...register("status")}>
-            <option value="paid">Pago</option>
-            <option value="pending">Pendente</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Not paid yet (pending)</option>
           </Select>
         </Field>
-        <Field label="Conta utilizada" error={err(e, "accountId")} htmlFor="exp-acc">
-          <AccountSelect id="exp-acc" allowEmpty={status === "pending" ? "Ainda não definida" : undefined} {...register("accountId")} />
+        <Field label="Paid from" error={err(e, "accountId")} htmlFor="exp-acc">
+          <AccountSelect id="exp-acc" allowEmpty={status === "pending" ? "Not decided yet" : undefined} {...register("accountId")} />
         </Field>
-        <Field label="Forma de pagamento" htmlFor="exp-pm">
+        <Field label="Payment method" htmlFor="exp-pm">
           <PaymentMethodSelect id="exp-pm" {...register("paymentMethod")} />
         </Field>
-        <Field label="Recorrência" htmlFor="exp-rec" hint="Recorrentes entram nas projeções futuras.">
+        <Field label="Repeats" htmlFor="exp-rec" hint="Repeating expenses are included in your forecasts.">
           <Select id="exp-rec" {...register("recurrence")}>
             {EXPENSE_RECURRENCES.map((r) => (
               <option key={r} value={r}>
@@ -105,13 +105,13 @@ export function ExpenseForm({ initial, onDone }: { initial?: ExpenseInitial; onD
           error={err(e, "fxRate")}
         />
       )}
-      <Field label="Descrição / observações" htmlFor="exp-notes">
+      <Field label="Notes (optional)" htmlFor="exp-notes">
         <Textarea id="exp-notes" rows={2} {...register("notes")} />
       </Field>
-      {!app.accounts.length && <p className="text-sm text-warning">Crie uma conta em “Contas & saldos” para registrar despesas pagas.</p>}
+      {!app.accounts.length && <p className="text-sm text-warning">Add an account on the “Accounts” page to record paid expenses.</p>}
       <div className="flex justify-end gap-2 pt-2">
         <Button type="submit" loading={pending}>
-          {initial?.id ? "Salvar alterações" : "Registrar despesa"}
+          {initial?.id ? "Save changes" : "Add expense"}
         </Button>
       </div>
     </form>
@@ -156,35 +156,35 @@ export function IncomeTxForm({ initial, onDone }: { initial?: IncomeTxInitial; o
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
       <p className="rounded-xl bg-surface-2 px-3 py-2 text-xs text-muted">
-        Use para um dinheiro que <strong>já entrou</strong>. Rendas que se repetem (bolsa, salário) ficam melhores em Receitas → Nova fonte de renda.
+        Use this for money that <strong>already arrived</strong>. For income that repeats (scholarship, salary), use Income → New income source.
       </p>
-      <Field label="Descrição" error={err(e, "description")} htmlFor="inc-desc">
-        <Input id="inc-desc" placeholder="Ex.: Freelance de design" {...register("description")} />
+      <Field label="Description" error={err(e, "description")} htmlFor="inc-desc">
+        <Input id="inc-desc" placeholder="e.g. Design freelance" {...register("description")} />
       </Field>
       <FormGrid>
-        <Field label="Valor" error={err(e, "amount")} htmlFor="inc-amount">
+        <Field label="Amount" error={err(e, "amount")} htmlFor="inc-amount">
           <MoneyInput id="inc-amount" currency={watch("currency") as Currency} {...register("amount")} />
         </Field>
-        <Field label="Moeda" htmlFor="inc-cur">
+        <Field label="Currency" htmlFor="inc-cur">
           <CurrencySelect id="inc-cur" {...register("currency")} />
         </Field>
-        <Field label="Categoria" htmlFor="inc-cat">
+        <Field label="Category" htmlFor="inc-cat">
           <CategorySelect id="inc-cat" kind="income" {...register("category")} />
         </Field>
-        <Field label="Data de recebimento" error={err(e, "date")} htmlFor="inc-date">
+        <Field label="Date received" error={err(e, "date")} htmlFor="inc-date">
           <Input id="inc-date" type="date" {...register("date")} />
         </Field>
-        <Field label="Conta de destino" error={err(e, "accountId")} htmlFor="inc-acc" className="sm:col-span-2">
+        <Field label="Received in" error={err(e, "accountId")} htmlFor="inc-acc" className="sm:col-span-2">
           <AccountSelect id="inc-acc" {...register("accountId")} />
         </Field>
       </FormGrid>
       <FxField from={watch("currency") as Currency} accountId={watch("accountId")} amount={watch("amount") as string} register={register("fxRate")} />
-      <Field label="Observações" htmlFor="inc-notes">
+      <Field label="Notes (optional)" htmlFor="inc-notes">
         <Textarea id="inc-notes" rows={2} {...register("notes")} />
       </Field>
       <div className="flex justify-end pt-2">
         <Button type="submit" loading={pending}>
-          {initial?.id ? "Salvar" : "Registrar receita"}
+          {initial?.id ? "Save" : "Add income"}
         </Button>
       </div>
     </form>
@@ -211,43 +211,43 @@ export function TransferForm({ onDone }: { onDone?: () => void }) {
   const to = active.find((a) => a.id === watch("toAccountId"));
   const onSubmit = handleSubmit((v) => run(() => createTransfer({ ...v, toAmount: v.toAmount || null }), { onSuccess: () => onDone?.() }));
   if (active.length < 2)
-    return <p className="text-sm text-muted">Você precisa de pelo menos duas contas para registrar uma transferência entre elas.</p>;
+    return <p className="text-sm text-muted">You need at least two accounts to move money between them.</p>;
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
       <p className="rounded-xl bg-surface-2 px-3 py-2 text-xs text-muted">
-        Transferências entre suas próprias contas não contam como receita nem como despesa.
+        Moving money between your own accounts is not counted as income or expense.
       </p>
       <FormGrid>
-        <Field label="De" htmlFor="tr-from">
+        <Field label="From" htmlFor="tr-from">
           <AccountSelect id="tr-from" {...register("fromAccountId")} />
         </Field>
-        <Field label="Para" error={err(e, "toAccountId")} htmlFor="tr-to">
+        <Field label="To" error={err(e, "toAccountId")} htmlFor="tr-to">
           <AccountSelect id="tr-to" {...register("toAccountId")} />
         </Field>
-        <Field label="Valor enviado" error={err(e, "amount")} htmlFor="tr-amount">
+        <Field label="Amount sent" error={err(e, "amount")} htmlFor="tr-amount">
           <MoneyInput id="tr-amount" currency={from?.currency} {...register("amount")} />
         </Field>
         {from && to && from.currency !== to.currency ? (
-          <Field label="Valor recebido no destino" hint="Em branco = conversão pela última cotação." htmlFor="tr-to-amount">
+          <Field label="Amount received" hint="Leave empty to convert with the latest rate." htmlFor="tr-to-amount">
             <MoneyInput id="tr-to-amount" currency={to.currency} {...register("toAmount")} />
           </Field>
         ) : (
-          <Field label="Data" htmlFor="tr-date">
+          <Field label="Date" htmlFor="tr-date">
             <Input id="tr-date" type="date" {...register("date")} />
           </Field>
         )}
         {from && to && from.currency !== to.currency && (
-          <Field label="Data" htmlFor="tr-date2">
+          <Field label="Date" htmlFor="tr-date2">
             <Input id="tr-date2" type="date" {...register("date")} />
           </Field>
         )}
-        <Field label="Descrição (opcional)" htmlFor="tr-desc" className="sm:col-span-2">
-          <Input id="tr-desc" placeholder="Transferência entre contas" {...register("description")} />
+        <Field label="Description (optional)" htmlFor="tr-desc" className="sm:col-span-2">
+          <Input id="tr-desc" placeholder="Transfer between accounts" {...register("description")} />
         </Field>
       </FormGrid>
       <div className="flex justify-end pt-2">
         <Button type="submit" loading={pending}>
-          Registrar transferência
+          Move money
         </Button>
       </div>
     </form>
@@ -275,30 +275,30 @@ export function RefundForm({ refundOf, initialCategory, onDone }: { refundOf?: s
   const onSubmit = handleSubmit((v) => run(() => createRefund({ ...v, refundOf: v.refundOf || null, fxRate: v.fxRate || null }), { onSuccess: () => onDone?.() }));
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <Field label="Descrição" error={err(e, "description")} htmlFor="rf-desc">
-        <Input id="rf-desc" placeholder="Ex.: Devolução da loja" {...register("description")} />
+      <Field label="Description" error={err(e, "description")} htmlFor="rf-desc">
+        <Input id="rf-desc" placeholder="e.g. Store return" {...register("description")} />
       </Field>
       <FormGrid>
-        <Field label="Valor reembolsado" error={err(e, "amount")} htmlFor="rf-amount">
+        <Field label="Amount refunded" error={err(e, "amount")} htmlFor="rf-amount">
           <MoneyInput id="rf-amount" currency={watch("currency") as Currency} {...register("amount")} />
         </Field>
-        <Field label="Moeda" htmlFor="rf-cur">
+        <Field label="Currency" htmlFor="rf-cur">
           <CurrencySelect id="rf-cur" {...register("currency")} />
         </Field>
-        <Field label="Categoria da despesa original" htmlFor="rf-cat">
+        <Field label="Category of the original expense" htmlFor="rf-cat">
           <CategorySelect id="rf-cat" kind="expense" {...register("category")} />
         </Field>
-        <Field label="Data" htmlFor="rf-date">
+        <Field label="Date" htmlFor="rf-date">
           <Input id="rf-date" type="date" {...register("date")} />
         </Field>
-        <Field label="Conta que recebeu" error={err(e, "accountId")} htmlFor="rf-acc" className="sm:col-span-2">
+        <Field label="Received in" error={err(e, "accountId")} htmlFor="rf-acc" className="sm:col-span-2">
           <AccountSelect id="rf-acc" {...register("accountId")} />
         </Field>
       </FormGrid>
       <FxField from={watch("currency") as Currency} accountId={watch("accountId")} amount={watch("amount") as string} register={register("fxRate")} />
       <div className="flex justify-end pt-2">
         <Button type="submit" loading={pending}>
-          Registrar reembolso
+          Add refund
         </Button>
       </div>
     </form>

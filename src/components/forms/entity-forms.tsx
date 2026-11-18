@@ -86,11 +86,11 @@ export function AccountForm({ initial, onDone }: { initial?: AccountInitial; onD
       className="space-y-4"
       onSubmit={handleSubmit((v) => run(() => (initial?.id ? updateAccount({ ...v, id: initial.id }) : createAccount(v)), { onSuccess: () => onDone?.() }))}
     >
-      <Field label="Nome da conta" error={err(e, "name")} htmlFor="acc-name">
-        <Input id="acc-name" placeholder="Ex.: Chase Checking, Nubank" {...register("name")} />
+      <Field label="Account name" error={err(e, "name")} htmlFor="acc-name">
+        <Input id="acc-name" placeholder="e.g. Chase Checking, Nubank" {...register("name")} />
       </Field>
       <FormGrid>
-        <Field label="Tipo" htmlFor="acc-type">
+        <Field label="Type" htmlFor="acc-type">
           <Select id="acc-type" {...register("type")}>
             {ACCOUNT_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -99,32 +99,32 @@ export function AccountForm({ initial, onDone }: { initial?: AccountInitial; onD
             ))}
           </Select>
         </Field>
-        <Field label="Moeda" htmlFor="acc-cur">
+        <Field label="Currency" htmlFor="acc-cur">
           <CurrencySelect id="acc-cur" {...register("currency")} />
         </Field>
         <Field
           label={
             <>
-              Saldo inicial
-              <InfoTip>Quanto havia na conta na data abaixo. Movimentações anteriores a essa data não alteram o saldo de novo.</InfoTip>
+              Current balance
+              <InfoTip>How much was in the account on the date below. Anything recorded before that date will not change the balance again.</InfoTip>
             </>
           }
           error={err(e, "openingBalance")}
           htmlFor="acc-bal"
-          hint="Cartão de crédito com fatura? Use valor negativo."
+          hint="Credit card with a balance owed? Use a negative number."
         >
           <MoneyInput id="acc-bal" currency={watch("currency") as Currency} {...register("openingBalance")} />
         </Field>
-        <Field label="Saldo em" error={err(e, "openingDate")} htmlFor="acc-date">
+        <Field label="Balance as of" error={err(e, "openingDate")} htmlFor="acc-date">
           <Input id="acc-date" type="date" {...register("openingDate")} />
         </Field>
       </FormGrid>
       <CheckboxRow
-        label="Conta no dinheiro disponível"
-        description="Desmarque para poupança/investimentos que você não usa no dia a dia."
+        label="Count this as money I can spend"
+        description="Uncheck for savings or investments you do not use day to day."
         {...register("includeInAvailable")}
       />
-      <Submit pending={pending}>{initial?.id ? "Salvar" : "Criar conta"}</Submit>
+      <Submit pending={pending}>{initial?.id ? "Save" : "Add account"}</Submit>
     </form>
   );
 }
@@ -174,20 +174,20 @@ export function IncomeSourceForm({ initial, onDone }: { initial?: IncomeSourceIn
         run(() => (initial?.id ? updateIncome({ ...v, id: initial.id }) : createIncome(v)), { onSuccess: () => onDone?.() }),
       )}
     >
-      <Field label="Nome" error={err(e, "name")} htmlFor="src-name">
-        <Input id="src-name" placeholder="Ex.: Bolsa de estudos" {...register("name")} />
+      <Field label="Name" error={err(e, "name")} htmlFor="src-name">
+        <Input id="src-name" placeholder="e.g. Scholarship" {...register("name")} />
       </Field>
       <FormGrid>
-        <Field label="Valor" error={err(e, "amount")} htmlFor="src-amount">
+        <Field label="Amount" error={err(e, "amount")} htmlFor="src-amount">
           <MoneyInput id="src-amount" currency={watch("currency") as Currency} {...register("amount")} />
         </Field>
-        <Field label="Moeda" htmlFor="src-cur">
+        <Field label="Currency" htmlFor="src-cur">
           <CurrencySelect id="src-cur" {...register("currency")} />
         </Field>
-        <Field label="Categoria" htmlFor="src-cat">
+        <Field label="Category" htmlFor="src-cat">
           <CategorySelect id="src-cat" kind="income" {...register("category")} />
         </Field>
-        <Field label="Frequência" htmlFor="src-freq">
+        <Field label="How often" htmlFor="src-freq">
           <Select id="src-freq" {...register("frequency")}>
             {INCOME_FREQUENCIES.map((f) => (
               <option key={f} value={f}>
@@ -198,43 +198,43 @@ export function IncomeSourceForm({ initial, onDone }: { initial?: IncomeSourceIn
         </Field>
         {freq === "custom" && (
           <>
-            <Field label="A cada" error={err(e, "customInterval")} htmlFor="src-int">
+            <Field label="Every" error={err(e, "customInterval")} htmlFor="src-int">
               <Input id="src-int" type="number" min={1} max={365} {...register("customInterval")} />
             </Field>
-            <Field label="Unidade" htmlFor="src-unit">
+            <Field label="Unit" htmlFor="src-unit">
               <Select id="src-unit" {...register("customUnit")}>
-                <option value="">Escolha</option>
-                <option value="day">dias</option>
-                <option value="week">semanas</option>
-                <option value="month">meses</option>
+                <option value="">Choose</option>
+                <option value="day">days</option>
+                <option value="week">weeks</option>
+                <option value="month">months</option>
               </Select>
             </Field>
           </>
         )}
-        <Field label={freq === "once" ? "Data de recebimento" : "Primeiro / próximo recebimento"} error={err(e, "startDate")} htmlFor="src-start">
+        <Field label={freq === "once" ? "Date received" : "First / next payment date"} error={err(e, "startDate")} htmlFor="src-start">
           <Input id="src-start" type="date" {...register("startDate")} />
         </Field>
         {freq !== "once" && (
-          <Field label="Termina em (opcional)" error={err(e, "endDate")} htmlFor="src-end">
+          <Field label="Ends on (optional)" error={err(e, "endDate")} htmlFor="src-end">
             <Input id="src-end" type="date" {...register("endDate")} />
           </Field>
         )}
-        <Field label="Conta de destino" htmlFor="src-acc" className="sm:col-span-2">
-          <AccountSelect id="src-acc" allowEmpty="Definir ao receber" {...register("accountId")} />
+        <Field label="Goes into" htmlFor="src-acc" className="sm:col-span-2">
+          <AccountSelect id="src-acc" allowEmpty="Decide when received" {...register("accountId")} />
         </Field>
       </FormGrid>
-      <Field label="Observações" htmlFor="src-notes">
+      <Field label="Notes (optional)" htmlFor="src-notes">
         <Textarea id="src-notes" rows={2} {...register("notes")} />
       </Field>
       {!initial?.id && (
         <CheckboxRow
-          label="Já recebi o primeiro valor"
-          description="Registra o recebimento na conta de destino na data informada."
+          label="I already received the first payment"
+          description="Records it in the account on the date above."
           {...register("receivedNow")}
         />
       )}
-      <p className="text-xs text-muted">Receitas futuras aparecem nas projeções, mas só entram no saldo real quando você confirma o recebimento.</p>
-      <Submit pending={pending}>{initial?.id ? "Salvar" : "Cadastrar receita"}</Submit>
+      <p className="text-xs text-muted">Future payments show up in your forecasts, but only count in your balance after you confirm you received them.</p>
+      <Submit pending={pending}>{initial?.id ? "Save" : "Add income"}</Submit>
     </form>
   );
 }
@@ -271,18 +271,18 @@ export function ReceiveIncomeForm({
   return (
     <form noValidate className="space-y-4" onSubmit={handleSubmit((v) => run(() => receiveIncome(v), { onSuccess: () => onDone?.() }))}>
       <FormGrid>
-        <Field label="Valor recebido" error={err(e, "amount")} htmlFor="rcv-amount" hint="Ajuste se caiu um valor diferente do previsto.">
+        <Field label="Amount received" error={err(e, "amount")} htmlFor="rcv-amount" hint="Change it if a different amount arrived.">
           <MoneyInput id="rcv-amount" currency={currency} {...register("amount")} />
         </Field>
-        <Field label="Data em que caiu" error={err(e, "date")} htmlFor="rcv-date">
+        <Field label="Date it arrived" error={err(e, "date")} htmlFor="rcv-date">
           <Input id="rcv-date" type="date" {...register("date")} />
         </Field>
-        <Field label="Conta de destino" error={err(e, "accountId")} htmlFor="rcv-acc" className="sm:col-span-2">
+        <Field label="Received in" error={err(e, "accountId")} htmlFor="rcv-acc" className="sm:col-span-2">
           <AccountSelect id="rcv-acc" {...register("accountId")} />
         </Field>
       </FormGrid>
       <FxField from={currency} accountId={watch("accountId")} amount={watch("amount") as string} register={register("fxRate")} />
-      <Submit pending={pending}>Confirmar recebimento</Submit>
+      <Submit pending={pending}>Confirm received</Submit>
     </form>
   );
 }
@@ -335,20 +335,20 @@ export function BillForm({ initial, onDone }: { initial?: BillInitial; onDone?: 
       className="space-y-4"
       onSubmit={handleSubmit((v) => run(() => (initial?.id ? updateBill({ ...v, id: initial.id }) : createBill(v)), { onSuccess: () => onDone?.() }))}
     >
-      <Field label="Nome da conta" error={err(e, "name")} htmlFor="bill-name">
-        <Input id="bill-name" placeholder="Ex.: Aluguel, Internet, Telefone" {...register("name")} />
+      <Field label="Bill name" error={err(e, "name")} htmlFor="bill-name">
+        <Input id="bill-name" placeholder="e.g. Rent, Internet, Phone" {...register("name")} />
       </Field>
       <FormGrid>
-        <Field label="Valor total" error={err(e, "amount")} htmlFor="bill-amount">
+        <Field label="Amount" error={err(e, "amount")} htmlFor="bill-amount">
           <MoneyInput id="bill-amount" currency={cur} {...register("amount")} />
         </Field>
-        <Field label="Moeda" htmlFor="bill-cur">
+        <Field label="Currency" htmlFor="bill-cur">
           <CurrencySelect id="bill-cur" {...register("currency")} />
         </Field>
-        <Field label={initial?.id ? "Data de vencimento (referência)" : "Próximo vencimento"} error={err(e, "firstDueDate")} htmlFor="bill-due">
+        <Field label={initial?.id ? "Due date (reference)" : "Next due date"} error={err(e, "firstDueDate")} htmlFor="bill-due">
           <Input id="bill-due" type="date" {...register("firstDueDate")} />
         </Field>
-        <Field label="Recorrência" htmlFor="bill-rec">
+        <Field label="Repeats" htmlFor="bill-rec">
           <Select id="bill-rec" {...register("recurrence")}>
             {BILL_RECURRENCES.map((r) => (
               <option key={r} value={r}>
@@ -357,15 +357,15 @@ export function BillForm({ initial, onDone }: { initial?: BillInitial; onDone?: 
             ))}
           </Select>
         </Field>
-        <Field label="Categoria" htmlFor="bill-cat">
+        <Field label="Category" htmlFor="bill-cat">
           <CategorySelect id="bill-cat" kind="expense" {...register("category")} />
         </Field>
         <Field
           label={
             <>
-              Prioridade
+              Priority
               <InfoTip>
-                Essencial: moradia, alimentação, saúde, transporte, educação. Importante: telefone, internet, obrigações. Opcional: pode ser adiada.
+                Essential: housing, food, health, transportation, education. Important: phone, internet, other obligations. Optional: can wait.
               </InfoTip>
             </>
           }
@@ -379,14 +379,14 @@ export function BillForm({ initial, onDone }: { initial?: BillInitial; onDone?: 
             ))}
           </Select>
         </Field>
-        <Field label="Multa por atraso (fixa)" error={err(e, "lateFee")} htmlFor="bill-fee">
+        <Field label="Late fee (fixed)" error={err(e, "lateFee")} htmlFor="bill-fee">
           <MoneyInput id="bill-fee" currency={cur} {...register("lateFee")} />
         </Field>
         <Field
           label={
             <>
-              Juros por atraso (% a.a.)
-              <InfoTip>Taxa anual cobrada sobre o valor em atraso, se a empresa informar. Usada para estimar o custo de atrasar.</InfoTip>
+              Late interest (% per year)
+              <InfoTip>Yearly rate charged on the late amount, if the company tells you. Used to estimate what paying late would cost.</InfoTip>
             </>
           }
           error={err(e, "interestRate")}
@@ -394,22 +394,22 @@ export function BillForm({ initial, onDone }: { initial?: BillInitial; onDone?: 
         >
           <Input id="bill-int" inputMode="decimal" {...register("interestRate")} />
         </Field>
-        <Field label="Valor mínimo permitido (opcional)" error={err(e, "minimumAmount")} htmlFor="bill-min">
+        <Field label="Minimum payment (optional)" error={err(e, "minimumAmount")} htmlFor="bill-min">
           <MoneyInput id="bill-min" currency={cur} {...register("minimumAmount")} />
         </Field>
-        <Field label="Termina em (opcional)" error={err(e, "endDate")} htmlFor="bill-end">
+        <Field label="Ends on (optional)" error={err(e, "endDate")} htmlFor="bill-end">
           <Input id="bill-end" type="date" {...register("endDate")} />
         </Field>
-        <Field label="Pagar normalmente com" htmlFor="bill-acc" className="sm:col-span-2">
-          <AccountSelect id="bill-acc" allowEmpty="Escolher no pagamento" {...register("accountId")} />
+        <Field label="Usually paid from" htmlFor="bill-acc" className="sm:col-span-2">
+          <AccountSelect id="bill-acc" allowEmpty="Choose when paying" {...register("accountId")} />
         </Field>
       </FormGrid>
-      <CheckboxRow label="Aceita pagamento parcial" description="Permite pagar parte do valor (ex.: cartão, faculdade parcelada)." {...register("allowsPartial")} />
-      <Field label="Observações" htmlFor="bill-notes">
+      <CheckboxRow label="Partial payments allowed" description="You can pay part of it (e.g. credit card, tuition plan)." {...register("allowsPartial")} />
+      <Field label="Notes (optional)" htmlFor="bill-notes">
         <Textarea id="bill-notes" rows={2} {...register("notes")} />
       </Field>
-      {initial?.id && <p className="text-xs text-muted">Vencimentos futuros ainda sem pagamento serão recalculados com os novos dados.</p>}
-      <Submit pending={pending}>{initial?.id ? "Salvar" : "Cadastrar conta"}</Submit>
+      {initial?.id && <p className="text-xs text-muted">Upcoming due dates that have no payments yet will be updated with the new details.</p>}
+      <Submit pending={pending}>{initial?.id ? "Save" : "Add bill"}</Submit>
     </form>
   );
 }
@@ -452,18 +452,18 @@ export function BillPaymentForm({
       onSubmit={handleSubmit((v) => run(() => payBill({ ...v, accountId: nul(v.accountId), paymentMethod: nul(v.paymentMethod) }), { onSuccess: () => onDone?.() }))}
     >
       <FormGrid>
-        <Field label="Valor pago" error={err(e, "amount")} htmlFor="bp-amount" hint={allowsPartial ? "Pagamento parcial permitido." : "Esta conta exige o valor integral."}>
+        <Field label="Amount paid" error={err(e, "amount")} htmlFor="bp-amount" hint={allowsPartial ? "Partial payment allowed." : "This bill must be paid in full."}>
           <MoneyInput id="bp-amount" currency={currency} readOnly={!allowsPartial} {...register("amount")} />
         </Field>
-        <Field label="Data do pagamento" error={err(e, "date")} htmlFor="bp-date">
+        <Field label="Payment date" error={err(e, "date")} htmlFor="bp-date">
           <Input id="bp-date" type="date" {...register("date")} />
         </Field>
         {record && (
           <>
-            <Field label="Conta usada" error={err(e, "accountId")} htmlFor="bp-acc">
+            <Field label="Paid from" error={err(e, "accountId")} htmlFor="bp-acc">
               <AccountSelect id="bp-acc" {...register("accountId")} />
             </Field>
-            <Field label="Forma de pagamento" htmlFor="bp-pm">
+            <Field label="Payment method" htmlFor="bp-pm">
               <PaymentMethodSelect id="bp-pm" {...register("paymentMethod")} />
             </Field>
           </>
@@ -471,12 +471,12 @@ export function BillPaymentForm({
       </FormGrid>
       {record && <FxField from={currency} accountId={watch("accountId")} amount={watch("amount") as string} register={register("fxRate")} />}
       <CheckboxRow
-        label="Registrar a saída de dinheiro da conta"
-        description="Desmarque apenas para pagamentos antigos, já refletidos no saldo inicial."
+        label="Take this money out of the account"
+        description="Uncheck only for old payments already included in your starting balance."
         {...register("recordOutflow")}
       />
-      <p className="text-xs text-muted">A Isabelle Wallet apenas registra o pagamento. Nenhum dinheiro é movimentado de verdade.</p>
-      <Submit pending={pending}>Registrar pagamento</Submit>
+      <p className="text-xs text-muted">Isabelle Wallet only records the payment. No real money is moved.</p>
+      <Submit pending={pending}>Record payment</Submit>
     </form>
   );
 }
@@ -507,18 +507,18 @@ export function OccurrenceEditForm({
   return (
     <form noValidate className="space-y-4" onSubmit={handleSubmit((v) => run(() => updateOccurrence(v), { onSuccess: () => onDone?.() }))}>
       <FormGrid>
-        <Field label="Valor deste vencimento" error={err(e, "amountDue")} htmlFor="oc-amount" hint="Útil para contas com valor variável ou multa aplicada.">
+        <Field label="Amount for this due date" error={err(e, "amountDue")} htmlFor="oc-amount" hint="Useful for bills that change each month or had a fee added.">
           <MoneyInput id="oc-amount" currency={currency} {...register("amountDue")} />
         </Field>
-        <Field label="Mínimo (opcional)" error={err(e, "minimumDue")} htmlFor="oc-min">
+        <Field label="Minimum (optional)" error={err(e, "minimumDue")} htmlFor="oc-min">
           <MoneyInput id="oc-min" currency={currency} {...register("minimumDue")} />
         </Field>
       </FormGrid>
-      <CheckboxRow label="Dispensar este vencimento" description="Ex.: mês isento. Não entra mais nos totais." {...register("waived")} />
-      <Field label="Observações" htmlFor="oc-notes">
+      <CheckboxRow label="Skip this due date" description="e.g. a free month. It will not count in your totals." {...register("waived")} />
+      <Field label="Notes (optional)" htmlFor="oc-notes">
         <Textarea id="oc-notes" rows={2} {...register("notes")} />
       </Field>
-      <Submit pending={pending}>Salvar vencimento</Submit>
+      <Submit pending={pending}>Save</Submit>
     </form>
   );
 }
@@ -566,17 +566,17 @@ export function SubscriptionForm({ initial, onDone }: { initial?: SubscriptionIn
         run(() => (initial?.id ? updateSubscription({ ...v, id: initial.id }) : createSubscription(v)), { onSuccess: () => onDone?.() }),
       )}
     >
-      <Field label="Nome" error={err(e, "name")} htmlFor="sub-name">
-        <Input id="sub-name" placeholder="Ex.: Netflix, Spotify, iCloud" {...register("name")} />
+      <Field label="Name" error={err(e, "name")} htmlFor="sub-name">
+        <Input id="sub-name" placeholder="e.g. Netflix, Spotify, iCloud" {...register("name")} />
       </Field>
       <FormGrid>
-        <Field label="Valor por cobrança" error={err(e, "amount")} htmlFor="sub-amount">
+        <Field label="Price per charge" error={err(e, "amount")} htmlFor="sub-amount">
           <MoneyInput id="sub-amount" currency={watch("currency") as Currency} {...register("amount")} />
         </Field>
-        <Field label="Moeda" htmlFor="sub-cur">
+        <Field label="Currency" htmlFor="sub-cur">
           <CurrencySelect id="sub-cur" {...register("currency")} />
         </Field>
-        <Field label="Ciclo" htmlFor="sub-cycle">
+        <Field label="Billed" htmlFor="sub-cycle">
           <Select id="sub-cycle" {...register("billingCycle")}>
             {SUBSCRIPTION_CYCLES.map((c) => (
               <option key={c} value={c}>
@@ -585,10 +585,10 @@ export function SubscriptionForm({ initial, onDone }: { initial?: SubscriptionIn
             ))}
           </Select>
         </Field>
-        <Field label="Próxima cobrança" error={err(e, "nextChargeDate")} htmlFor="sub-next">
+        <Field label="Next charge" error={err(e, "nextChargeDate")} htmlFor="sub-next">
           <Input id="sub-next" type="date" {...register("nextChargeDate")} />
         </Field>
-        <Field label="Categoria" htmlFor="sub-cat">
+        <Field label="Category" htmlFor="sub-cat">
           <CategorySelect id="sub-cat" kind="expense" {...register("category")} />
         </Field>
         <Field label="Status" htmlFor="sub-status">
@@ -600,14 +600,14 @@ export function SubscriptionForm({ initial, onDone }: { initial?: SubscriptionIn
             ))}
           </Select>
         </Field>
-        <Field label="Cobrada na conta" htmlFor="sub-acc">
-          <AccountSelect id="sub-acc" allowEmpty="Não definida" {...register("accountId")} />
+        <Field label="Charged to" htmlFor="sub-acc">
+          <AccountSelect id="sub-acc" allowEmpty="Not set" {...register("accountId")} />
         </Field>
         <Field
           label={
             <>
-              Último uso (opcional)
-              <InfoTip>Só sinalizamos “pouco uso” quando você informa a data de uso. Nada é presumido.</InfoTip>
+              Last used (optional)
+              <InfoTip>We only flag “rarely used” when you tell us when you last used it. Nothing is assumed.</InfoTip>
             </>
           }
           htmlFor="sub-used"
@@ -615,10 +615,10 @@ export function SubscriptionForm({ initial, onDone }: { initial?: SubscriptionIn
           <Input id="sub-used" type="date" {...register("lastUsedOn")} />
         </Field>
       </FormGrid>
-      <Field label="Observações" htmlFor="sub-notes">
+      <Field label="Notes (optional)" htmlFor="sub-notes">
         <Textarea id="sub-notes" rows={2} {...register("notes")} />
       </Field>
-      <Submit pending={pending}>{initial?.id ? "Salvar" : "Cadastrar assinatura"}</Submit>
+      <Submit pending={pending}>{initial?.id ? "Save" : "Add subscription"}</Submit>
     </form>
   );
 }
@@ -648,18 +648,18 @@ export function SubscriptionChargeForm({
   return (
     <form noValidate className="space-y-4" onSubmit={handleSubmit((v) => run(() => recordSubscriptionCharge(v), { onSuccess: () => onDone?.() }))}>
       <FormGrid>
-        <Field label="Valor cobrado" error={err(e, "amount")} htmlFor="sc-amount">
+        <Field label="Amount charged" error={err(e, "amount")} htmlFor="sc-amount">
           <MoneyInput id="sc-amount" currency={currency} {...register("amount")} />
         </Field>
-        <Field label="Data" error={err(e, "date")} htmlFor="sc-date">
+        <Field label="Date" error={err(e, "date")} htmlFor="sc-date">
           <Input id="sc-date" type="date" {...register("date")} />
         </Field>
-        <Field label="Conta" error={err(e, "accountId")} htmlFor="sc-acc" className="sm:col-span-2">
+        <Field label="Charged to" error={err(e, "accountId")} htmlFor="sc-acc" className="sm:col-span-2">
           <AccountSelect id="sc-acc" {...register("accountId")} />
         </Field>
       </FormGrid>
       <FxField from={currency} accountId={watch("accountId")} amount={watch("amount") as string} register={register("fxRate")} />
-      <Submit pending={pending}>Registrar cobrança</Submit>
+      <Submit pending={pending}>Record charge</Submit>
     </form>
   );
 }
@@ -688,7 +688,7 @@ export function DebtForm({ initial, onDone }: { initial?: DebtInitial; onDone?: 
   const { register, handleSubmit, watch, formState } = useForm({
     resolver: zodResolver(debtSchema),
     defaultValues: {
-      name: initial?.name ?? "Empréstimo universitário",
+      name: initial?.name ?? "Student loan",
       currency: initial?.currency ?? app.baseCurrency,
       initialBalance: initial?.initialBalance ?? "",
       startDate: initial?.startDate ?? app.today,
@@ -713,27 +713,27 @@ export function DebtForm({ initial, onDone }: { initial?: DebtInitial; onDone?: 
       onSubmit={handleSubmit((v) => run(() => (initial?.id ? updateDebt({ ...v, id: initial.id }) : createDebt(v)), { onSuccess: () => onDone?.() }))}
     >
       <FormGrid>
-        <Field label="Nome" error={err(e, "name")} htmlFor="debt-name" className="sm:col-span-2">
+        <Field label="Name" error={err(e, "name")} htmlFor="debt-name" className="sm:col-span-2">
           <Input id="debt-name" {...register("name")} />
         </Field>
-        <Field label="Saldo atual da dívida" error={err(e, "initialBalance")} htmlFor="debt-bal" hint="Quanto você deve hoje (ou na data inicial).">
+        <Field label="How much you owe" error={err(e, "initialBalance")} htmlFor="debt-bal" hint="The balance today (or on the date next to it).">
           <MoneyInput id="debt-bal" currency={cur} {...register("initialBalance")} />
         </Field>
-        <Field label="Moeda da dívida" htmlFor="debt-cur">
+        <Field label="Currency" htmlFor="debt-cur">
           <CurrencySelect id="debt-cur" {...register("currency")} />
         </Field>
-        <Field label="Data desse saldo (data inicial)" error={err(e, "startDate")} htmlFor="debt-start">
+        <Field label="Balance as of" error={err(e, "startDate")} htmlFor="debt-start">
           <Input id="debt-start" type="date" {...register("startDate")} />
         </Field>
       </FormGrid>
       <div className="rounded-2xl border border-pink-100 bg-pink-50/60 p-4">
-        <p className="mb-3 text-sm font-semibold text-ink">Acréscimo semestral da faculdade</p>
+        <p className="mb-3 text-sm font-semibold text-ink">Semester charge from your school</p>
         <FormGrid>
           <Field
             label={
               <>
-                Valor do acréscimo
-                <InfoTip>Valor adicionado à dívida a cada período (ex.: 5.500 por semestre). É tratado como novo acréscimo, separado de juros.</InfoTip>
+                Amount added
+                <InfoTip>Amount added to the loan every period (e.g. 5,500 per semester). It is a new charge, kept separate from interest.</InfoTip>
               </>
             }
             error={err(e, "incrementAmount")}
@@ -741,17 +741,17 @@ export function DebtForm({ initial, onDone }: { initial?: DebtInitial; onDone?: 
           >
             <MoneyInput id="debt-inc" currency={cur} {...register("incrementAmount")} />
           </Field>
-          <Field label="A cada (meses)" error={err(e, "incrementIntervalMonths")} htmlFor="debt-int" hint="6 = semestral">
+          <Field label="Every (months)" error={err(e, "incrementIntervalMonths")} htmlFor="debt-int" hint="6 = every semester">
             <Input id="debt-int" type="number" min={1} max={24} {...register("incrementIntervalMonths")} />
           </Field>
-          <Field label="Próxima data de acréscimo" error={err(e, "incrementAnchorDate")} htmlFor="debt-anchor">
+          <Field label="Next charge date" error={err(e, "incrementAnchorDate")} htmlFor="debt-anchor">
             <Input id="debt-anchor" type="date" {...register("incrementAnchorDate")} />
           </Field>
           <Field
             label={
               <>
-                Último acréscimo em (opcional)
-                <InfoTip>Ex.: o semestre da formatura. Sem essa data, a projeção considera acréscimos para sempre.</InfoTip>
+                Last charge on (optional)
+                <InfoTip>e.g. your graduation semester. Without this date, the forecast assumes the charges never stop.</InfoTip>
               </>
             }
             error={err(e, "incrementsEndDate")}
@@ -765,8 +765,8 @@ export function DebtForm({ initial, onDone }: { initial?: DebtInitial; onDone?: 
         <Field
           label={
             <>
-              Juros (% ao ano)
-              <InfoTip>Deixe 0 se o empréstimo não cobra juros. Quando informado, os juros são lançados no fim de cada mês.</InfoTip>
+              Interest (% per year)
+              <InfoTip>Leave 0 if the loan has no interest. If set, interest is added at the end of each month.</InfoTip>
             </>
           }
           error={err(e, "interestRate")}
@@ -774,23 +774,23 @@ export function DebtForm({ initial, onDone }: { initial?: DebtInitial; onDone?: 
         >
           <Input id="debt-rate" inputMode="decimal" {...register("interestRate")} />
         </Field>
-        <Field label="Juros contam a partir de (opcional)" htmlFor="debt-since">
+        <Field label="Interest starts on (optional)" htmlFor="debt-since">
           <Input id="debt-since" type="date" {...register("interestSince")} />
         </Field>
-        <Field label="Pagamento mensal planejado" error={err(e, "plannedMonthlyPayment")} htmlFor="debt-plan">
+        <Field label="Planned monthly payment" error={err(e, "plannedMonthlyPayment")} htmlFor="debt-plan">
           <MoneyInput id="debt-plan" currency={cur} {...register("plannedMonthlyPayment")} />
         </Field>
-        <Field label="Dia do pagamento" error={err(e, "paymentDay")} htmlFor="debt-day">
+        <Field label="Payment day of the month" error={err(e, "paymentDay")} htmlFor="debt-day">
           <Input id="debt-day" type="number" min={1} max={28} {...register("paymentDay")} />
         </Field>
-        <Field label="Prazo desejado para quitar (opcional)" htmlFor="debt-target" className="sm:col-span-2">
+        <Field label="Pay off by (optional)" htmlFor="debt-target" className="sm:col-span-2">
           <Input id="debt-target" type="date" {...register("targetPayoffDate")} />
         </Field>
       </FormGrid>
-      <Field label="Observações" htmlFor="debt-notes">
+      <Field label="Notes (optional)" htmlFor="debt-notes">
         <Textarea id="debt-notes" rows={2} {...register("notes")} />
       </Field>
-      <Submit pending={pending}>{initial?.id ? "Salvar configuração" : "Cadastrar dívida"}</Submit>
+      <Submit pending={pending}>{initial?.id ? "Save settings" : "Add debt"}</Submit>
     </form>
   );
 }
@@ -813,12 +813,12 @@ export function DebtPaymentForm({ debts, debtId, onDone }: { debts: Array<{ id: 
   const e = formState.errors as Errors;
   const debt = debts.find((d) => d.id === watch("debtId"));
   const record = watch("recordOutflow");
-  if (!debts.length) return <p className="text-sm text-muted">Cadastre sua dívida em University Debt Manager primeiro.</p>;
+  if (!debts.length) return <p className="text-sm text-muted">Add your debt on the University Debt page first.</p>;
   return (
     <form noValidate className="space-y-4" onSubmit={handleSubmit((v) => run(() => payDebt({ ...v, accountId: nul(v.accountId) }), { onSuccess: () => onDone?.() }))}>
       <FormGrid>
         {debts.length > 1 && (
-          <Field label="Dívida" htmlFor="dp-debt" className="sm:col-span-2">
+          <Field label="Debt" htmlFor="dp-debt" className="sm:col-span-2">
             <Select id="dp-debt" {...register("debtId")}>
               {debts.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -828,28 +828,28 @@ export function DebtPaymentForm({ debts, debtId, onDone }: { debts: Array<{ id: 
             </Select>
           </Field>
         )}
-        <Field label="Valor pago" error={err(e, "amount")} htmlFor="dp-amount">
+        <Field label="Amount paid" error={err(e, "amount")} htmlFor="dp-amount">
           <MoneyInput id="dp-amount" currency={debt?.currency} {...register("amount")} />
         </Field>
-        <Field label="Data" error={err(e, "date")} htmlFor="dp-date">
+        <Field label="Date" error={err(e, "date")} htmlFor="dp-date">
           <Input id="dp-date" type="date" {...register("date")} />
         </Field>
         {record && (
-          <Field label="Conta de onde saiu" error={err(e, "accountId")} htmlFor="dp-acc" className="sm:col-span-2">
+          <Field label="Paid from" error={err(e, "accountId")} htmlFor="dp-acc" className="sm:col-span-2">
             <AccountSelect id="dp-acc" {...register("accountId")} />
           </Field>
         )}
       </FormGrid>
       {record && debt && <FxField from={debt.currency} accountId={watch("accountId")} amount={watch("amount") as string} register={register("fxRate")} />}
       <CheckboxRow
-        label="Registrar como saída de dinheiro"
-        description="O pagamento reduz a dívida e também sai da sua conta (contado uma única vez)."
+        label="Take this money out of the account"
+        description="The payment lowers the debt and also leaves your account (counted only once)."
         {...register("recordOutflow")}
       />
-      <Field label="Observação" htmlFor="dp-note">
+      <Field label="Note (optional)" htmlFor="dp-note">
         <Input id="dp-note" {...register("note")} />
       </Field>
-      <Submit pending={pending}>Registrar pagamento</Submit>
+      <Submit pending={pending}>Record payment</Submit>
     </form>
   );
 }
@@ -865,23 +865,23 @@ export function DebtEventForm({ debtId, currency, onDone }: { debtId: string; cu
   return (
     <form noValidate className="space-y-4" onSubmit={handleSubmit((v) => run(() => addDebtEvent(v), { onSuccess: () => onDone?.() }))}>
       <FormGrid>
-        <Field label="Tipo" htmlFor="de-type">
+        <Field label="Type" htmlFor="de-type">
           <Select id="de-type" {...register("type")}>
-            <option value="increment">Acréscimo manual</option>
-            <option value="adjustment">Ajuste (+ ou −)</option>
+            <option value="increment">Extra charge</option>
+            <option value="adjustment">Correction (+ or −)</option>
           </Select>
         </Field>
-        <Field label="Valor" error={err(e, "amount")} htmlFor="de-amount" hint="Ajustes podem ser negativos (ex.: desconto).">
+        <Field label="Amount" error={err(e, "amount")} htmlFor="de-amount" hint="Corrections can be negative (e.g. a discount).">
           <MoneyInput id="de-amount" currency={currency} {...register("amount")} />
         </Field>
-        <Field label="Data" error={err(e, "date")} htmlFor="de-date">
+        <Field label="Date" error={err(e, "date")} htmlFor="de-date">
           <Input id="de-date" type="date" {...register("date")} />
         </Field>
-        <Field label="Observação" htmlFor="de-note">
+        <Field label="Note (optional)" htmlFor="de-note">
           <Input id="de-note" {...register("note")} />
         </Field>
       </FormGrid>
-      <Submit pending={pending}>Adicionar ao histórico</Submit>
+      <Submit pending={pending}>Add to history</Submit>
     </form>
   );
 }
@@ -923,11 +923,11 @@ export function GoalForm({ initial, onDone }: { initial?: GoalInitial; onDone?: 
       className="space-y-4"
       onSubmit={handleSubmit((v) => run(() => (initial?.id ? updateGoal({ ...v, id: initial.id }) : createGoal(v)), { onSuccess: () => onDone?.() }))}
     >
-      <Field label="Nome da meta" error={err(e, "name")} htmlFor="goal-name">
-        <Input id="goal-name" placeholder="Ex.: Reserva de emergência" {...register("name")} />
+      <Field label="Goal name" error={err(e, "name")} htmlFor="goal-name">
+        <Input id="goal-name" placeholder="e.g. Emergency fund" {...register("name")} />
       </Field>
       <FormGrid>
-        <Field label="Tipo" htmlFor="goal-kind">
+        <Field label="Type" htmlFor="goal-kind">
           <Select id="goal-kind" {...register("kind")}>
             {GOAL_KINDS.map((k) => (
               <option key={k} value={k}>
@@ -936,7 +936,7 @@ export function GoalForm({ initial, onDone }: { initial?: GoalInitial; onDone?: 
             ))}
           </Select>
         </Field>
-        <Field label="Prioridade" htmlFor="goal-pri">
+        <Field label="Priority" htmlFor="goal-pri">
           <Select id="goal-pri" {...register("priority")}>
             {(["high", "medium", "low"] as const).map((p) => (
               <option key={p} value={p}>
@@ -945,28 +945,28 @@ export function GoalForm({ initial, onDone }: { initial?: GoalInitial; onDone?: 
             ))}
           </Select>
         </Field>
-        <Field label="Valor desejado" error={err(e, "targetAmount")} htmlFor="goal-target">
+        <Field label="Target amount" error={err(e, "targetAmount")} htmlFor="goal-target">
           <MoneyInput id="goal-target" currency={cur} {...register("targetAmount")} />
         </Field>
-        <Field label="Moeda" htmlFor="goal-cur">
+        <Field label="Currency" htmlFor="goal-cur">
           <CurrencySelect id="goal-cur" {...register("currency")} />
         </Field>
         {!initial?.id && (
-          <Field label="Valor já acumulado" error={err(e, "initialSaved")} htmlFor="goal-saved">
+          <Field label="Already saved" error={err(e, "initialSaved")} htmlFor="goal-saved">
             <MoneyInput id="goal-saved" currency={cur} {...register("initialSaved")} />
           </Field>
         )}
-        <Field label="Contribuição mensal planejada" error={err(e, "monthlyContribution")} htmlFor="goal-monthly">
+        <Field label="Plan to save per month" error={err(e, "monthlyContribution")} htmlFor="goal-monthly">
           <MoneyInput id="goal-monthly" currency={cur} {...register("monthlyContribution")} />
         </Field>
-        <Field label="Data limite (opcional)" htmlFor="goal-deadline">
+        <Field label="Target date (optional)" htmlFor="goal-deadline">
           <Input id="goal-deadline" type="date" {...register("deadline")} />
         </Field>
       </FormGrid>
-      <Field label="Observações" htmlFor="goal-notes">
+      <Field label="Notes (optional)" htmlFor="goal-notes">
         <Textarea id="goal-notes" rows={2} {...register("notes")} />
       </Field>
-      <Submit pending={pending}>{initial?.id ? "Salvar" : "Criar meta"}</Submit>
+      <Submit pending={pending}>{initial?.id ? "Save" : "Create goal"}</Submit>
     </form>
   );
 }
@@ -982,17 +982,17 @@ export function ContributionForm({ goalId, currency, onDone }: { goalId: string;
   return (
     <form noValidate className="space-y-4" onSubmit={handleSubmit((v) => run(() => addContribution(v), { onSuccess: () => onDone?.() }))}>
       <FormGrid>
-        <Field label="Valor" error={err(e, "amount")} htmlFor="ct-amount" hint="Use valor negativo para registrar uma retirada.">
+        <Field label="Amount" error={err(e, "amount")} htmlFor="ct-amount" hint="Use a negative number to take money out.">
           <MoneyInput id="ct-amount" currency={currency} {...register("amount")} />
         </Field>
-        <Field label="Data" htmlFor="ct-date">
+        <Field label="Date" htmlFor="ct-date">
           <Input id="ct-date" type="date" {...register("date")} />
         </Field>
       </FormGrid>
-      <Field label="Observação" htmlFor="ct-note">
+      <Field label="Note (optional)" htmlFor="ct-note">
         <Input id="ct-note" {...register("note")} />
       </Field>
-      <Submit pending={pending}>Registrar contribuição</Submit>
+      <Submit pending={pending}>Add to goal</Submit>
     </form>
   );
 }
@@ -1008,7 +1008,7 @@ export function BudgetForm({ category, amount, onDone, lockCategory }: { categor
   return (
     <form noValidate className="space-y-4" onSubmit={handleSubmit((v) => run(() => upsertBudget(v), { onSuccess: () => onDone?.() }))}>
       <FormGrid>
-        <Field label="Categoria" htmlFor="bg-cat">
+        <Field label="Category" htmlFor="bg-cat">
           {lockCategory ? (
             <>
               <input type="hidden" {...register("category")} />
@@ -1018,11 +1018,11 @@ export function BudgetForm({ category, amount, onDone, lockCategory }: { categor
             <CategorySelect id="bg-cat" kind="expense" {...register("category")} />
           )}
         </Field>
-        <Field label={`Limite mensal (${app.baseCurrency})`} error={err(e, "amount")} htmlFor="bg-amount">
+        <Field label={`Monthly limit (${app.baseCurrency})`} error={err(e, "amount")} htmlFor="bg-amount">
           <MoneyInput id="bg-amount" currency={app.baseCurrency} {...register("amount")} />
         </Field>
       </FormGrid>
-      <Submit pending={pending}>Salvar limite</Submit>
+      <Submit pending={pending}>Save limit</Submit>
     </form>
   );
 }
